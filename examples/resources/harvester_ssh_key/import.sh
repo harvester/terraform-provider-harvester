@@ -1,0 +1,1 @@
+terraform import harvester_ssh_key.foo <Namespace>/<Name>

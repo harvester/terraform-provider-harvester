@@ -1,0 +1,1 @@
+terraform import harvester_clusternetwork.foo <Namespace>/<Name>

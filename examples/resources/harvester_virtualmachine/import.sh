@@ -1,0 +1,1 @@
+terraform import harvester_virtualmachine.foo <Namespace>/<Name>
