@@ -1,0 +1,1 @@
+terraform import harvester_image.foo <Namespace>/<Name>

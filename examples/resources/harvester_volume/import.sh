@@ -1,0 +1,1 @@
+terraform import harvester_volume.foo <Namespace>/<Name>
