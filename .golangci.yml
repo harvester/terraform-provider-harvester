@@ -1,0 +1,29 @@
+run:
+  deadline: 5m
+linters:
+  enable:
+    - vet
+    - staticcheck
+    - bodyclose
+    - errcheck
+    - gofmt
+    - goimports
+    - whitespace
+    - deadcode
+    - unused
+    - unparam
+    - ineffassign
+    - scopelint
+    - maligned
+    - prealloc
+    - stylecheck
+    - goconst
+    - gosimple
+    - misspell
+    - gosec
+  enable-all: false
+  disable-all: true
+  fast: false
+linters-settings:
+  goimports:
+    local-prefixes: github.com/harvester/terraform-provider-harvester
