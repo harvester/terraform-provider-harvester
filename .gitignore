@@ -1,0 +1,12 @@
+.DS_Store
+/.dapper
+/.idea
+/.vscode
+/bin
+/dist
+.terraform.lock.hcl
+.terraform/
+crash.log
+terraform.tfstate
+terraform.tfstate.backup
+terraform-provider-harvester

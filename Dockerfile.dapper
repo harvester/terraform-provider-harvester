@@ -1,0 +1,24 @@
+FROM golang:1.16.5-alpine3.13
+
+ARG DAPPER_HOST_ARCH
+ENV ARCH $DAPPER_HOST_ARCH
+
+RUN apk update && apk -U add bash git gcc musl-dev docker vim less file curl wget ca-certificates
+
+# install goimports
+RUN GO111MODULE=on go get golang.org/x/tools/cmd/goimports@v0.1.2
+
+## install golangci-lint
+RUN if [ "${ARCH}" = "amd64" ]; then \
+        curl -sL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | sh -s -- -b "$(go env GOPATH)/bin" v1.27.0; \
+    fi
+
+ENV DAPPER_ENV REPO TAG DRONE_TAG CROSS
+ENV DAPPER_SOURCE /go/src/github.com/harvester/terraform-provider-harvester
+ENV DAPPER_OUTPUT ./bin ./dist
+ENV DAPPER_DOCKER_SOCKET true
+ENV HOME ${DAPPER_SOURCE}
+
+WORKDIR ${DAPPER_SOURCE}
+ENTRYPOINT ["./scripts/entry"]
+CMD ["ci"]
