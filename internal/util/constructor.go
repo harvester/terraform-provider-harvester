@@ -4,10 +4,10 @@ import (
 	"reflect"
 	"strings"
 
+	"github.com/harvester/harvester/pkg/builder"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/harvester/terraform-provider-harvester/pkg/builder"
 	"github.com/harvester/terraform-provider-harvester/pkg/constants"
 )
 

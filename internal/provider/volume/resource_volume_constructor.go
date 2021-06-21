@@ -1,14 +1,15 @@
 package volume
 
 import (
+	"github.com/harvester/harvester/pkg/builder"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/utils/pointer"
 	cdiv1beta1 "kubevirt.io/containerized-data-importer/pkg/apis/core/v1beta1"
 
 	"github.com/harvester/terraform-provider-harvester/internal/util"
-	"github.com/harvester/terraform-provider-harvester/pkg/builder"
 	"github.com/harvester/terraform-provider-harvester/pkg/constants"
+	"github.com/harvester/terraform-provider-harvester/pkg/helper"
 )
 
 var (
@@ -69,11 +70,11 @@ func (c *Constructor) Setup() util.Processors {
 			Field: constants.FieldVolumeImage,
 			Parser: func(i interface{}) error {
 				if imageNamespacedName := i.(string); imageNamespacedName != "" {
-					imageNamespace, imageName, err := builder.NamespacedNamePartsByDefault(imageNamespacedName, c.Volume.Namespace)
+					imageNamespace, imageName, err := helper.NamespacedNamePartsByDefault(imageNamespacedName, c.Volume.Namespace)
 					if err != nil {
 						return err
 					}
-					c.Volume.Annotations[builder.AnnotationKeyImageID] = builder.BuildID(imageNamespace, imageName)
+					c.Volume.Annotations[builder.AnnotationKeyImageID] = helper.BuildID(imageNamespace, imageName)
 					storageClassName := builder.BuildImageStorageClassName(imageNamespace, imageName)
 					c.Volume.Spec.PVC.StorageClassName = pointer.StringPtr(storageClassName)
 				}

@@ -1,13 +1,14 @@
 package virtualmachine
 
 import (
+	"github.com/harvester/harvester/pkg/builder"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/utils/pointer"
 	kubevirtv1 "kubevirt.io/client-go/api/v1"
 
 	"github.com/harvester/terraform-provider-harvester/internal/util"
-	"github.com/harvester/terraform-provider-harvester/pkg/builder"
 	"github.com/harvester/terraform-provider-harvester/pkg/constants"
+	"github.com/harvester/terraform-provider-harvester/pkg/helper"
 )
 
 const (
@@ -116,7 +117,7 @@ func (c *Constructor) Setup() util.Processors {
 				if existingVolumeName != "" {
 					vmBuilder.ExistingDataVolume(diskName, existingVolumeName)
 				} else if containerImageName != "" {
-					vmBuilder.ContainerDisk(diskName, containerImageName, builder.DefaultImagePullPolicy)
+					vmBuilder.ContainerDiskVolume(diskName, containerImageName, builder.DefaultImagePullPolicy)
 				} else {
 					dataVolumeOption := &builder.DataVolumeOption{
 						VolumeMode: corev1.PersistentVolumeBlock,
@@ -132,12 +133,12 @@ func (c *Constructor) Setup() util.Processors {
 						dataVolumeOption.AccessMode = corev1.PersistentVolumeAccessMode(accessMode)
 					}
 					if imageNamespacedName != "" {
-						imageNamespace, imageName, err := builder.NamespacedNamePartsByDefault(imageNamespacedName, c.Builder.VirtualMachine.Namespace)
+						imageNamespace, imageName, err := helper.NamespacedNamePartsByDefault(imageNamespacedName, c.Builder.VirtualMachine.Namespace)
 						if err != nil {
 							return err
 						}
-						dataVolumeOption.ImageID = builder.BuildID(imageNamespace, imageName)
-						storageClassName := builder.BuildImageStorageClassName(imageNamespace, imageName)
+						dataVolumeOption.ImageID = helper.BuildID(imageNamespace, imageName)
+						storageClassName := builder.BuildImageStorageClassName("", imageName)
 						dataVolumeOption.StorageClassName = pointer.StringPtr(storageClassName)
 					}
 					vmBuilder.DataVolume(diskName, diskSize, volumeName, dataVolumeOption)
@@ -175,7 +176,7 @@ func (c *Constructor) Setup() util.Processors {
 }
 
 func (c *Constructor) Result() (interface{}, error) {
-	return c.Builder.VM(), nil
+	return c.Builder.VM()
 }
 
 func newVMConstructor(vmBuilder *builder.VMBuilder) util.Constructor {

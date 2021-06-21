@@ -9,7 +9,7 @@ replace (
 	github.com/go-kit/kit => github.com/go-kit/kit v0.3.0
 	github.com/googleapis/gnostic => github.com/googleapis/gnostic v0.4.1
 
-	github.com/harvester/harvester => github.com/harvester/harvester v0.0.2-0.20210607055928-8cfc827fa20a
+	github.com/harvester/harvester => github.com/harvester/harvester v0.0.2-0.20210621053253-abc91f0304f5
 
 	github.com/knative/pkg => github.com/rancher/pkg v0.0.0-20190514055449-b30ab9de040e
 	github.com/openshift/api => github.com/openshift/api v0.0.0-20191219222812-2987a591a72c

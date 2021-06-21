@@ -3,8 +3,6 @@ package volume
 import (
 	"context"
 
-	client2 "github.com/harvester/terraform-provider-harvester/pkg/client"
-
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -12,8 +10,9 @@ import (
 	cdiv1beta1 "kubevirt.io/containerized-data-importer/pkg/apis/core/v1beta1"
 
 	"github.com/harvester/terraform-provider-harvester/internal/util"
-	"github.com/harvester/terraform-provider-harvester/pkg/builder"
+	"github.com/harvester/terraform-provider-harvester/pkg/client"
 	"github.com/harvester/terraform-provider-harvester/pkg/constants"
+	"github.com/harvester/terraform-provider-harvester/pkg/helper"
 	"github.com/harvester/terraform-provider-harvester/pkg/importer"
 )
 
@@ -31,14 +30,14 @@ func ResourceVolume() *schema.Resource {
 }
 
 func resourceVolumeCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client := meta.(*client2.Client)
+	c := meta.(*client.Client)
 	namespace := d.Get(constants.FieldCommonNamespace).(string)
 	name := d.Get(constants.FieldCommonName).(string)
 	toCreate, err := util.ResourceConstruct(d, Creator(namespace, name))
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	obj, err := client.HarvesterClient.CdiV1beta1().DataVolumes(namespace).Create(ctx, toCreate.(*cdiv1beta1.DataVolume), metav1.CreateOptions{})
+	obj, err := c.HarvesterClient.CdiV1beta1().DataVolumes(namespace).Create(ctx, toCreate.(*cdiv1beta1.DataVolume), metav1.CreateOptions{})
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -46,12 +45,12 @@ func resourceVolumeCreate(ctx context.Context, d *schema.ResourceData, meta inte
 }
 
 func resourceVolumeUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client := meta.(*client2.Client)
-	namespace, name, err := builder.IDParts(d.Id())
+	c := meta.(*client.Client)
+	namespace, name, err := helper.IDParts(d.Id())
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	obj, err := client.HarvesterClient.CdiV1beta1().DataVolumes(namespace).Get(ctx, name, metav1.GetOptions{})
+	obj, err := c.HarvesterClient.CdiV1beta1().DataVolumes(namespace).Get(ctx, name, metav1.GetOptions{})
 	if err != nil {
 		if apierrors.IsNotFound(err) {
 			d.SetId("")
@@ -63,7 +62,7 @@ func resourceVolumeUpdate(ctx context.Context, d *schema.ResourceData, meta inte
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	_, err = client.HarvesterClient.CdiV1beta1().DataVolumes(namespace).Update(ctx, toUpdate.(*cdiv1beta1.DataVolume), metav1.UpdateOptions{})
+	_, err = c.HarvesterClient.CdiV1beta1().DataVolumes(namespace).Update(ctx, toUpdate.(*cdiv1beta1.DataVolume), metav1.UpdateOptions{})
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -71,12 +70,12 @@ func resourceVolumeUpdate(ctx context.Context, d *schema.ResourceData, meta inte
 }
 
 func resourceVolumeRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client := meta.(*client2.Client)
-	namespace, name, err := builder.IDParts(d.Id())
+	c := meta.(*client.Client)
+	namespace, name, err := helper.IDParts(d.Id())
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	obj, err := client.HarvesterClient.CdiV1beta1().DataVolumes(namespace).Get(ctx, name, metav1.GetOptions{})
+	obj, err := c.HarvesterClient.CdiV1beta1().DataVolumes(namespace).Get(ctx, name, metav1.GetOptions{})
 	if err != nil {
 		if apierrors.IsNotFound(err) {
 			d.SetId("")
@@ -88,12 +87,12 @@ func resourceVolumeRead(ctx context.Context, d *schema.ResourceData, meta interf
 }
 
 func resourceVolumeDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client := meta.(*client2.Client)
-	namespace, name, err := builder.IDParts(d.Id())
+	c := meta.(*client.Client)
+	namespace, name, err := helper.IDParts(d.Id())
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	err = client.HarvesterClient.CdiV1beta1().DataVolumes(namespace).Delete(ctx, name, metav1.DeleteOptions{})
+	err = c.HarvesterClient.CdiV1beta1().DataVolumes(namespace).Delete(ctx, name, metav1.DeleteOptions{})
 	if err != nil && !apierrors.IsNotFound(err) {
 		return diag.FromErr(err)
 	}

@@ -3,12 +3,13 @@ package importer
 import (
 	"strings"
 
+	"github.com/harvester/harvester/pkg/builder"
 	"github.com/harvester/harvester/pkg/ref"
 	kubevirtv1 "kubevirt.io/client-go/api/v1"
 	cdiv1beta1 "kubevirt.io/containerized-data-importer/pkg/apis/core/v1beta1"
 
-	"github.com/harvester/terraform-provider-harvester/pkg/builder"
 	"github.com/harvester/terraform-provider-harvester/pkg/constants"
+	"github.com/harvester/terraform-provider-harvester/pkg/helper"
 )
 
 func ResourceVolumeStateGetter(obj *cdiv1beta1.DataVolume) (*StateGetter, error) {
@@ -33,7 +34,7 @@ func ResourceVolumeStateGetter(obj *cdiv1beta1.DataVolume) (*StateGetter, error)
 		}
 	}
 	if imageID := obj.Annotations[builder.AnnotationKeyImageID]; imageID != "" {
-		imageNamespacedName, err := builder.BuildNamespacedNameFromID(imageID, obj.Namespace)
+		imageNamespacedName, err := helper.BuildNamespacedNameFromID(imageID, obj.Namespace)
 		if err != nil {
 			return nil, err
 		}
@@ -51,7 +52,7 @@ func ResourceVolumeStateGetter(obj *cdiv1beta1.DataVolume) (*StateGetter, error)
 		states[constants.FieldCommonState] = constants.StateCommonReady
 	}
 	return &StateGetter{
-		ID:           builder.BuildID(obj.Namespace, obj.Name),
+		ID:           helper.BuildID(obj.Namespace, obj.Name),
 		Name:         obj.Name,
 		ResourceType: constants.ResourceTypeVolume,
 		States:       states,

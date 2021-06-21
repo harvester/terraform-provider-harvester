@@ -3,8 +3,8 @@ package importer
 import (
 	harvsternetworkv1 "github.com/harvester/harvester-network-controller/pkg/apis/network.harvesterhci.io/v1beta1"
 
-	"github.com/harvester/terraform-provider-harvester/pkg/builder"
 	"github.com/harvester/terraform-provider-harvester/pkg/constants"
+	"github.com/harvester/terraform-provider-harvester/pkg/helper"
 )
 
 func ResourceClusterNetworkStateGetter(obj *harvsternetworkv1.ClusterNetwork) (*StateGetter, error) {
@@ -17,7 +17,7 @@ func ResourceClusterNetworkStateGetter(obj *harvsternetworkv1.ClusterNetwork) (*
 		constants.FieldClusterNetworkDefaultPhysicalNIC: obj.Config[constants.ClusterNetworkConfigKeyDefaultPhysicalNIC],
 	}
 	return &StateGetter{
-		ID:           builder.BuildID(obj.Namespace, obj.Name),
+		ID:           helper.BuildID(obj.Namespace, obj.Name),
 		Name:         obj.Name,
 		ResourceType: constants.ResourceTypeClusterNetwork,
 		States:       states,

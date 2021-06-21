@@ -3,7 +3,7 @@ package importer
 import (
 	"strings"
 
-	"github.com/harvester/terraform-provider-harvester/pkg/builder"
+	"github.com/harvester/harvester/pkg/builder"
 )
 
 type StateGetter struct {

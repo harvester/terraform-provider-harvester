@@ -4,10 +4,11 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/harvester/harvester/pkg/builder"
 	kubevirtv1 "kubevirt.io/client-go/api/v1"
 
-	"github.com/harvester/terraform-provider-harvester/pkg/builder"
 	"github.com/harvester/terraform-provider-harvester/pkg/constants"
+	"github.com/harvester/terraform-provider-harvester/pkg/helper"
 )
 
 type VMImporter struct {
@@ -113,7 +114,7 @@ func (v *VMImporter) dataVolume(volume kubevirtv1.Volume, state map[string]inter
 		if dataVolumeTemplate.Name == dataVolumeName {
 			state[constants.FieldDiskSize] = dataVolumeTemplate.Spec.PVC.Resources.Requests.Storage().String()
 			if imageID := dataVolumeTemplate.Annotations[builder.AnnotationKeyImageID]; imageID != "" {
-				imageNamespacedName, err := builder.BuildNamespacedNameFromID(imageID, v.Namespace())
+				imageNamespacedName, err := helper.BuildNamespacedNameFromID(imageID, v.Namespace())
 				if err != nil {
 					return err
 				}
@@ -269,7 +270,7 @@ func ResourceVirtualMachineStateGetter(vm *kubevirtv1.VirtualMachine, vmi *kubev
 		return nil, err
 	}
 	return &StateGetter{
-		ID:           builder.BuildID(vm.Namespace, vm.Name),
+		ID:           helper.BuildID(vm.Namespace, vm.Name),
 		Name:         vm.Name,
 		ResourceType: constants.ResourceTypeVirtualMachine,
 		States: map[string]interface{}{
