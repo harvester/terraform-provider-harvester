@@ -21,7 +21,7 @@ resource "harvester_virtualmachine" "k3os" {
     bus        = "sata"
     boot_order = 2
 
-    image_name = "k3os"
+    image = "k3os"
   }
 
   disk {
@@ -79,7 +79,7 @@ resource "harvester_virtualmachine" "ubuntu20-dev" {
     bus        = "virtio"
     boot_order = 1
 
-    image_name = "ubuntu20"
+    image = "ubuntu20"
   }
 
   disk {
