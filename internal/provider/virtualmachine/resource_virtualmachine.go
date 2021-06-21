@@ -10,9 +10,9 @@ import (
 	kubevirtv1 "kubevirt.io/client-go/api/v1"
 
 	"github.com/harvester/terraform-provider-harvester/internal/util"
-	"github.com/harvester/terraform-provider-harvester/pkg/builder"
 	"github.com/harvester/terraform-provider-harvester/pkg/client"
 	"github.com/harvester/terraform-provider-harvester/pkg/constants"
+	"github.com/harvester/terraform-provider-harvester/pkg/helper"
 	"github.com/harvester/terraform-provider-harvester/pkg/importer"
 )
 
@@ -46,7 +46,7 @@ func resourceVirtualMachineCreate(ctx context.Context, d *schema.ResourceData, m
 
 func resourceVirtualMachineUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	c := meta.(*client.Client)
-	namespace, name, err := builder.IDParts(d.Id())
+	namespace, name, err := helper.IDParts(d.Id())
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -71,7 +71,7 @@ func resourceVirtualMachineUpdate(ctx context.Context, d *schema.ResourceData, m
 
 func resourceVirtualMachineRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	c := meta.(*client.Client)
-	namespace, name, err := builder.IDParts(d.Id())
+	namespace, name, err := helper.IDParts(d.Id())
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -95,7 +95,7 @@ func resourceVirtualMachineRead(ctx context.Context, d *schema.ResourceData, met
 
 func resourceVirtualMachineDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	c := meta.(*client.Client)
-	namespace, name, err := builder.IDParts(d.Id())
+	namespace, name, err := helper.IDParts(d.Id())
 	if err != nil {
 		return diag.FromErr(err)
 	}

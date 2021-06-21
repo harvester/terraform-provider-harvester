@@ -10,9 +10,9 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/harvester/terraform-provider-harvester/internal/util"
-	"github.com/harvester/terraform-provider-harvester/pkg/builder"
 	"github.com/harvester/terraform-provider-harvester/pkg/client"
 	"github.com/harvester/terraform-provider-harvester/pkg/constants"
+	"github.com/harvester/terraform-provider-harvester/pkg/helper"
 	"github.com/harvester/terraform-provider-harvester/pkg/importer"
 )
 
@@ -46,7 +46,7 @@ func resourceNetworkCreate(ctx context.Context, d *schema.ResourceData, meta int
 
 func resourceNetworkUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	c := meta.(*client.Client)
-	namespace, name, err := builder.IDParts(d.Id())
+	namespace, name, err := helper.IDParts(d.Id())
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -71,7 +71,7 @@ func resourceNetworkUpdate(ctx context.Context, d *schema.ResourceData, meta int
 
 func resourceNetworkRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	c := meta.(*client.Client)
-	namespace, name, err := builder.IDParts(d.Id())
+	namespace, name, err := helper.IDParts(d.Id())
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -89,7 +89,7 @@ func resourceNetworkRead(ctx context.Context, d *schema.ResourceData, meta inter
 
 func resourceNetworkDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	c := meta.(*client.Client)
-	namespace, name, err := builder.IDParts(d.Id())
+	namespace, name, err := helper.IDParts(d.Id())
 	if err != nil {
 		return diag.FromErr(err)
 	}

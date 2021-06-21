@@ -4,8 +4,8 @@ import (
 	harvsterv1 "github.com/harvester/harvester/pkg/apis/harvesterhci.io/v1beta1"
 	corev1 "k8s.io/api/core/v1"
 
-	"github.com/harvester/terraform-provider-harvester/pkg/builder"
 	"github.com/harvester/terraform-provider-harvester/pkg/constants"
+	"github.com/harvester/terraform-provider-harvester/pkg/helper"
 )
 
 func ResourceImageStateGetter(obj *harvsterv1.VirtualMachineImage) (*StateGetter, error) {
@@ -32,7 +32,7 @@ func ResourceImageStateGetter(obj *harvsterv1.VirtualMachineImage) (*StateGetter
 	}
 	states[constants.FieldCommonState] = state
 	return &StateGetter{
-		ID:           builder.BuildID(obj.Namespace, obj.Name),
+		ID:           helper.BuildID(obj.Namespace, obj.Name),
 		Name:         obj.Name,
 		ResourceType: constants.ResourceTypeImage,
 		States:       states,

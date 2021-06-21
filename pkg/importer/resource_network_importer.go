@@ -3,11 +3,12 @@ package importer
 import (
 	"encoding/json"
 
-	networkv1 "github.com/harvester/harvester/pkg/api/network"
+	"github.com/harvester/harvester/pkg/builder"
+	"github.com/harvester/harvester/pkg/webhook/resources/network"
 	nadv1 "github.com/k8snetworkplumbingwg/network-attachment-definition-client/pkg/apis/k8s.cni.cncf.io/v1"
 
-	"github.com/harvester/terraform-provider-harvester/pkg/builder"
 	"github.com/harvester/terraform-provider-harvester/pkg/constants"
+	"github.com/harvester/terraform-provider-harvester/pkg/helper"
 )
 
 func ResourceNetworkStateGetter(obj *nadv1.NetworkAttachmentDefinition) (*StateGetter, error) {
@@ -16,7 +17,7 @@ func ResourceNetworkStateGetter(obj *nadv1.NetworkAttachmentDefinition) (*StateG
 		networkType = obj.Labels[builder.LabelKeyNetworkType]
 	)
 	if networkType == builder.NetworkTypeVLAN {
-		netconf := &networkv1.NetConf{}
+		netconf := &network.NetConf{}
 		if err := json.Unmarshal([]byte(obj.Spec.Config), netconf); err != nil {
 			return nil, err
 		}
@@ -31,7 +32,7 @@ func ResourceNetworkStateGetter(obj *nadv1.NetworkAttachmentDefinition) (*StateG
 		constants.FieldNetworkConfig:     obj.Spec.Config,
 	}
 	return &StateGetter{
-		ID:           builder.BuildID(obj.Namespace, obj.Name),
+		ID:           helper.BuildID(obj.Namespace, obj.Name),
 		Name:         obj.Name,
 		ResourceType: constants.ResourceTypeNetwork,
 		States:       states,
