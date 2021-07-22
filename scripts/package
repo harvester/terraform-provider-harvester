@@ -5,5 +5,14 @@ source $(dirname $0)/version
 
 cd $(dirname $0)/..
 
+if [ "${GIT_TAG}" != "${VERSION}" ]; then
+  VERSION=0.0.0-${VERSION}
+else
+  VERSION=${VERSION#"v"}
+fi
+
+sed "s/%VERSION%/${VERSION}/g" hack/install-terraform-provider-harvester.sh.tpl | sed "s/%ARCH%/${ARCH}/g" > bin/install-terraform-provider-harvester.sh
+chmod +x bin/install-terraform-provider-harvester.sh
+
 mkdir -p dist/artifacts
-tar -zcvf dist/artifacts/terraform-provider-harvester${SUFFIX}.tar.gz -C bin terraform-provider-harvester
+tar -zcvf dist/artifacts/terraform-provider-harvester${SUFFIX}.tar.gz -C bin terraform-provider-harvester install-terraform-provider-harvester.sh
