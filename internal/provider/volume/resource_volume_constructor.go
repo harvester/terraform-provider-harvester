@@ -75,7 +75,7 @@ func (c *Constructor) Setup() util.Processors {
 						return err
 					}
 					c.Volume.Annotations[builder.AnnotationKeyImageID] = helper.BuildID(imageNamespace, imageName)
-					storageClassName := builder.BuildImageStorageClassName(imageNamespace, imageName)
+					storageClassName := builder.BuildImageStorageClassName("", imageName)
 					c.Volume.Spec.PVC.StorageClassName = pointer.StringPtr(storageClassName)
 				}
 				return nil
