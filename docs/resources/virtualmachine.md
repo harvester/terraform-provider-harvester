@@ -14,6 +14,8 @@ description: |-
 
 ```terraform
 resource "harvester_virtualmachine" "k3os" {
+  depends_on = [harvester_image.k3os, harvester_network.vlan1]
+
   count       = 3
   name        = "k3os-${count.index}"
   description = "test k3os iso"
@@ -50,6 +52,8 @@ resource "harvester_virtualmachine" "k3os" {
 
 
 resource "harvester_virtualmachine" "ubuntu20-dev" {
+  depends_on = [harvester_image.ubuntu20, harvester_volume.ubuntu20-dev-mount-disk, harvester_network.vlan1, harvester_network.vlan2, harvester_network.vlan3]
+
   name        = "ubuntu-dev"
   description = "test raw image"
 
