@@ -5,7 +5,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/utils/pointer"
-	cdiv1beta1 "kubevirt.io/containerized-data-importer/pkg/apis/core/v1beta1"
 
 	"github.com/harvester/terraform-provider-harvester/internal/util"
 	"github.com/harvester/terraform-provider-harvester/pkg/constants"
@@ -17,7 +16,7 @@ var (
 )
 
 type Constructor struct {
-	Volume *cdiv1beta1.DataVolume
+	Volume *corev1.PersistentVolumeClaim
 }
 
 func (c *Constructor) Setup() util.Processors {
@@ -27,7 +26,7 @@ func (c *Constructor) Setup() util.Processors {
 			Field: constants.FieldVolumeSize,
 			Parser: func(i interface{}) error {
 				size := i.(string)
-				c.Volume.Spec.PVC.Resources.Requests[corev1.ResourceStorage] = resource.MustParse(size)
+				c.Volume.Spec.Resources.Requests[corev1.ResourceStorage] = resource.MustParse(size)
 				return nil
 			},
 		},
@@ -35,7 +34,7 @@ func (c *Constructor) Setup() util.Processors {
 			Field: constants.FieldVolumeStorageClassName,
 			Parser: func(i interface{}) error {
 				if storageClassName := i.(string); storageClassName != "" {
-					c.Volume.Spec.PVC.StorageClassName = pointer.StringPtr(storageClassName)
+					c.Volume.Spec.StorageClassName = pointer.StringPtr(storageClassName)
 				}
 				return nil
 			},
@@ -47,7 +46,7 @@ func (c *Constructor) Setup() util.Processors {
 				if volumeMode := i.(string); volumeMode != "" {
 					persistentVolumeMode = corev1.PersistentVolumeMode(volumeMode)
 				}
-				c.Volume.Spec.PVC.VolumeMode = &persistentVolumeMode
+				c.Volume.Spec.VolumeMode = &persistentVolumeMode
 				return nil
 			},
 		},
@@ -62,7 +61,7 @@ func (c *Constructor) Setup() util.Processors {
 						corev1.PersistentVolumeAccessMode(accessMode),
 					}
 				}
-				c.Volume.Spec.PVC.AccessModes = accessModes
+				c.Volume.Spec.AccessModes = accessModes
 				return nil
 			},
 		},
@@ -76,7 +75,7 @@ func (c *Constructor) Setup() util.Processors {
 					}
 					c.Volume.Annotations[builder.AnnotationKeyImageID] = helper.BuildID(imageNamespace, imageName)
 					storageClassName := builder.BuildImageStorageClassName("", imageName)
-					c.Volume.Spec.PVC.StorageClassName = pointer.StringPtr(storageClassName)
+					c.Volume.Spec.StorageClassName = pointer.StringPtr(storageClassName)
 				}
 				return nil
 			},
@@ -89,29 +88,24 @@ func (c *Constructor) Result() (interface{}, error) {
 	return c.Volume, nil
 }
 
-func newVolumeConstructor(volume *cdiv1beta1.DataVolume) util.Constructor {
+func newVolumeConstructor(volume *corev1.PersistentVolumeClaim) util.Constructor {
 	return &Constructor{
 		Volume: volume,
 	}
 }
 
 func Creator(namespace, name string) util.Constructor {
-	volume := &cdiv1beta1.DataVolume{
+	volume := &corev1.PersistentVolumeClaim{
 		ObjectMeta: util.NewObjectMeta(namespace, name),
-		Spec: cdiv1beta1.DataVolumeSpec{
-			Source: cdiv1beta1.DataVolumeSource{
-				Blank: &cdiv1beta1.DataVolumeBlankImage{},
-			},
-			PVC: &corev1.PersistentVolumeClaimSpec{
-				Resources: corev1.ResourceRequirements{
-					Requests: corev1.ResourceList{},
-				},
+		Spec: corev1.PersistentVolumeClaimSpec{
+			Resources: corev1.ResourceRequirements{
+				Requests: corev1.ResourceList{},
 			},
 		},
 	}
 	return newVolumeConstructor(volume)
 }
 
-func Updater(volume *cdiv1beta1.DataVolume) util.Constructor {
+func Updater(volume *corev1.PersistentVolumeClaim) util.Constructor {
 	return newVolumeConstructor(volume)
 }

@@ -5,33 +5,30 @@ import (
 
 	"github.com/harvester/harvester/pkg/builder"
 	"github.com/harvester/harvester/pkg/ref"
+	corev1 "k8s.io/api/core/v1"
 	kubevirtv1 "kubevirt.io/client-go/api/v1"
-	cdiv1beta1 "kubevirt.io/containerized-data-importer/pkg/apis/core/v1beta1"
 
 	"github.com/harvester/terraform-provider-harvester/pkg/constants"
 	"github.com/harvester/terraform-provider-harvester/pkg/helper"
 )
 
-func ResourceVolumeStateGetter(obj *cdiv1beta1.DataVolume) (*StateGetter, error) {
+func ResourceVolumeStateGetter(obj *corev1.PersistentVolumeClaim) (*StateGetter, error) {
 	states := map[string]interface{}{
 		constants.FieldCommonNamespace:   obj.Namespace,
 		constants.FieldCommonName:        obj.Name,
 		constants.FieldCommonDescription: GetDescriptions(obj.Annotations),
 		constants.FieldCommonTags:        GetTags(obj.Labels),
-		constants.FieldVolumeSize:        obj.Spec.PVC.Resources.Requests.Storage().String(),
+		constants.FieldVolumeSize:        obj.Spec.Resources.Requests.Storage().String(),
 		constants.FieldPhase:             obj.Status.Phase,
-		constants.FieldProgress:          obj.Status.Progress,
 	}
-	if obj.Spec.PVC != nil {
-		if obj.Spec.PVC.VolumeMode != nil {
-			states[constants.FieldVolumeMode] = obj.Spec.PVC.VolumeMode
-		}
-		if obj.Spec.PVC.StorageClassName != nil {
-			states[constants.FieldVolumeStorageClassName] = obj.Spec.PVC.StorageClassName
-		}
-		if len(obj.Spec.PVC.AccessModes) > 0 {
-			states[constants.FieldVolumeAccessMode] = obj.Spec.PVC.AccessModes[0]
-		}
+	if obj.Spec.VolumeMode != nil {
+		states[constants.FieldVolumeMode] = obj.Spec.VolumeMode
+	}
+	if obj.Spec.StorageClassName != nil {
+		states[constants.FieldVolumeStorageClassName] = obj.Spec.StorageClassName
+	}
+	if len(obj.Spec.AccessModes) > 0 {
+		states[constants.FieldVolumeAccessMode] = obj.Spec.AccessModes[0]
 	}
 	if imageID := obj.Annotations[builder.AnnotationKeyImageID]; imageID != "" {
 		imageNamespacedName, err := helper.BuildNamespacedNameFromID(imageID, obj.Namespace)

@@ -126,7 +126,7 @@ func resourceVirtualMachineDelete(ctx context.Context, d *schema.ResourceData, m
 		if autoDelete, ok := deleteConfigs[volume.Name]; ok && !autoDelete {
 			continue
 		}
-		err = c.HarvesterClient.CdiV1beta1().DataVolumes(namespace).Delete(ctx, volume.Name, metav1.DeleteOptions{})
+		err = c.KubeClient.CoreV1().PersistentVolumeClaims(namespace).Delete(ctx, volume.Name, metav1.DeleteOptions{})
 		if err != nil && !apierrors.IsNotFound(err) {
 			return diag.FromErr(err)
 		}
