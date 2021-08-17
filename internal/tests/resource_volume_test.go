@@ -5,10 +5,11 @@ import (
 	"fmt"
 	"testing"
 
+	corev1 "k8s.io/api/core/v1"
+
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	cdiv1beta1 "kubevirt.io/containerized-data-importer/pkg/apis/core/v1beta1"
 
 	"github.com/harvester/terraform-provider-harvester/pkg/client"
 	"github.com/harvester/terraform-provider-harvester/pkg/constants"
@@ -40,7 +41,7 @@ func buildVolumeConfig(name, description, size string) string {
 
 func TestAccVolume_basic(t *testing.T) {
 	var (
-		volume *cdiv1beta1.DataVolume
+		volume *corev1.PersistentVolumeClaim
 		ctx    = context.Background()
 	)
 	resource.Test(t, resource.TestCase{
@@ -61,7 +62,7 @@ func TestAccVolume_basic(t *testing.T) {
 	})
 }
 
-func testAccVolumeExists(ctx context.Context, n string, volume *cdiv1beta1.DataVolume) resource.TestCheckFunc {
+func testAccVolumeExists(ctx context.Context, n string, volume *corev1.PersistentVolumeClaim) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[n]
 		if !ok {
@@ -79,7 +80,7 @@ func testAccVolumeExists(ctx context.Context, n string, volume *cdiv1beta1.DataV
 		if err != nil {
 			return err
 		}
-		foundVolume, err := c.HarvesterClient.CdiV1beta1().DataVolumes(namespace).Get(ctx, name, metav1.GetOptions{})
+		foundVolume, err := c.KubeClient.CoreV1().PersistentVolumeClaims(namespace).Get(ctx, name, metav1.GetOptions{})
 		if err != nil {
 			return err
 		}
@@ -102,7 +103,7 @@ func testAccCheckVolumeDestroy(ctx context.Context) resource.TestCheckFunc {
 			}
 
 			volumeStateRefreshFunc := getResourceStateRefreshFunc(func() (interface{}, error) {
-				return c.HarvesterClient.CdiV1beta1().DataVolumes(namespace).Get(ctx, name, metav1.GetOptions{})
+				return c.KubeClient.CoreV1().PersistentVolumeClaims(namespace).Get(ctx, name, metav1.GetOptions{})
 			})
 			stateConf := getStateChangeConf(volumeStateRefreshFunc)
 			if _, err = stateConf.WaitForStateContext(ctx); err != nil {

@@ -3,11 +3,12 @@ package volume
 import (
 	"context"
 
+	corev1 "k8s.io/api/core/v1"
+
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	cdiv1beta1 "kubevirt.io/containerized-data-importer/pkg/apis/core/v1beta1"
 
 	"github.com/harvester/terraform-provider-harvester/internal/util"
 	"github.com/harvester/terraform-provider-harvester/pkg/client"
@@ -37,7 +38,7 @@ func resourceVolumeCreate(ctx context.Context, d *schema.ResourceData, meta inte
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	obj, err := c.HarvesterClient.CdiV1beta1().DataVolumes(namespace).Create(ctx, toCreate.(*cdiv1beta1.DataVolume), metav1.CreateOptions{})
+	obj, err := c.KubeClient.CoreV1().PersistentVolumeClaims(namespace).Create(ctx, toCreate.(*corev1.PersistentVolumeClaim), metav1.CreateOptions{})
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -50,7 +51,8 @@ func resourceVolumeUpdate(ctx context.Context, d *schema.ResourceData, meta inte
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	obj, err := c.HarvesterClient.CdiV1beta1().DataVolumes(namespace).Get(ctx, name, metav1.GetOptions{})
+
+	obj, err := c.KubeClient.CoreV1().PersistentVolumeClaims(namespace).Get(ctx, name, metav1.GetOptions{})
 	if err != nil {
 		if apierrors.IsNotFound(err) {
 			d.SetId("")
@@ -62,7 +64,7 @@ func resourceVolumeUpdate(ctx context.Context, d *schema.ResourceData, meta inte
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	_, err = c.HarvesterClient.CdiV1beta1().DataVolumes(namespace).Update(ctx, toUpdate.(*cdiv1beta1.DataVolume), metav1.UpdateOptions{})
+	_, err = c.KubeClient.CoreV1().PersistentVolumeClaims(namespace).Update(ctx, toUpdate.(*corev1.PersistentVolumeClaim), metav1.UpdateOptions{})
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -75,7 +77,7 @@ func resourceVolumeRead(ctx context.Context, d *schema.ResourceData, meta interf
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	obj, err := c.HarvesterClient.CdiV1beta1().DataVolumes(namespace).Get(ctx, name, metav1.GetOptions{})
+	obj, err := c.KubeClient.CoreV1().PersistentVolumeClaims(namespace).Get(ctx, name, metav1.GetOptions{})
 	if err != nil {
 		if apierrors.IsNotFound(err) {
 			d.SetId("")
@@ -92,7 +94,7 @@ func resourceVolumeDelete(ctx context.Context, d *schema.ResourceData, meta inte
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	err = c.HarvesterClient.CdiV1beta1().DataVolumes(namespace).Delete(ctx, name, metav1.DeleteOptions{})
+	err = c.KubeClient.CoreV1().PersistentVolumeClaims(namespace).Delete(ctx, name, metav1.DeleteOptions{})
 	if err != nil && !apierrors.IsNotFound(err) {
 		return diag.FromErr(err)
 	}
@@ -100,7 +102,7 @@ func resourceVolumeDelete(ctx context.Context, d *schema.ResourceData, meta inte
 	return nil
 }
 
-func resourceVolumeImport(d *schema.ResourceData, obj *cdiv1beta1.DataVolume) diag.Diagnostics {
+func resourceVolumeImport(d *schema.ResourceData, obj *corev1.PersistentVolumeClaim) diag.Diagnostics {
 	stateGetter, err := importer.ResourceVolumeStateGetter(obj)
 	if err != nil {
 		return nil

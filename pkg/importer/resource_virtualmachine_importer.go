@@ -5,6 +5,8 @@ import (
 	"fmt"
 
 	"github.com/harvester/harvester/pkg/builder"
+	harvesterutil "github.com/harvester/harvester/pkg/util"
+	corev1 "k8s.io/api/core/v1"
 	kubevirtv1 "kubevirt.io/client-go/api/v1"
 
 	"github.com/harvester/terraform-provider-harvester/pkg/constants"
@@ -106,35 +108,44 @@ func (v *VMImporter) NetworkInterface() ([]map[string]interface{}, error) {
 	return networkInterfaceStates, nil
 }
 
-func (v *VMImporter) dataVolume(volume kubevirtv1.Volume, state map[string]interface{}) error {
-	dataVolumeName := volume.DataVolume.Name
-	state[constants.FieldDiskVolumeName] = dataVolumeName
-	var isInDataVolumeTemplates bool
-	for _, dataVolumeTemplate := range v.VirtualMachine.Spec.DataVolumeTemplates {
-		if dataVolumeTemplate.Name == dataVolumeName {
-			state[constants.FieldDiskSize] = dataVolumeTemplate.Spec.PVC.Resources.Requests.Storage().String()
-			if imageID := dataVolumeTemplate.Annotations[builder.AnnotationKeyImageID]; imageID != "" {
-				imageNamespacedName, err := helper.BuildNamespacedNameFromID(imageID, v.Namespace())
-				if err != nil {
-					return err
+func (v *VMImporter) pvcVolume(volume kubevirtv1.Volume, state map[string]interface{}) error {
+	pvcName := volume.PersistentVolumeClaim.ClaimName
+	state[constants.FieldDiskVolumeName] = pvcName
+	var (
+		isInPVCTemplates bool
+		pvcTemplates     []*corev1.PersistentVolumeClaim
+	)
+	volumeClaimTemplates := v.VirtualMachine.Annotations[harvesterutil.AnnotationVolumeClaimTemplates]
+	if volumeClaimTemplates != "" {
+		if err := json.Unmarshal([]byte(volumeClaimTemplates), &pvcTemplates); err != nil {
+			return err
+		}
+		for _, pvcTemplate := range pvcTemplates {
+			if pvcTemplate.Name == pvcName {
+				state[constants.FieldDiskSize] = pvcTemplate.Spec.Resources.Requests.Storage().String()
+				if imageID := pvcTemplate.Annotations[builder.AnnotationKeyImageID]; imageID != "" {
+					imageNamespacedName, err := helper.BuildNamespacedNameFromID(imageID, v.Namespace())
+					if err != nil {
+						return err
+					}
+					state[constants.FieldVolumeImage] = imageNamespacedName
 				}
-				state[constants.FieldVolumeImage] = imageNamespacedName
+				if pvcTemplate.Spec.VolumeMode != nil {
+					state[constants.FieldVolumeMode] = string(*pvcTemplate.Spec.VolumeMode)
+				}
+				if accessModes := pvcTemplate.Spec.AccessModes; len(accessModes) > 0 {
+					state[constants.FieldVolumeAccessMode] = string(pvcTemplate.Spec.AccessModes[0])
+				}
+				if pvcTemplate.Spec.StorageClassName != nil {
+					state[constants.FieldVolumeStorageClassName] = *pvcTemplate.Spec.StorageClassName
+				}
+				isInPVCTemplates = true
+				break
 			}
-			if dataVolumeTemplate.Spec.PVC.VolumeMode != nil {
-				state[constants.FieldVolumeMode] = string(*dataVolumeTemplate.Spec.PVC.VolumeMode)
-			}
-			if accessModes := dataVolumeTemplate.Spec.PVC.AccessModes; len(accessModes) > 0 {
-				state[constants.FieldVolumeAccessMode] = string(dataVolumeTemplate.Spec.PVC.AccessModes[0])
-			}
-			if dataVolumeTemplate.Spec.PVC.StorageClassName != nil {
-				state[constants.FieldVolumeStorageClassName] = *dataVolumeTemplate.Spec.PVC.StorageClassName
-			}
-			isInDataVolumeTemplates = true
-			break
 		}
 	}
-	if !isInDataVolumeTemplates {
-		state[constants.FieldDiskExistingVolumeName] = dataVolumeName
+	if !isInPVCTemplates {
+		state[constants.FieldDiskExistingVolumeName] = pvcName
 		state[constants.FieldDiskAutoDelete] = false
 	}
 	return nil
@@ -208,8 +219,8 @@ func (v *VMImporter) Volume() ([]map[string]interface{}, []map[string]interface{
 		if volume.CloudInitNoCloud != nil || volume.CloudInitConfigDrive != nil {
 			cloudInitState = v.cloudInit(volume)
 		} else {
-			if volume.DataVolume != nil {
-				if err := v.dataVolume(volume, diskState); err != nil {
+			if volume.PersistentVolumeClaim != nil {
+				if err := v.pvcVolume(volume, diskState); err != nil {
 					return nil, nil, err
 				}
 			} else if volume.ContainerDisk != nil {

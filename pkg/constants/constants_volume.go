@@ -10,8 +10,7 @@ const (
 	FieldVolumeAccessMode       = "access_mode"
 	FieldVolumeAttachedVM       = "attached_vm"
 
-	FieldProgress = "progress"
-	FieldPhase    = "phase"
+	FieldPhase = "phase"
 
 	StateVolumeInUse = "In-use"
 )

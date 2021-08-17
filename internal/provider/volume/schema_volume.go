@@ -53,10 +53,6 @@ func Schema() map[string]*schema.Schema {
 			Type:     schema.TypeString,
 			Computed: true,
 		},
-		constants.FieldProgress: {
-			Type:     schema.TypeString,
-			Computed: true,
-		},
 	}
 	util.NamespacedSchemaWrap(s, false)
 	return s

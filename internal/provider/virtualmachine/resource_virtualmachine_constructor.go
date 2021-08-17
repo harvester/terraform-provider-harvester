@@ -115,33 +115,33 @@ func (c *Constructor) Setup() util.Processors {
 				}
 				vmBuilder.Disk(diskName, diskBus, isCDRom, bootOrder)
 				if existingVolumeName != "" {
-					vmBuilder.ExistingDataVolume(diskName, existingVolumeName)
+					vmBuilder.ExistingPVCVolume(diskName, existingVolumeName)
 				} else if containerImageName != "" {
 					vmBuilder.ContainerDiskVolume(diskName, containerImageName, builder.DefaultImagePullPolicy)
 				} else {
-					dataVolumeOption := &builder.DataVolumeOption{
+					pvcOption := &builder.PersistentVolumeClaimOption{
 						VolumeMode: corev1.PersistentVolumeBlock,
 						AccessMode: corev1.ReadWriteMany,
 					}
 					if storageClassName := r[constants.FieldVolumeStorageClassName].(string); storageClassName != "" {
-						dataVolumeOption.StorageClassName = pointer.StringPtr(storageClassName)
+						pvcOption.StorageClassName = pointer.StringPtr(storageClassName)
 					}
 					if volumeMode := r[constants.FieldVolumeMode].(string); volumeMode != "" {
-						dataVolumeOption.VolumeMode = corev1.PersistentVolumeMode(volumeMode)
+						pvcOption.VolumeMode = corev1.PersistentVolumeMode(volumeMode)
 					}
 					if accessMode := r[constants.FieldVolumeAccessMode].(string); accessMode != "" {
-						dataVolumeOption.AccessMode = corev1.PersistentVolumeAccessMode(accessMode)
+						pvcOption.AccessMode = corev1.PersistentVolumeAccessMode(accessMode)
 					}
 					if imageNamespacedName != "" {
 						imageNamespace, imageName, err := helper.NamespacedNamePartsByDefault(imageNamespacedName, c.Builder.VirtualMachine.Namespace)
 						if err != nil {
 							return err
 						}
-						dataVolumeOption.ImageID = helper.BuildID(imageNamespace, imageName)
+						pvcOption.ImageID = helper.BuildID(imageNamespace, imageName)
 						storageClassName := builder.BuildImageStorageClassName("", imageName)
-						dataVolumeOption.StorageClassName = pointer.StringPtr(storageClassName)
+						pvcOption.StorageClassName = pointer.StringPtr(storageClassName)
 					}
-					vmBuilder.DataVolume(diskName, diskSize, volumeName, dataVolumeOption)
+					vmBuilder.PVCVolume(diskName, diskSize, volumeName, pvcOption)
 				}
 				return nil
 			},
