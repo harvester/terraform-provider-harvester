@@ -54,13 +54,20 @@ func (v *VMImporter) Run() bool {
 	return *v.VirtualMachine.Spec.Running
 }
 
-func (v *VMImporter) KeyPairs() ([]string, error) {
-	var keyPairs []string
+func (v *VMImporter) SSHKeys() ([]string, error) {
+	var sshKeys []string
 	sshNames := v.VirtualMachine.Spec.Template.ObjectMeta.Annotations[builder.AnnotationKeyVirtualMachineSSHNames]
-	if err := json.Unmarshal([]byte(sshNames), &keyPairs); err != nil {
+	if err := json.Unmarshal([]byte(sshNames), &sshKeys); err != nil {
 		return nil, err
 	}
-	return keyPairs, nil
+	for i, sshKeyID := range sshKeys {
+		sshKeyNamespacedName, err := helper.BuildNamespacedNameFromID(sshKeyID, v.Namespace())
+		if err != nil {
+			return nil, err
+		}
+		sshKeys[i] = sshKeyNamespacedName
+	}
+	return sshKeys, nil
 }
 
 func (v *VMImporter) NetworkInterface() ([]map[string]interface{}, error) {
@@ -276,7 +283,7 @@ func ResourceVirtualMachineStateGetter(vm *kubevirtv1.VirtualMachine, vmi *kubev
 	if err != nil {
 		return nil, err
 	}
-	keyPairs, err := vmImporter.KeyPairs()
+	sshKeys, err := vmImporter.SSHKeys()
 	if err != nil {
 		return nil, err
 	}
@@ -298,7 +305,7 @@ func ResourceVirtualMachineStateGetter(vm *kubevirtv1.VirtualMachine, vmi *kubev
 			constants.FieldVirtualMachineNetworkInterface: networkInterface,
 			constants.FieldVirtualMachineDisk:             disk,
 			constants.FieldVirtualMachineCloudInit:        cloudInit,
-			constants.FieldVirtualMachineSSHKeys:          keyPairs,
+			constants.FieldVirtualMachineSSHKeys:          sshKeys,
 			constants.FieldVirtualMachineInstanceNodeName: vmImporter.NodeName(),
 		},
 	}, nil
