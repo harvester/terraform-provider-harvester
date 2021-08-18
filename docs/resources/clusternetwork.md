@@ -36,7 +36,6 @@ resource "harvester_clusternetwork" "vlan" {
 - **default_physical_nic** (String)
 - **description** (String) Any text you want that better describes this resource
 - **id** (String) The ID of this resource.
-- **namespace** (String)
 - **tags** (Map of String)
 
 ### Read-Only
@@ -48,5 +47,5 @@ resource "harvester_clusternetwork" "vlan" {
 Import is supported using the following syntax:
 
 ```shell
-terraform import harvester_clusternetwork.foo <Namespace>/<Name>
+terraform import harvester_clusternetwork.foo <Name>
 ```
