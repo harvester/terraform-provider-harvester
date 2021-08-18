@@ -68,7 +68,13 @@ func (c *Constructor) Setup() util.Processors {
 		{
 			Field: constants.FieldVirtualMachineSSHKeys,
 			Parser: func(i interface{}) error {
-				vmBuilder.SSHKey(i.(string))
+				sshKeyNamespacedName := i.(string)
+				sshKeyNamespace, sshKeyName, err := helper.NamespacedNamePartsByDefault(sshKeyNamespacedName, c.Builder.VirtualMachine.Namespace)
+				if err != nil {
+					return err
+				}
+				sshKeyID := helper.BuildID(sshKeyNamespace, sshKeyName)
+				vmBuilder.SSHKey(sshKeyID)
 				return nil
 			},
 		},
