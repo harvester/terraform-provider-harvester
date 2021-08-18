@@ -21,7 +21,7 @@ resource "harvester_volume" "ubuntu20-dev-mount-disk" {
 resource "harvester_volume" "ubuntu20-dev-image-disk" {
   name  = "ubuntu20-dev-image-disk"
   size  = "10Gi"
-  image = "ubuntu20"
+  image = "harvester-public/ubuntu20"
 }
 ```
 
@@ -48,7 +48,6 @@ resource "harvester_volume" "ubuntu20-dev-image-disk" {
 
 - **attached_vm** (String)
 - **phase** (String)
-- **progress** (String)
 - **state** (String)
 
 ## Import
