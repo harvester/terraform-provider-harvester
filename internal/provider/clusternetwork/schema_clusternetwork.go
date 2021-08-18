@@ -18,6 +18,6 @@ func Schema() map[string]*schema.Schema {
 			Optional: true,
 		},
 	}
-	util.NamespacedSchemaWrap(s, true)
+	util.NonNamespacedSchemaWrap(s)
 	return s
 }

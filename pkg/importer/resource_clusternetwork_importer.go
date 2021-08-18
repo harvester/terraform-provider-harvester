@@ -9,7 +9,6 @@ import (
 
 func ResourceClusterNetworkStateGetter(obj *harvsternetworkv1.ClusterNetwork) (*StateGetter, error) {
 	states := map[string]interface{}{
-		constants.FieldCommonNamespace:                  obj.Namespace,
 		constants.FieldCommonName:                       obj.Name,
 		constants.FieldCommonDescription:                GetDescriptions(obj.Annotations),
 		constants.FieldCommonTags:                       GetTags(obj.Labels),
@@ -17,7 +16,7 @@ func ResourceClusterNetworkStateGetter(obj *harvsternetworkv1.ClusterNetwork) (*
 		constants.FieldClusterNetworkDefaultPhysicalNIC: obj.Config[constants.ClusterNetworkConfigKeyDefaultPhysicalNIC],
 	}
 	return &StateGetter{
-		ID:           helper.BuildID(obj.Namespace, obj.Name),
+		ID:           helper.BuildID("", obj.Name),
 		Name:         obj.Name,
 		ResourceType: constants.ResourceTypeClusterNetwork,
 		States:       states,
