@@ -6,5 +6,5 @@ resource "harvester_volume" "ubuntu20-dev-mount-disk" {
 resource "harvester_volume" "ubuntu20-dev-image-disk" {
   name  = "ubuntu20-dev-image-disk"
   size  = "10Gi"
-  image = "ubuntu20"
+  image = "harvester-public/ubuntu20"
 }
