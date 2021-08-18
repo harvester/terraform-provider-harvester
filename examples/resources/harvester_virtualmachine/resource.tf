@@ -13,7 +13,7 @@ resource "harvester_virtualmachine" "k3os" {
 
   network_interface {
     name         = "nic-1"
-    network_name = "vlan1"
+    network_name = "harvester-public/vlan1"
   }
 
   disk {
@@ -23,7 +23,7 @@ resource "harvester_virtualmachine" "k3os" {
     bus        = "sata"
     boot_order = 2
 
-    image = "k3os"
+    image = "harvester-public/k3os"
   }
 
   disk {
@@ -59,21 +59,21 @@ resource "harvester_virtualmachine" "ubuntu20-dev" {
 
   network_interface {
     name         = "nic-1"
-    network_name = "vlan1"
+    network_name = "harvester-public/vlan1"
   }
 
   network_interface {
     name         = "nic-2"
     model        = "virtio"
     type         = "bridge"
-    network_name = "vlan2"
+    network_name = "harvester-public/vlan2"
   }
 
   network_interface {
     name         = "nic-3"
     model        = "e1000"
     type         = "bridge"
-    network_name = "vlan3"
+    network_name = "harvester-public/vlan3"
   }
 
   disk {
@@ -83,7 +83,7 @@ resource "harvester_virtualmachine" "ubuntu20-dev" {
     bus        = "virtio"
     boot_order = 1
 
-    image = "ubuntu20"
+    image = "harvester-public/ubuntu20"
   }
 
   disk {
