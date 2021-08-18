@@ -12,15 +12,21 @@ const (
 
 func IDParts(id string) (string, string, error) {
 	parts := strings.Split(id, IDSep)
-	if len(parts) != 2 {
-		err := fmt.Errorf("unexpected ID format (%q), expected %q. ", id, "namespace/name")
+	switch len(parts) {
+	case 1:
+		return "", parts[0], nil
+	case 2:
+		return parts[0], parts[1], nil
+	default:
+		err := fmt.Errorf("unexpected ID format (%q), expected %q or %q. ", id, "namespace/name", "name")
 		return "", "", err
 	}
-
-	return parts[0], parts[1], nil
 }
 
 func BuildID(namespace, name string) string {
+	if namespace == "" {
+		return name
+	}
 	return namespace + IDSep + name
 }
 

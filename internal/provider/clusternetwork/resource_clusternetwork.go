@@ -31,13 +31,12 @@ func ResourceClusterNetwork() *schema.Resource {
 
 func resourceClusterNetworkCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	c := meta.(*client.Client)
-	namespace := d.Get(constants.FieldCommonNamespace).(string)
 	name := d.Get(constants.FieldCommonName).(string)
-	toCreate, err := util.ResourceConstruct(d, Creator(namespace, name))
+	toCreate, err := util.ResourceConstruct(d, Creator("", name))
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	clusterNetwork, err := c.HarvesterNetworkClient.NetworkV1beta1().ClusterNetworks(namespace).Create(ctx, toCreate.(*harvsternetworkv1.ClusterNetwork), metav1.CreateOptions{})
+	clusterNetwork, err := c.HarvesterNetworkClient.NetworkV1beta1().ClusterNetworks().Create(ctx, toCreate.(*harvsternetworkv1.ClusterNetwork), metav1.CreateOptions{})
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -46,11 +45,11 @@ func resourceClusterNetworkCreate(ctx context.Context, d *schema.ResourceData, m
 
 func resourceClusterNetworkUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	c := meta.(*client.Client)
-	namespace, name, err := helper.IDParts(d.Id())
+	_, name, err := helper.IDParts(d.Id())
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	clusterNetwork, err := c.HarvesterNetworkClient.NetworkV1beta1().ClusterNetworks(namespace).Get(ctx, name, metav1.GetOptions{})
+	clusterNetwork, err := c.HarvesterNetworkClient.NetworkV1beta1().ClusterNetworks().Get(ctx, name, metav1.GetOptions{})
 	if err != nil {
 		if apierrors.IsNotFound(err) {
 			d.SetId("")
@@ -62,7 +61,7 @@ func resourceClusterNetworkUpdate(ctx context.Context, d *schema.ResourceData, m
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	_, err = c.HarvesterNetworkClient.NetworkV1beta1().ClusterNetworks(namespace).Update(ctx, toUpdate.(*harvsternetworkv1.ClusterNetwork), metav1.UpdateOptions{})
+	_, err = c.HarvesterNetworkClient.NetworkV1beta1().ClusterNetworks().Update(ctx, toUpdate.(*harvsternetworkv1.ClusterNetwork), metav1.UpdateOptions{})
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -71,11 +70,11 @@ func resourceClusterNetworkUpdate(ctx context.Context, d *schema.ResourceData, m
 
 func resourceClusterNetworkRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	c := meta.(*client.Client)
-	namespace, name, err := helper.IDParts(d.Id())
+	_, name, err := helper.IDParts(d.Id())
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	clusterNetwork, err := c.HarvesterNetworkClient.NetworkV1beta1().ClusterNetworks(namespace).Get(ctx, name, metav1.GetOptions{})
+	clusterNetwork, err := c.HarvesterNetworkClient.NetworkV1beta1().ClusterNetworks().Get(ctx, name, metav1.GetOptions{})
 	if err != nil {
 		if apierrors.IsNotFound(err) {
 			d.SetId("")
@@ -88,11 +87,11 @@ func resourceClusterNetworkRead(ctx context.Context, d *schema.ResourceData, met
 
 func resourceClusterNetworkDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	c := meta.(*client.Client)
-	namespace, name, err := helper.IDParts(d.Id())
+	_, name, err := helper.IDParts(d.Id())
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	err = c.HarvesterNetworkClient.NetworkV1beta1().ClusterNetworks(namespace).Delete(ctx, name, metav1.DeleteOptions{})
+	err = c.HarvesterNetworkClient.NetworkV1beta1().ClusterNetworks().Delete(ctx, name, metav1.DeleteOptions{})
 	if err != nil && !apierrors.IsNotFound(err) {
 		return diag.FromErr(err)
 	}

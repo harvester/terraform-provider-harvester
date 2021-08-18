@@ -16,7 +16,6 @@ import (
 )
 
 const (
-	testAccClusterNetworkNamespace    = "harvester-system"
 	testAccClusterNetworkName         = "vlan"
 	testAccClusterNetworkResourceName = constants.ResourceTypeClusterNetwork + "." + testAccClusterNetworkName
 	testAccClusterNetworkDescription  = "Terraform Harvester ClusterNetwork acceptance test"
@@ -26,7 +25,6 @@ const (
 
 	testAccClusterNetworkConfigTemplate = `
 resource %s "%s" {
-	namespace = harvester-system
 	%s = "%s"
 	%s = "%s"
 	%s = %s
@@ -55,7 +53,7 @@ func TestAccClusterNetwork_basic(t *testing.T) {
 			{
 				ResourceName:  testAccClusterNetworkResourceName,
 				ImportState:   true,
-				ImportStateId: testAccClusterNetworkNamespace + "/" + testAccClusterNetworkName,
+				ImportStateId: testAccClusterNetworkName,
 				Destroy:       false,
 				Config:        buildClusterNetworkConfig(testAccClusterNetworkName, testAccClusterNetworkDescription, testAccClusterNetworkEnable, testAccClusterNetworkDefaultPhysicalNIC),
 				Check: resource.ComposeTestCheckFunc(
@@ -84,11 +82,11 @@ func testAccClusterNetworkExists(ctx context.Context, n string, clusterNetwork *
 		id := rs.Primary.ID
 		c := testAccProvider.Meta().(*client.Client)
 
-		namespace, name, err := helper.IDParts(id)
+		_, name, err := helper.IDParts(id)
 		if err != nil {
 			return err
 		}
-		foundClusterNetwork, err := c.HarvesterNetworkClient.NetworkV1beta1().ClusterNetworks(namespace).Get(ctx, name, metav1.GetOptions{})
+		foundClusterNetwork, err := c.HarvesterNetworkClient.NetworkV1beta1().ClusterNetworks().Get(ctx, name, metav1.GetOptions{})
 		if err != nil {
 			return err
 		}

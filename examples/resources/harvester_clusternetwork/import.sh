@@ -1,1 +1,1 @@
-terraform import harvester_clusternetwork.foo <Namespace>/<Name>
+terraform import harvester_clusternetwork.foo <Name>
