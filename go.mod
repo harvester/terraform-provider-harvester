@@ -8,7 +8,7 @@ replace (
 	github.com/docker/docker => github.com/docker/docker v1.4.2-0.20200203170920-46ec8731fbce
 	github.com/go-kit/kit => github.com/go-kit/kit v0.3.0
 	github.com/googleapis/gnostic => github.com/googleapis/gnostic v0.4.1
-	github.com/harvester/harvester => github.com/harvester/harvester v0.0.2-0.20210818094900-3edc82a7ae6a
+	github.com/harvester/harvester => github.com/harvester/harvester v0.0.2-0.20210902062738-14ef2406f0fc
 
 	github.com/knative/pkg => github.com/rancher/pkg v0.0.0-20190514055449-b30ab9de040e
 	github.com/openshift/api => github.com/openshift/api v0.0.0-20191219222812-2987a591a72c
