@@ -146,6 +146,7 @@ func (v *VMImporter) pvcVolume(volume kubevirtv1.Volume, state map[string]interf
 				if pvcTemplate.Spec.StorageClassName != nil {
 					state[constants.FieldVolumeStorageClassName] = *pvcTemplate.Spec.StorageClassName
 				}
+				state[constants.FieldDiskAutoDelete] = pvcTemplate.Annotations[constants.AnnotationDiskAutoDelete] == "true"
 				isInPVCTemplates = true
 				break
 			}
@@ -153,7 +154,6 @@ func (v *VMImporter) pvcVolume(volume kubevirtv1.Volume, state map[string]interf
 	}
 	if !isInPVCTemplates {
 		state[constants.FieldDiskExistingVolumeName] = pvcName
-		state[constants.FieldDiskAutoDelete] = false
 	}
 	return nil
 }

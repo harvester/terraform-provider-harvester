@@ -2,6 +2,7 @@ package virtualmachine
 
 import (
 	"github.com/harvester/harvester/pkg/builder"
+	harvesterutil "github.com/harvester/harvester/pkg/util"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/utils/pointer"
 	kubevirtv1 "kubevirt.io/client-go/api/v1"
@@ -147,6 +148,11 @@ func (c *Constructor) Setup() util.Processors {
 						storageClassName := builder.BuildImageStorageClassName("", imageName)
 						pvcOption.StorageClassName = pointer.StringPtr(storageClassName)
 					}
+					if autoDelete := r[constants.FieldDiskAutoDelete].(bool); autoDelete {
+						pvcOption.Annotations = map[string]string{
+							constants.AnnotationDiskAutoDelete: "true",
+						}
+					}
 					vmBuilder.PVCVolume(diskName, diskSize, volumeName, pvcOption)
 				}
 				return nil
@@ -204,7 +210,7 @@ func Updater(vm *kubevirtv1.VirtualMachine) util.Constructor {
 	vm.Spec.Template.Spec.Domain.Devices.Interfaces = []kubevirtv1.Interface{}
 	vm.Spec.Template.Spec.Domain.Devices.Disks = []kubevirtv1.Disk{}
 	vm.Spec.Template.Spec.Volumes = []kubevirtv1.Volume{}
-	vm.Spec.DataVolumeTemplates = []kubevirtv1.DataVolumeTemplateSpec{}
+	vm.Annotations[harvesterutil.AnnotationVolumeClaimTemplates] = "[]"
 	return newVMConstructor(&builder.VMBuilder{
 		VirtualMachine: vm,
 	})

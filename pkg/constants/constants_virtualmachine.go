@@ -51,4 +51,6 @@ const (
 	FieldDiskContainerImageName = "container_image_name"
 	FieldDiskAutoDelete         = "auto_delete"
 	FieldDiskVolumeName         = "volume_name"
+
+	AnnotationDiskAutoDelete = "terraform-provider-harvester-auto-delete"
 )

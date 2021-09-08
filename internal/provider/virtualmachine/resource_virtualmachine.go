@@ -108,25 +108,24 @@ func resourceVirtualMachineDelete(ctx context.Context, d *schema.ResourceData, m
 		return diag.FromErr(err)
 	}
 	deleteConfigs := make(map[string]bool)
-	if diskList, ok := d.GetOk("disk"); ok {
+	if diskList, ok := d.GetOk(constants.FieldVirtualMachineDisk); ok {
 		for _, disk := range diskList.([]interface{}) {
 			r := disk.(map[string]interface{})
-			if volumeName := r["volume_name"].(string); volumeName != "" {
-				deleteConfigs[volumeName] = r["auto_delete"].(bool)
-			}
+			diskName := r[constants.FieldDiskName].(string)
+			deleteConfigs[diskName] = r[constants.FieldDiskAutoDelete].(bool)
 		}
 	}
 	if err = c.HarvesterClient.KubevirtV1().VirtualMachines(namespace).Delete(ctx, name, metav1.DeleteOptions{}); err != nil && !apierrors.IsNotFound(err) {
 		return diag.FromErr(err)
 	}
 	for _, volume := range vm.Spec.Template.Spec.Volumes {
-		if volume.DataVolume == nil {
+		if volume.PersistentVolumeClaim == nil {
 			continue
 		}
 		if autoDelete, ok := deleteConfigs[volume.Name]; ok && !autoDelete {
 			continue
 		}
-		err = c.KubeClient.CoreV1().PersistentVolumeClaims(namespace).Delete(ctx, volume.Name, metav1.DeleteOptions{})
+		err = c.KubeClient.CoreV1().PersistentVolumeClaims(namespace).Delete(ctx, volume.PersistentVolumeClaim.ClaimName, metav1.DeleteOptions{})
 		if err != nil && !apierrors.IsNotFound(err) {
 			return diag.FromErr(err)
 		}
