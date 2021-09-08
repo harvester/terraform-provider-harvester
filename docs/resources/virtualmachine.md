@@ -38,7 +38,8 @@ resource "harvester_virtualmachine" "k3os" {
     bus        = "sata"
     boot_order = 2
 
-    image = "harvester-public/k3os"
+    image       = "harvester-public/k3os"
+    auto_delete = true
   }
 
   disk {
@@ -98,14 +99,16 @@ resource "harvester_virtualmachine" "ubuntu20-dev" {
     bus        = "virtio"
     boot_order = 1
 
-    image = "harvester-public/ubuntu20"
+    image       = "harvester-public/ubuntu20"
+    auto_delete = true
   }
 
   disk {
-    name = "emptydisk"
-    type = "disk"
-    size = "20Gi"
-    bus  = "virtio"
+    name        = "emptydisk"
+    type        = "disk"
+    size        = "20Gi"
+    bus         = "virtio"
+    auto_delete = true
   }
 
   disk {
