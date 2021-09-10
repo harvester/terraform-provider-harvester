@@ -33,9 +33,8 @@ func (c *Constructor) Setup() util.Processors {
 		{
 			Field: constants.FieldVolumeStorageClassName,
 			Parser: func(i interface{}) error {
-				if storageClassName := i.(string); storageClassName != "" {
-					c.Volume.Spec.StorageClassName = pointer.StringPtr(storageClassName)
-				}
+				storageClassName := i.(string)
+				c.Volume.Spec.StorageClassName = pointer.StringPtr(storageClassName)
 				return nil
 			},
 		},
@@ -49,6 +48,7 @@ func (c *Constructor) Setup() util.Processors {
 				c.Volume.Spec.VolumeMode = &persistentVolumeMode
 				return nil
 			},
+			Required: true,
 		},
 		{
 			Field: constants.FieldVolumeAccessMode,
@@ -64,19 +64,19 @@ func (c *Constructor) Setup() util.Processors {
 				c.Volume.Spec.AccessModes = accessModes
 				return nil
 			},
+			Required: true,
 		},
 		{
 			Field: constants.FieldVolumeImage,
 			Parser: func(i interface{}) error {
-				if imageNamespacedName := i.(string); imageNamespacedName != "" {
-					imageNamespace, imageName, err := helper.NamespacedNamePartsByDefault(imageNamespacedName, c.Volume.Namespace)
-					if err != nil {
-						return err
-					}
-					c.Volume.Annotations[builder.AnnotationKeyImageID] = helper.BuildID(imageNamespace, imageName)
-					storageClassName := builder.BuildImageStorageClassName("", imageName)
-					c.Volume.Spec.StorageClassName = pointer.StringPtr(storageClassName)
+				imageNamespacedName := i.(string)
+				imageNamespace, imageName, err := helper.NamespacedNamePartsByDefault(imageNamespacedName, c.Volume.Namespace)
+				if err != nil {
+					return err
 				}
+				c.Volume.Annotations[builder.AnnotationKeyImageID] = helper.BuildID(imageNamespace, imageName)
+				storageClassName := builder.BuildImageStorageClassName("", imageName)
+				c.Volume.Spec.StorageClassName = pointer.StringPtr(storageClassName)
 				return nil
 			},
 		},

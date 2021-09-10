@@ -55,6 +55,7 @@ func (c *Constructor) Setup() util.Processors {
 				c.Network.Spec.Config = config
 				return nil
 			},
+			Required: true,
 		},
 	}
 	return append(processors, customProcessors...)
