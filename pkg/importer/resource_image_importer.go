@@ -10,25 +10,38 @@ import (
 
 func ResourceImageStateGetter(obj *harvsterv1.VirtualMachineImage) (*StateGetter, error) {
 	states := map[string]interface{}{
-		constants.FieldCommonNamespace:   obj.Namespace,
-		constants.FieldCommonName:        obj.Name,
-		constants.FieldCommonDescription: GetDescriptions(obj.Annotations),
-		constants.FieldCommonTags:        GetTags(obj.Labels),
-		constants.FieldImageDisplayName:  obj.Spec.DisplayName,
-		constants.FieldImageURL:          obj.Spec.URL,
-		constants.FieldImageSize:         obj.Status.Size,
+		constants.FieldCommonNamespace:       obj.Namespace,
+		constants.FieldCommonName:            obj.Name,
+		constants.FieldCommonDescription:     GetDescriptions(obj.Annotations),
+		constants.FieldCommonTags:            GetTags(obj.Labels),
+		constants.FieldImageDisplayName:      obj.Spec.DisplayName,
+		constants.FieldImageSourceType:       obj.Spec.SourceType,
+		constants.FieldImageURL:              obj.Spec.URL,
+		constants.FieldImageProgress:         obj.Status.Progress,
+		constants.FieldImageSize:             obj.Status.Size,
+		constants.FieldImageStorageClassName: obj.Status.StorageClassName,
 	}
-	var state string
+	var (
+		state       string
+		initialized bool
+		imported    bool
+	)
 	for _, condition := range obj.Status.Conditions {
-		if condition.Type == harvsterv1.ImageInitialized {
-			if condition.Status == corev1.ConditionTrue {
-				state = constants.StateCommonActive
-			} else if condition.Status == corev1.ConditionFalse {
-				state = constants.StateImageFailed
-			}
-		} else {
-			state = constants.StateImageInProgress
+		switch condition.Type {
+		case harvsterv1.ImageInitialized:
+			initialized = condition.Status == corev1.ConditionTrue
+		case harvsterv1.ImageImported:
+			imported = condition.Status == corev1.ConditionTrue
 		}
+	}
+	if initialized {
+		if imported {
+			state = constants.StateCommonActive
+		} else {
+			state = constants.StateImageUploading
+		}
+	} else {
+		state = constants.StateImageFailed
 	}
 	states[constants.FieldCommonState] = state
 	return &StateGetter{

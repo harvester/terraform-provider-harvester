@@ -3,10 +3,13 @@ package constants
 const (
 	ResourceTypeImage = "harvester_image"
 
-	FieldImageDisplayName = "display_name"
-	FieldImageURL         = "url"
-	FieldImageSize        = "size"
+	FieldImageDisplayName      = "display_name"
+	FieldImageURL              = "url"
+	FieldImageSourceType       = "source_type"
+	FieldImageProgress         = "progress"
+	FieldImageSize             = "size"
+	FieldImageStorageClassName = "storage_class_name"
 
-	StateImageInProgress = "In Progress"
-	StateImageFailed     = "Failed"
+	StateImageUploading = "Uploading"
+	StateImageFailed    = "Failed"
 )
