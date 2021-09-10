@@ -18,6 +18,7 @@ resource "harvester_image" "k3os" {
   namespace = "harvester-public"
 
   display_name = "k3os"
+  source_type  = "download"
   url          = "https://github.com/rancher/k3os/releases/download/v0.20.6-k3s1r0/k3os-amd64.iso"
 }
 
@@ -26,6 +27,7 @@ resource "harvester_image" "ubuntu20" {
   namespace = "harvester-public"
 
   display_name = "ubuntu20"
+  source_type  = "download"
   url          = "http://cloud-images.ubuntu.com/releases/focal/release/ubuntu-20.04-server-cloudimg-amd64.img"
 }
 ```
@@ -37,7 +39,7 @@ resource "harvester_image" "ubuntu20" {
 
 - **display_name** (String)
 - **name** (String) A unique name
-- **url** (String) supports the `raw` and `qcow2` image formats which are supported by [qemu](https://www.qemu.org/docs/master/system/images.html#disk-image-file-formats). Bootable ISO images can also be used and are treated like `raw` images.
+- **source_type** (String)
 
 ### Optional
 
@@ -45,11 +47,14 @@ resource "harvester_image" "ubuntu20" {
 - **id** (String) The ID of this resource.
 - **namespace** (String)
 - **tags** (Map of String)
+- **url** (String) supports the `raw` and `qcow2` image formats which are supported by [qemu](https://www.qemu.org/docs/master/system/images.html#disk-image-file-formats). Bootable ISO images can also be used and are treated like `raw` images.
 
 ### Read-Only
 
+- **progress** (Number)
 - **size** (Number)
 - **state** (String)
+- **storage_class_name** (String)
 
 ## Import
 
