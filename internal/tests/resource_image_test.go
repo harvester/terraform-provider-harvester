@@ -21,6 +21,7 @@ const (
 	testAccImageResourceName = constants.ResourceTypeImage + "." + testAccImageName
 	testAccImageDescription  = "Terraform Harvester image acceptance test"
 	testAccImageDisplayName  = "foo"
+	testAccImageSourceType   = "download"
 
 	testAccImageURL = "http://cloud-images.ubuntu.com/releases/focal/release/ubuntu-20.04-server-cloudimg-amd64.img"
 
@@ -30,15 +31,17 @@ resource %s "%s" {
 	%s = "%s"
 	%s = "%s"
 	%s = "%s"
+	%s = "%s"
 }
 `
 )
 
-func buildImageConfig(name, description, displayName, url string) string {
+func buildImageConfig(name, description, displayName, sourceType, url string) string {
 	return fmt.Sprintf(testAccImageConfigTemplate, constants.ResourceTypeImage, name,
 		constants.FieldCommonName, name,
 		constants.FieldCommonDescription, description,
 		constants.FieldImageDisplayName, displayName,
+		constants.FieldImageSourceType, sourceType,
 		constants.FieldImageURL, url)
 }
 
@@ -53,19 +56,20 @@ func TestAccImage_basic(t *testing.T) {
 		CheckDestroy: testAccCheckImageDestroy(ctx),
 		Steps: []resource.TestStep{
 			{
-				Config:      buildImageConfig(testAccImageName, testAccImageDescription, "", testAccImageURL),
+				Config:      buildImageConfig(testAccImageName, testAccImageDescription, "", testAccImageSourceType, testAccImageURL),
 				ExpectError: regexp.MustCompile(fmt.Sprintf(`%s must not be empty`, constants.FieldImageDisplayName)),
 			},
 			{
-				Config:      buildImageConfig(testAccImageName, testAccImageDescription, testAccImageDisplayName, ""),
+				Config:      buildImageConfig(testAccImageName, testAccImageDescription, testAccImageDisplayName, testAccImageSourceType, ""),
 				ExpectError: regexp.MustCompile(fmt.Sprintf(`expected "%s" url to not be empty`, constants.FieldImageURL)),
 			},
 			{
-				Config: buildImageConfig(testAccImageName, testAccImageDescription, testAccImageDisplayName, testAccImageURL),
+				Config: buildImageConfig(testAccImageName, testAccImageDescription, testAccImageDisplayName, testAccImageSourceType, testAccImageURL),
 				Check: resource.ComposeTestCheckFunc(
 					testAccImageExists(ctx, testAccImageResourceName, image),
 					resource.TestCheckResourceAttr(testAccImageResourceName, constants.FieldCommonName, testAccImageName),
 					resource.TestCheckResourceAttr(testAccImageResourceName, constants.FieldCommonDescription, testAccImageDescription),
+					resource.TestCheckResourceAttr(testAccImageResourceName, constants.FieldImageSourceType, testAccImageSourceType),
 					resource.TestCheckResourceAttr(testAccImageResourceName, constants.FieldImageURL, testAccImageURL),
 				),
 			},

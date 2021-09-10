@@ -1,6 +1,7 @@
 package image
 
 import (
+	harvsterv1 "github.com/harvester/harvester/pkg/apis/harvesterhci.io/v1beta1"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 
@@ -21,12 +22,28 @@ func Schema() map[string]*schema.Schema {
 		},
 		constants.FieldImageURL: {
 			Type:         schema.TypeString,
-			Required:     true,
+			Optional:     true,
 			ValidateFunc: validation.IsURLWithHTTPorHTTPS,
 			Description:  URLDescription,
 		},
+		constants.FieldImageSourceType: {
+			Type:     schema.TypeString,
+			Required: true,
+			ValidateFunc: validation.StringInSlice([]string{
+				harvsterv1.VirtualMachineImageSourceTypeDownload,
+				harvsterv1.VirtualMachineImageSourceTypeUpload,
+			}, false),
+		},
+		constants.FieldImageProgress: {
+			Type:     schema.TypeInt,
+			Computed: true,
+		},
 		constants.FieldImageSize: {
 			Type:     schema.TypeInt,
+			Computed: true,
+		},
+		constants.FieldImageStorageClassName: {
+			Type:     schema.TypeString,
 			Computed: true,
 		},
 	}
