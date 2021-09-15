@@ -38,7 +38,12 @@ func ResourceImageStateGetter(obj *harvsterv1.VirtualMachineImage) (*StateGetter
 		if imported {
 			state = constants.StateCommonActive
 		} else {
-			state = constants.StateImageUploading
+			switch obj.Spec.SourceType {
+			case harvsterv1.VirtualMachineImageSourceTypeDownload:
+				state = constants.StateImageDownloading
+			default:
+				state = constants.StateImageUploading
+			}
 		}
 	} else {
 		state = constants.StateImageFailed

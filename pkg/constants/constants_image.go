@@ -10,6 +10,7 @@ const (
 	FieldImageSize             = "size"
 	FieldImageStorageClassName = "storage_class_name"
 
-	StateImageUploading = "Uploading"
-	StateImageFailed    = "Failed"
+	StateImageUploading   = "Uploading"
+	StateImageDownloading = "Downloading"
+	StateImageFailed      = "Failed"
 )
