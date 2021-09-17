@@ -2,11 +2,15 @@ package virtualmachine
 
 import (
 	"context"
+	"fmt"
+	"strings"
 
+	harvesterutil "github.com/harvester/harvester/pkg/util"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/watch"
 	kubevirtv1 "kubevirt.io/client-go/api/v1"
 
 	"github.com/harvester/terraform-provider-harvester/internal/util"
@@ -115,9 +119,7 @@ func resourceVirtualMachineDelete(ctx context.Context, d *schema.ResourceData, m
 			deleteConfigs[diskName] = r[constants.FieldDiskAutoDelete].(bool)
 		}
 	}
-	if err = c.HarvesterClient.KubevirtV1().VirtualMachines(namespace).Delete(ctx, name, metav1.DeleteOptions{}); err != nil && !apierrors.IsNotFound(err) {
-		return diag.FromErr(err)
-	}
+	removedPVCs := make([]string, 0, len(vm.Spec.Template.Spec.Volumes))
 	for _, volume := range vm.Spec.Template.Spec.Volumes {
 		if volume.PersistentVolumeClaim == nil {
 			continue
@@ -125,10 +127,37 @@ func resourceVirtualMachineDelete(ctx context.Context, d *schema.ResourceData, m
 		if autoDelete, ok := deleteConfigs[volume.Name]; ok && !autoDelete {
 			continue
 		}
-		err = c.KubeClient.CoreV1().PersistentVolumeClaims(namespace).Delete(ctx, volume.PersistentVolumeClaim.ClaimName, metav1.DeleteOptions{})
-		if err != nil && !apierrors.IsNotFound(err) {
-			return diag.FromErr(err)
+		removedPVCs = append(removedPVCs, volume.PersistentVolumeClaim.ClaimName)
+	}
+	vmCopy := vm.DeepCopy()
+	vmCopy.Annotations[harvesterutil.RemovedPVCsAnnotationKey] = strings.Join(removedPVCs, ",")
+	_, err = c.HarvesterClient.KubevirtV1().VirtualMachines(namespace).Update(ctx, vmCopy, metav1.UpdateOptions{})
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	propagationPolicy := metav1.DeletePropagationForeground
+	deleteOptions := metav1.DeleteOptions{PropagationPolicy: &propagationPolicy}
+	if err = c.HarvesterClient.KubevirtV1().VirtualMachines(namespace).Delete(ctx, name, deleteOptions); err != nil && !apierrors.IsNotFound(err) {
+		return diag.FromErr(err)
+	}
+	timeoutSeconds := int64(15)
+	events, err := c.HarvesterClient.KubevirtV1().VirtualMachines(namespace).Watch(ctx, metav1.ListOptions{
+		FieldSelector:  fmt.Sprintf("metadata.name=%s", name),
+		Watch:          true,
+		TimeoutSeconds: &timeoutSeconds,
+	})
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	deleted := false
+	for event := range events.ResultChan() {
+		if event.Type == watch.Deleted {
+			events.Stop()
+			deleted = true
 		}
+	}
+	if !deleted {
+		return diag.FromErr(fmt.Errorf("timeout waiting for virtualmachine %s to be deleted", d.Id()))
 	}
 	d.SetId("")
 	return nil
