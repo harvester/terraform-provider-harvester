@@ -176,6 +176,8 @@ func (c *Constructor) Setup() util.Processors {
 				isCDRom := cloudInitSource.CloudInitType == builder.CloudInitTypeConfigDrive
 				if isCDRom {
 					diskBus = builder.DiskBusSata
+				} else {
+					diskBus = builder.DiskBusVirtio
 				}
 				diskName := builder.CloudInitDiskName
 				vmBuilder.Disk(diskName, diskBus, isCDRom, 0)
