@@ -20,6 +20,10 @@ import (
 	"github.com/harvester/terraform-provider-harvester/pkg/importer"
 )
 
+const (
+	vmDeleteTimeout = 300
+)
+
 func ResourceVirtualMachine() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: resourceVirtualMachineCreate,
@@ -140,7 +144,7 @@ func resourceVirtualMachineDelete(ctx context.Context, d *schema.ResourceData, m
 	if err = c.HarvesterClient.KubevirtV1().VirtualMachines(namespace).Delete(ctx, name, deleteOptions); err != nil && !apierrors.IsNotFound(err) {
 		return diag.FromErr(err)
 	}
-	timeoutSeconds := int64(15)
+	timeoutSeconds := int64(vmDeleteTimeout)
 	events, err := c.HarvesterClient.KubevirtV1().VirtualMachines(namespace).Watch(ctx, metav1.ListOptions{
 		FieldSelector:  fmt.Sprintf("metadata.name=%s", name),
 		Watch:          true,
