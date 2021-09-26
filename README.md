@@ -36,7 +36,7 @@ make
 #### 2. Install the provider
 The expected location for the Harvester provider for that target platform within one of the local search directories would be like the following:
 ```bash
-registry.terraform.io/harvester/harvester/0.2.3/linux_amd64/terraform-provider-harvester_v0.2.3
+registry.terraform.io/harvester/harvester/0.2.4/linux_amd64/terraform-provider-harvester_v0.2.4
 ```
 
 The default location for locally-installed providers is one of the following, depending on which operating system you are running Terraform under:
@@ -45,7 +45,7 @@ The default location for locally-installed providers is one of the following, de
 
 Place the provider into the plugins directory, for example:
 ```bash
-version=0.2.3
+version=0.2.4
 arch=linux_amd64
 terraform_harvester_provider_bin=./bin/terraform-provider-harvester
 
