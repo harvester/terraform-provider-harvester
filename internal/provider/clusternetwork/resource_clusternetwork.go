@@ -2,6 +2,7 @@ package clusternetwork
 
 import (
 	"context"
+	"errors"
 
 	harvsternetworkv1 "github.com/harvester/harvester-network-controller/pkg/apis/network.harvesterhci.io/v1beta1"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -86,17 +87,7 @@ func resourceClusterNetworkRead(ctx context.Context, d *schema.ResourceData, met
 }
 
 func resourceClusterNetworkDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	c := meta.(*client.Client)
-	_, name, err := helper.IDParts(d.Id())
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	err = c.HarvesterNetworkClient.NetworkV1beta1().ClusterNetworks().Delete(ctx, name, metav1.DeleteOptions{})
-	if err != nil && !apierrors.IsNotFound(err) {
-		return diag.FromErr(err)
-	}
-	d.SetId("")
-	return nil
+	return diag.FromErr(errors.New("clusternetwork should not be destroyed, to avoid this error and continue with the plan, either move clusternetwork to another module or reduce the scope of the plan using the -target flag"))
 }
 
 func resourceClusterNetworkImport(d *schema.ResourceData, obj *harvsternetworkv1.ClusterNetwork) diag.Diagnostics {
