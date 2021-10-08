@@ -54,7 +54,7 @@ func IsValidName(i interface{}, k string) ([]string, []error) {
 	}
 
 	if errs := validation.IsDNS1123Subdomain(v); len(errs) > 0 {
-		return nil, []error{fmt.Errorf("expected %q to not be an kubernetes qualified name", k)}
+		return nil, []error{fmt.Errorf("expected %q to not be an kubernetes valid name", k)}
 	}
 
 	return nil, nil
