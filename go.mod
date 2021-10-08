@@ -49,7 +49,7 @@ replace (
 )
 
 require (
-	github.com/harvester/harvester v0.3.0-preview1
+	github.com/harvester/harvester v0.3.0-rc1
 	github.com/harvester/harvester-network-controller v0.1.7
 	github.com/hashicorp/hcl/v2 v2.8.2 // indirect
 	github.com/hashicorp/terraform-plugin-docs v0.4.0
