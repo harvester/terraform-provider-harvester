@@ -44,7 +44,7 @@ The default location for locally-installed providers is one of the following, de
 
 Place the provider into the plugins directory, for example:
 ```bash
-version=0.2.6
+version=0.2.7
 arch=linux_amd64
 terraform_harvester_provider_bin=./bin/terraform-provider-harvester
 
