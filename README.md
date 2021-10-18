@@ -8,10 +8,9 @@ Terraform Provider for Harvester
 
 ## Install The Provider
 
-### Option 1: Download and Install The Provider From Releases
+### Option 1: Download and Install The Provider By Init
 ```bash
-tar -zxvf terraform-provider-harvester-amd64.tar.gz
-./install-terraform-provider-harvester.sh
+terraform init
 ```
 
 ### Option 2: Build and Install The Provider Manually
