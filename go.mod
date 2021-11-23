@@ -8,7 +8,6 @@ replace (
 	github.com/docker/docker => github.com/docker/docker v1.4.2-0.20200203170920-46ec8731fbce
 	github.com/go-kit/kit => github.com/go-kit/kit v0.3.0
 	github.com/googleapis/gnostic => github.com/googleapis/gnostic v0.4.1
-
 	github.com/knative/pkg => github.com/rancher/pkg v0.0.0-20190514055449-b30ab9de040e
 	github.com/openshift/api => github.com/openshift/api v0.0.0-20191219222812-2987a591a72c
 	github.com/openshift/client-go => github.com/openshift/client-go v0.0.0-20200521150516-05eb9880269c
@@ -43,22 +42,22 @@ replace (
 	k8s.io/mount-utils => k8s.io/mount-utils v0.21.2
 	k8s.io/sample-apiserver => k8s.io/sample-apiserver v0.21.2
 
-	kubevirt.io/client-go => github.com/kubevirt/client-go v0.44.0
+	kubevirt.io/client-go => github.com/kubevirt/client-go v0.45.0
 	kubevirt.io/containerized-data-importer => github.com/rancher/kubevirt-containerized-data-importer v1.26.1-0.20210802100720-9bcf4e7ba0ce
 	sigs.k8s.io/structured-merge-diff => sigs.k8s.io/structured-merge-diff v0.0.0-20190302045857-e85c7b244fd2
 )
 
 require (
-	github.com/harvester/harvester v0.3.0-rc1
-	github.com/harvester/harvester-network-controller v0.1.7
+	github.com/harvester/harvester v1.0.0-rc1
+	github.com/harvester/harvester-network-controller v0.2.5
 	github.com/hashicorp/hcl/v2 v2.8.2 // indirect
 	github.com/hashicorp/terraform-plugin-docs v0.4.0
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.6.1
 	github.com/k8snetworkplumbingwg/network-attachment-definition-client v0.0.0-20200331171230-d50e42f2b669
-	github.com/rancher/wrangler v0.8.1-0.20210618171953-ab479ee75244
+	github.com/rancher/wrangler v0.8.3
 	k8s.io/api v0.21.2
 	k8s.io/apimachinery v0.21.2
 	k8s.io/client-go v12.0.0+incompatible
-	k8s.io/utils v0.0.0-20210305010621-2afb4311ab10
-	kubevirt.io/client-go v0.44.0
+	k8s.io/utils v0.0.0-20210819203725-bdf08cb9a70a
+	kubevirt.io/client-go v0.45.0
 )
