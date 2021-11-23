@@ -122,7 +122,7 @@ func (c *Constructor) Setup() util.Processors {
 				}
 				vmBuilder.Disk(diskName, diskBus, isCDRom, bootOrder)
 				if existingVolumeName != "" {
-					vmBuilder.ExistingPVCVolume(diskName, existingVolumeName)
+					vmBuilder.ExistingPVCVolume(diskName, existingVolumeName, true)
 				} else if containerImageName != "" {
 					vmBuilder.ContainerDiskVolume(diskName, containerImageName, builder.DefaultImagePullPolicy)
 				} else {
@@ -153,7 +153,7 @@ func (c *Constructor) Setup() util.Processors {
 							constants.AnnotationDiskAutoDelete: "true",
 						}
 					}
-					vmBuilder.PVCVolume(diskName, diskSize, volumeName, pvcOption)
+					vmBuilder.PVCVolume(diskName, diskSize, volumeName, false, pvcOption)
 				}
 				return nil
 			},
