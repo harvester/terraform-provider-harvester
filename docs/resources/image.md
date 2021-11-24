@@ -46,6 +46,8 @@ resource "harvester_image" "ubuntu20" {
 - **description** (String) Any text you want that better describes this resource
 - **id** (String) The ID of this resource.
 - **namespace** (String)
+- **pvc_name** (String)
+- **pvc_namespace** (String)
 - **tags** (Map of String)
 - **url** (String) supports the `raw` and `qcow2` image formats which are supported by [qemu](https://www.qemu.org/docs/master/system/images.html#disk-image-file-formats). Bootable ISO images can also be used and are treated like `raw` images.
 
