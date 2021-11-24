@@ -17,6 +17,8 @@ func ResourceImageStateGetter(obj *harvsterv1.VirtualMachineImage) (*StateGetter
 		constants.FieldImageDisplayName:      obj.Spec.DisplayName,
 		constants.FieldImageSourceType:       obj.Spec.SourceType,
 		constants.FieldImageURL:              obj.Spec.URL,
+		constants.FieldImagePVCNamespace:     obj.Spec.PVCNamespace,
+		constants.FieldImagePVCName:          obj.Spec.PVCName,
 		constants.FieldImageProgress:         obj.Status.Progress,
 		constants.FieldImageSize:             obj.Status.Size,
 		constants.FieldImageStorageClassName: obj.Status.StorageClassName,
@@ -41,6 +43,8 @@ func ResourceImageStateGetter(obj *harvsterv1.VirtualMachineImage) (*StateGetter
 			switch obj.Spec.SourceType {
 			case harvsterv1.VirtualMachineImageSourceTypeDownload:
 				state = constants.StateImageDownloading
+			case harvsterv1.VirtualMachineImageSourceTypeExportVolume:
+				state = constants.StateImageExporting
 			default:
 				state = constants.StateImageUploading
 			}
