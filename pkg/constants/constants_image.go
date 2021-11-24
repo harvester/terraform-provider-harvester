@@ -5,6 +5,8 @@ const (
 
 	FieldImageDisplayName      = "display_name"
 	FieldImageURL              = "url"
+	FieldImagePVCNamespace     = "pvc_namespace"
+	FieldImagePVCName          = "pvc_name"
 	FieldImageSourceType       = "source_type"
 	FieldImageProgress         = "progress"
 	FieldImageSize             = "size"
@@ -12,5 +14,6 @@ const (
 
 	StateImageUploading   = "Uploading"
 	StateImageDownloading = "Downloading"
+	StateImageExporting   = "Exporting"
 	StateImageFailed      = "Failed"
 )

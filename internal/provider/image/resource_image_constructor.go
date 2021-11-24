@@ -34,6 +34,30 @@ func (c *Constructor) Setup() util.Processors {
 			},
 			Required: true,
 		},
+		{
+			Field: constants.FieldImagePVCNamespace,
+			Parser: func(i interface{}) error {
+				pvcNamespace := i.(string)
+				if pvcNamespace == "" && c.Image.Spec.SourceType == harvsterv1.VirtualMachineImageSourceTypeExportVolume {
+					return errors.New("must specify image pvc_namespace if image source type is export-from-volume")
+				}
+				c.Image.Spec.PVCNamespace = pvcNamespace
+				return nil
+			},
+			Required: true,
+		},
+		{
+			Field: constants.FieldImagePVCName,
+			Parser: func(i interface{}) error {
+				pvcName := i.(string)
+				if pvcName == "" && c.Image.Spec.SourceType == harvsterv1.VirtualMachineImageSourceTypeExportVolume {
+					return errors.New("must specify image pvc_name if image source type is export-from-volume")
+				}
+				c.Image.Spec.PVCName = pvcName
+				return nil
+			},
+			Required: true,
+		},
 	}
 	return append(processors, customProcessors...)
 }

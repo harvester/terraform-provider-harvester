@@ -26,12 +26,23 @@ func Schema() map[string]*schema.Schema {
 			ValidateFunc: validation.IsURLWithHTTPorHTTPS,
 			Description:  URLDescription,
 		},
+		constants.FieldImagePVCNamespace: {
+			Type:         schema.TypeString,
+			Optional:     true,
+			ValidateFunc: util.IsValidName,
+		},
+		constants.FieldImagePVCName: {
+			Type:         schema.TypeString,
+			Optional:     true,
+			ValidateFunc: util.IsValidName,
+		},
 		constants.FieldImageSourceType: {
 			Type:     schema.TypeString,
 			Required: true,
 			ValidateFunc: validation.StringInSlice([]string{
 				harvsterv1.VirtualMachineImageSourceTypeDownload,
 				harvsterv1.VirtualMachineImageSourceTypeUpload,
+				harvsterv1.VirtualMachineImageSourceTypeExportVolume,
 			}, false),
 		},
 		constants.FieldImageProgress: {
