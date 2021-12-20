@@ -48,15 +48,15 @@ replace (
 )
 
 require (
-	github.com/harvester/harvester v1.0.0-rc1
-	github.com/harvester/harvester-network-controller v0.2.5
+	github.com/harvester/harvester v1.0.0-rc2
+	github.com/harvester/harvester-network-controller v0.2.6
 	github.com/hashicorp/hcl/v2 v2.8.2 // indirect
 	github.com/hashicorp/terraform-plugin-docs v0.4.0
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.6.1
 	github.com/k8snetworkplumbingwg/network-attachment-definition-client v0.0.0-20200331171230-d50e42f2b669
-	github.com/rancher/wrangler v0.8.3
-	k8s.io/api v0.21.2
-	k8s.io/apimachinery v0.21.2
+	github.com/rancher/wrangler v0.8.10
+	k8s.io/api v0.22.3
+	k8s.io/apimachinery v0.22.3
 	k8s.io/client-go v12.0.0+incompatible
 	k8s.io/utils v0.0.0-20210819203725-bdf08cb9a70a
 	kubevirt.io/client-go v0.45.0
