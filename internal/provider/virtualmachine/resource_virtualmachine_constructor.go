@@ -113,16 +113,23 @@ func (c *Constructor) Setup() util.Processors {
 				volumeName := r[constants.FieldDiskVolumeName].(string)
 				existingVolumeName := r[constants.FieldDiskExistingVolumeName].(string)
 				containerImageName := r[constants.FieldDiskContainerImageName].(string)
+				hotPlug := r[constants.FieldDiskHotPlug].(bool)
 				isCDRom := diskType == builder.DiskTypeCDRom
 				if diskBus == "" {
-					diskBus = util.If(isCDRom, builder.DiskBusSata, builder.DiskBusVirtio).(string)
+					if isCDRom {
+						diskBus = builder.DiskBusSata
+					} else if hotPlug {
+						diskBus = builder.DiskBusScsi
+					} else {
+						diskBus = builder.DiskBusVirtio
+					}
 				}
 				if diskSize == "" {
 					diskSize = util.If(existingVolumeName == "", "", builder.DefaultDiskSize).(string)
 				}
 				vmBuilder.Disk(diskName, diskBus, isCDRom, bootOrder)
 				if existingVolumeName != "" {
-					vmBuilder.ExistingPVCVolume(diskName, existingVolumeName, true)
+					vmBuilder.ExistingPVCVolume(diskName, existingVolumeName, hotPlug)
 				} else if containerImageName != "" {
 					vmBuilder.ContainerDiskVolume(diskName, containerImageName, builder.DefaultImagePullPolicy)
 				} else {
@@ -153,7 +160,7 @@ func (c *Constructor) Setup() util.Processors {
 							constants.AnnotationDiskAutoDelete: "true",
 						}
 					}
-					vmBuilder.PVCVolume(diskName, diskSize, volumeName, false, pvcOption)
+					vmBuilder.PVCVolume(diskName, diskSize, volumeName, hotPlug, pvcOption)
 				}
 				return nil
 			},
