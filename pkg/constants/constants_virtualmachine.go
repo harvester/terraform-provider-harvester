@@ -49,6 +49,7 @@ const (
 	FieldDiskBootOrder          = "boot_order"
 	FieldDiskExistingVolumeName = "existing_volume_name"
 	FieldDiskContainerImageName = "container_image_name"
+	FieldDiskHotPlug            = "hot_plug"
 	FieldDiskAutoDelete         = "auto_delete"
 	FieldDiskVolumeName         = "volume_name"
 

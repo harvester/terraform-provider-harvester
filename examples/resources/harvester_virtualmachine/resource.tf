@@ -99,10 +99,11 @@ resource "harvester_virtualmachine" "ubuntu20-dev" {
   disk {
     name = "mount-disk"
     type = "disk"
-    bus  = "virtio"
+    bus  = "scsi"
 
     existing_volume_name = "ubuntu20-dev-mount-disk"
     auto_delete          = false
+    hot_plug             = true
   }
 
   cloudinit {

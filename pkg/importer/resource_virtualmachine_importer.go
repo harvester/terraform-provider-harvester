@@ -116,8 +116,10 @@ func (v *VMImporter) NetworkInterface() ([]map[string]interface{}, error) {
 }
 
 func (v *VMImporter) pvcVolume(volume kubevirtv1.Volume, state map[string]interface{}) error {
-	pvcName := volume.PersistentVolumeClaim.ClaimName
+	pvc := volume.PersistentVolumeClaim
+	pvcName := pvc.ClaimName
 	state[constants.FieldDiskVolumeName] = pvcName
+	state[constants.FieldDiskHotPlug] = pvc.Hotpluggable
 	var (
 		isInPVCTemplates bool
 		pvcTemplates     []*corev1.PersistentVolumeClaim

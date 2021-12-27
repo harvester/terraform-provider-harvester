@@ -63,6 +63,11 @@ func diskSchema() map[string]*schema.Schema {
 			Optional: true,
 			Computed: true,
 		},
+		constants.FieldDiskHotPlug: {
+			Type:     schema.TypeBool,
+			Optional: true,
+			Computed: true,
+		},
 		constants.FieldVolumeStorageClassName: {
 			Type:         schema.TypeString,
 			Optional:     true,
