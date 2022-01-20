@@ -26,7 +26,14 @@ func Provider() *schema.Provider {
 				Description: "harvester kubeconfig",
 			},
 		},
-		DataSourcesMap: map[string]*schema.Resource{},
+		DataSourcesMap: map[string]*schema.Resource{
+			constants.ResourceTypeImage:          image.DataSourceImage(),
+			constants.ResourceTypeKeyPair:        keypair.DataSourceKeypair(),
+			constants.ResourceTypeNetwork:        network.DataSourceNetwork(),
+			constants.ResourceTypeVirtualMachine: virtualmachine.DataSourceVirtualMachine(),
+			constants.ResourceTypeVolume:         volume.DataSourceVolume(),
+			constants.ResourceTypeClusterNetwork: clusternetwork.DataSourceClusterNetwork(),
+		},
 		ResourcesMap: map[string]*schema.Resource{
 			constants.ResourceTypeImage:          image.ResourceImage(),
 			constants.ResourceTypeKeyPair:        keypair.ResourceKeypair(),

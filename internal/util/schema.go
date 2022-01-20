@@ -59,3 +59,25 @@ func IsValidName(i interface{}, k string) ([]string, []error) {
 
 	return nil, nil
 }
+
+func DataSourceSchemaWrap(s map[string]*schema.Schema) map[string]*schema.Schema {
+	for k, v := range s {
+		v.ForceNew = false
+		v.Computed = true
+		v.Default = nil
+		v.DefaultFunc = nil
+		if k == constants.FieldCommonName || k == constants.FieldCommonNamespace {
+			continue
+		}
+		if v.Elem != nil {
+			switch elem := v.Elem.(type) {
+			case schema.Resource:
+				v.Elem = DataSourceSchemaWrap(elem.Schema)
+			}
+		}
+		v.Optional = false
+		v.Required = false
+		v.ValidateFunc = nil
+	}
+	return s
+}

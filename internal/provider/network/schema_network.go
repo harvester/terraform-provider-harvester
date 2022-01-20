@@ -25,3 +25,7 @@ func Schema() map[string]*schema.Schema {
 	util.NamespacedSchemaWrap(s, false)
 	return s
 }
+
+func DataSourceSchema() map[string]*schema.Schema {
+	return util.DataSourceSchemaWrap(Schema())
+}
