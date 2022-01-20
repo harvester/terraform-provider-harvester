@@ -14,6 +14,7 @@ import (
 type Constructor interface {
 	Setup() Processors
 	Result() (interface{}, error)
+	Validate() error
 }
 
 type Processor struct {
@@ -103,6 +104,9 @@ func ResourceConstruct(d *schema.ResourceData, c Constructor) (interface{}, erro
 				return nil, err
 			}
 		}
+	}
+	if err := c.Validate(); err != nil {
+		return nil, err
 	}
 	return c.Result()
 }

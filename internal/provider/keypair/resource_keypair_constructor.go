@@ -20,6 +20,10 @@ func (c *Constructor) Setup() util.Processors {
 		String(constants.FieldKeyPairPublicKey, &c.KeyPair.Spec.PublicKey, true)
 }
 
+func (c *Constructor) Validate() error {
+	return nil
+}
+
 func (c *Constructor) Result() (interface{}, error) {
 	return c.KeyPair, nil
 }

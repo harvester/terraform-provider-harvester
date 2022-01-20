@@ -40,6 +40,10 @@ func (c *Constructor) Setup() util.Processors {
 	return append(processors, customProcessors...)
 }
 
+func (c *Constructor) Validate() error {
+	return nil
+}
+
 func (c *Constructor) Result() (interface{}, error) {
 	return c.ClusterNetwork, nil
 }
