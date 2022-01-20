@@ -1,8 +1,8 @@
 resource "harvester_virtualmachine" "k3os" {
-  depends_on = [harvester_image.k3os, harvester_network.vlan1]
+  count     = 3
+  name      = "k3os-${count.index}"
+  namespace = "default"
 
-  count       = 3
-  name        = "k3os-${count.index}"
   description = "test k3os iso"
   tags = {
     ssh-user = "rancher"
@@ -13,7 +13,7 @@ resource "harvester_virtualmachine" "k3os" {
 
   network_interface {
     name         = "nic-1"
-    network_name = "harvester-public/vlan1"
+    network_name = harvester_network.vlan1.id
   }
 
   disk {
@@ -23,7 +23,7 @@ resource "harvester_virtualmachine" "k3os" {
     bus        = "sata"
     boot_order = 2
 
-    image       = "harvester-public/k3os"
+    image       = harvester_image.k3os.id
     auto_delete = true
   }
 
@@ -38,11 +38,10 @@ resource "harvester_virtualmachine" "k3os" {
 
 
 resource "harvester_virtualmachine" "ubuntu20-dev" {
-  depends_on = [harvester_image.ubuntu20, harvester_volume.ubuntu20-dev-mount-disk, harvester_network.vlan1, harvester_network.vlan2, harvester_network.vlan3]
+  name      = "ubuntu-dev"
+  namespace = "default"
 
-  name        = "ubuntu-dev"
   description = "test raw image"
-
   tags = {
     ssh-user = "ubuntu"
   }
@@ -60,21 +59,21 @@ resource "harvester_virtualmachine" "ubuntu20-dev" {
 
   network_interface {
     name         = "nic-1"
-    network_name = "harvester-public/vlan1"
+    network_name = harvester_network.vlan1.id
   }
 
   network_interface {
     name         = "nic-2"
     model        = "virtio"
     type         = "bridge"
-    network_name = "harvester-public/vlan2"
+    network_name = harvester_network.vlan2.id
   }
 
   network_interface {
     name         = "nic-3"
     model        = "e1000"
     type         = "bridge"
-    network_name = "harvester-public/vlan3"
+    network_name = harvester_network.vlan3.id
   }
 
   disk {
@@ -84,7 +83,7 @@ resource "harvester_virtualmachine" "ubuntu20-dev" {
     bus        = "virtio"
     boot_order = 1
 
-    image       = "harvester-public/ubuntu20"
+    image       = harvester_image.ubuntu20.id
     auto_delete = true
   }
 
@@ -101,7 +100,7 @@ resource "harvester_virtualmachine" "ubuntu20-dev" {
     type = "disk"
     bus  = "scsi"
 
-    existing_volume_name = "ubuntu20-dev-mount-disk"
+    existing_volume_name = harvester_volume.ubuntu20-dev-mount-disk.name
     auto_delete          = false
     hot_plug             = true
   }
