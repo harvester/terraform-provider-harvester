@@ -8,6 +8,7 @@ import (
 	kubevirtv1 "kubevirt.io/client-go/api/v1"
 
 	"github.com/harvester/terraform-provider-harvester/internal/util"
+	"github.com/harvester/terraform-provider-harvester/pkg/client"
 	"github.com/harvester/terraform-provider-harvester/pkg/constants"
 	"github.com/harvester/terraform-provider-harvester/pkg/helper"
 )
@@ -22,6 +23,7 @@ var (
 
 type Constructor struct {
 	Builder *builder.VMBuilder
+	Client  *client.Client
 }
 
 func (c *Constructor) Setup() util.Processors {
@@ -196,31 +198,44 @@ func (c *Constructor) Setup() util.Processors {
 	return append(processors, customProcessors...)
 }
 
+func (c *Constructor) Validate() error {
+	if len(c.Builder.SSHNames) == 0 {
+		return nil
+	}
+
+	keyPairs, err := c.getKeyPairs(c.Builder.SSHNames, c.Builder.VirtualMachine.Namespace)
+	if err != nil {
+		return err
+	}
+	return c.checkKeyPairsInCloudInit(keyPairs)
+}
+
 func (c *Constructor) Result() (interface{}, error) {
 	return c.Builder.VM()
 }
 
-func newVMConstructor(vmBuilder *builder.VMBuilder) util.Constructor {
+func newVMConstructor(c *client.Client, vmBuilder *builder.VMBuilder) util.Constructor {
 	return &Constructor{
 		Builder: vmBuilder,
+		Client:  c,
 	}
 }
 
-func Creator(namespace, name string) util.Constructor {
+func Creator(c *client.Client, namespace, name string) util.Constructor {
 	vmBuilder := builder.NewVMBuilder(vmCreator).
 		Namespace(namespace).Name(name).
 		EvictionStrategy(true).
 		DefaultPodAntiAffinity()
-	return newVMConstructor(vmBuilder)
+	return newVMConstructor(c, vmBuilder)
 }
 
-func Updater(vm *kubevirtv1.VirtualMachine) util.Constructor {
+func Updater(c *client.Client, vm *kubevirtv1.VirtualMachine) util.Constructor {
 	vm.Spec.Template.Spec.Networks = []kubevirtv1.Network{}
 	vm.Spec.Template.Spec.Domain.Devices.Interfaces = []kubevirtv1.Interface{}
 	vm.Spec.Template.Spec.Domain.Devices.Disks = []kubevirtv1.Disk{}
 	vm.Spec.Template.Spec.Volumes = []kubevirtv1.Volume{}
 	vm.Annotations[harvesterutil.AnnotationVolumeClaimTemplates] = "[]"
-	return newVMConstructor(&builder.VMBuilder{
+	return newVMConstructor(c, &builder.VMBuilder{
 		VirtualMachine: vm,
 	})
 }
