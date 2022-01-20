@@ -8,7 +8,7 @@ import (
 	"github.com/harvester/terraform-provider-harvester/pkg/constants"
 )
 
-func networkInterfaceSchema() map[string]*schema.Schema {
+func resourceNetworkInterfaceSchema() map[string]*schema.Schema {
 	s := map[string]*schema.Schema{
 		constants.FiledNetworkInterfaceName: {
 			Type:     schema.TypeString,

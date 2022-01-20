@@ -46,7 +46,7 @@ func Schema() map[string]*schema.Schema {
 			Optional: true,
 			MaxItems: 1,
 			Elem: &schema.Resource{
-				Schema: cloudInitSchema(),
+				Schema: resourceCloudInitSchema(),
 			},
 		},
 		constants.FieldVirtualMachineDisk: {
@@ -54,7 +54,7 @@ func Schema() map[string]*schema.Schema {
 			Required: true,
 			MinItems: 1,
 			Elem: &schema.Resource{
-				Schema: diskSchema(),
+				Schema: resourceDiskSchema(),
 			},
 		},
 		constants.FieldVirtualMachineNetworkInterface: {
@@ -62,7 +62,7 @@ func Schema() map[string]*schema.Schema {
 			Required: true,
 			MinItems: 1,
 			Elem: &schema.Resource{
-				Schema: networkInterfaceSchema(),
+				Schema: resourceNetworkInterfaceSchema(),
 			},
 		},
 		constants.FieldVirtualMachineInstanceNodeName: {
@@ -72,4 +72,8 @@ func Schema() map[string]*schema.Schema {
 	}
 	util.NamespacedSchemaWrap(s, false)
 	return s
+}
+
+func DataSourceSchema() map[string]*schema.Schema {
+	return util.DataSourceSchemaWrap(Schema())
 }
