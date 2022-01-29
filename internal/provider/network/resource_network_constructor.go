@@ -3,7 +3,9 @@ package network
 import (
 	"errors"
 	"fmt"
+	"strconv"
 
+	networkutils "github.com/harvester/harvester-network-controller/pkg/utils"
 	"github.com/harvester/harvester/pkg/builder"
 	nadv1 "github.com/k8snetworkplumbingwg/network-attachment-definition-client/pkg/apis/k8s.cni.cncf.io/v1"
 
@@ -16,7 +18,8 @@ var (
 )
 
 type Constructor struct {
-	Network *nadv1.NetworkAttachmentDefinition
+	Network           *nadv1.NetworkAttachmentDefinition
+	Layer3NetworkConf *networkutils.Layer3NetworkConf
 }
 
 func (c *Constructor) Setup() util.Processors {
@@ -37,6 +40,7 @@ func (c *Constructor) Setup() util.Processors {
 				}
 				c.Network.Labels = map[string]string{
 					builder.LabelKeyNetworkType: networkType,
+					networkutils.KeyVlanLabel:   strconv.Itoa(vlanID),
 				}
 				return nil
 			},
@@ -57,6 +61,61 @@ func (c *Constructor) Setup() util.Processors {
 			},
 			Required: true,
 		},
+		{
+			Field: constants.FieldNetworkRouteDHCPServerIP,
+			Parser: func(i interface{}) error {
+				c.Layer3NetworkConf.ServerIPAddr = i.(string)
+				return nil
+			},
+		},
+		{
+			Field: constants.FieldNetworkRouteCIDR,
+			Parser: func(i interface{}) error {
+				c.Layer3NetworkConf.CIDR = i.(string)
+				return nil
+			},
+		},
+		{
+			Field: constants.FieldNetworkRouteGateWay,
+			Parser: func(i interface{}) error {
+				c.Layer3NetworkConf.Gateway = i.(string)
+				return nil
+			},
+		},
+		{
+			Field: constants.FieldNetworkRouteMode,
+			Parser: func(i interface{}) error {
+				c.Layer3NetworkConf.Mode = networkutils.Mode(i.(string))
+				layer3NetworkConf, err := c.Layer3NetworkConf.ToString()
+				if err != nil {
+					return err
+				}
+				switch c.Layer3NetworkConf.Mode {
+				case networkutils.Manual:
+					if c.Layer3NetworkConf.CIDR == "" {
+						return errors.New("must specify route_cidr in manual route type")
+					}
+					if c.Layer3NetworkConf.Gateway == "" {
+						return errors.New("must specify route_gateway in manual route type")
+					}
+				case networkutils.Auto:
+					if c.Layer3NetworkConf.CIDR != "" {
+						return errors.New("can not specify route_cidr in auto route type")
+					}
+					if c.Layer3NetworkConf.Gateway != "" {
+						return errors.New("can not specify route_gateway in auto route type")
+					}
+				}
+				if _, err = networkutils.NewLayer3NetworkConf(layer3NetworkConf); err != nil {
+					return err
+				}
+				c.Network.Annotations = map[string]string{
+					networkutils.KeyNetworkConf: layer3NetworkConf,
+				}
+				return nil
+			},
+			Required: true,
+		},
 	}
 	return append(processors, customProcessors...)
 }
@@ -71,7 +130,8 @@ func (c *Constructor) Result() (interface{}, error) {
 
 func newNetworkConstructor(network *nadv1.NetworkAttachmentDefinition) util.Constructor {
 	return &Constructor{
-		Network: network,
+		Network:           network,
+		Layer3NetworkConf: &networkutils.Layer3NetworkConf{},
 	}
 }
 
