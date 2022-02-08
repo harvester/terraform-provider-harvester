@@ -35,8 +35,13 @@ data "harvester_network" "vlan1" {
 
 - **config** (String)
 - **description** (String) Any text you want that better describes this resource
+- **route_cidr** (String) e.g. 172.16.0.1/24
+- **route_connectivity** (String)
+- **route_dhcp_server_ip** (String)
+- **route_gateway** (String) e.g. 172.16.0.1
+- **route_mode** (String)
 - **state** (String)
 - **tags** (Map of String)
-- **vlan_id** (Number) eg.1-4094
+- **vlan_id** (Number) e.g. 1-4094
 
 

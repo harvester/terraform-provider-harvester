@@ -18,6 +18,8 @@ resource "harvester_network" "vlan1" {
   namespace = "harvester-public"
 
   vlan_id = 1
+
+  route_dhcp_server_ip = ""
 }
 
 resource "harvester_network" "vlan" {
@@ -26,6 +28,10 @@ resource "harvester_network" "vlan" {
   namespace = "harvester-public"
 
   vlan_id = each.key
+
+  route_mode    = "manual"
+  route_cidr    = "172.16.0.1/24"
+  route_gateway = "172.16.0.1"
 }
 ```
 
@@ -35,7 +41,7 @@ resource "harvester_network" "vlan" {
 ### Required
 
 - **name** (String) A unique name
-- **vlan_id** (Number) eg.1-4094
+- **vlan_id** (Number) e.g. 1-4094
 
 ### Optional
 
@@ -43,10 +49,15 @@ resource "harvester_network" "vlan" {
 - **description** (String) Any text you want that better describes this resource
 - **id** (String) The ID of this resource.
 - **namespace** (String)
+- **route_cidr** (String) e.g. 172.16.0.1/24
+- **route_dhcp_server_ip** (String)
+- **route_gateway** (String) e.g. 172.16.0.1
+- **route_mode** (String)
 - **tags** (Map of String)
 
 ### Read-Only
 
+- **route_connectivity** (String)
 - **state** (String)
 
 ## Import
