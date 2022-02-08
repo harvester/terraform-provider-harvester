@@ -90,7 +90,7 @@ func checkKeyPairsInUserData(userdataContent []byte, keyPairs []*harvsterv1.KeyP
 	}
 	if len(missingKeyPairs) > 0 {
 		return fmt.Errorf(`missing ssh public keys in cloud-int userdata ssh_authorized_keys section, ssh_keys: [%s].
-Either remove unused ssh keys from "ssh_keys" or add ssh public keys to cloud-int userdata ssh_authorized_keys section.`, strings.Join(missingKeyPairs, ","))
+Either remove unused ssh keys from "ssh_keys" or add ssh public keys to cloud-int userdata ssh_authorized_keys section. `, strings.Join(missingKeyPairs, ","))
 	}
 	return nil
 }
