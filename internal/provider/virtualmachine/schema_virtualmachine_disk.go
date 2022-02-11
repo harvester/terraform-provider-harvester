@@ -46,17 +46,20 @@ func resourceDiskSchema() map[string]*schema.Schema {
 			ValidateFunc: validation.IntAtLeast(0),
 		},
 		constants.FieldVolumeImage: {
-			Type:     schema.TypeString,
-			Optional: true,
+			Type:          schema.TypeString,
+			ConflictsWith: []string{constants.FieldDiskExistingVolumeName, constants.FieldDiskContainerImageName},
+			Optional:      true,
 		},
 		constants.FieldDiskExistingVolumeName: {
-			Type:         schema.TypeString,
-			Optional:     true,
-			ValidateFunc: util.IsValidName,
+			Type:          schema.TypeString,
+			Optional:      true,
+			ConflictsWith: []string{constants.FieldVolumeImage, constants.FieldDiskContainerImageName},
+			ValidateFunc:  util.IsValidName,
 		},
 		constants.FieldDiskContainerImageName: {
-			Type:     schema.TypeString,
-			Optional: true,
+			Type:          schema.TypeString,
+			ConflictsWith: []string{constants.FieldVolumeImage, constants.FieldDiskExistingVolumeName},
+			Optional:      true,
 		},
 		constants.FieldDiskAutoDelete: {
 			Type:     schema.TypeBool,
