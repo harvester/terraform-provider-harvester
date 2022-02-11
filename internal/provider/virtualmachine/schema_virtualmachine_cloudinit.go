@@ -20,28 +20,34 @@ func resourceCloudInitSchema() map[string]*schema.Schema {
 			}, false),
 		},
 		constants.FieldCloudInitNetworkData: {
-			Type:     schema.TypeString,
-			Optional: true,
+			Type:          schema.TypeString,
+			ConflictsWith: []string{constants.FieldCloudInitNetworkDataBase64, constants.FieldCloudInitNetworkDataSecretName},
+			Optional:      true,
 		},
 		constants.FieldCloudInitNetworkDataBase64: {
-			Type:     schema.TypeString,
-			Optional: true,
+			Type:          schema.TypeString,
+			ConflictsWith: []string{constants.FieldCloudInitNetworkData, constants.FieldCloudInitNetworkDataSecretName},
+			Optional:      true,
 		},
 		constants.FieldCloudInitNetworkDataSecretName: {
-			Type:     schema.TypeString,
-			Optional: true,
+			Type:          schema.TypeString,
+			ConflictsWith: []string{constants.FieldCloudInitNetworkData, constants.FieldCloudInitNetworkDataBase64},
+			Optional:      true,
 		},
 		constants.FieldCloudInitUserData: {
-			Type:     schema.TypeString,
-			Optional: true,
+			Type:          schema.TypeString,
+			ConflictsWith: []string{constants.FieldCloudInitUserDataBase64, constants.FieldCloudInitUserDataSecretName},
+			Optional:      true,
 		},
 		constants.FieldCloudInitUserDataBase64: {
-			Type:     schema.TypeString,
-			Optional: true,
+			Type:          schema.TypeString,
+			ConflictsWith: []string{constants.FieldCloudInitUserData, constants.FieldCloudInitUserDataSecretName},
+			Optional:      true,
 		},
 		constants.FieldCloudInitUserDataSecretName: {
-			Type:     schema.TypeString,
-			Optional: true,
+			Type:          schema.TypeString,
+			ConflictsWith: []string{constants.FieldCloudInitUserData, constants.FieldCloudInitUserDataBase64},
+			Optional:      true,
 		},
 	}
 	return s
