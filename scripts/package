@@ -6,13 +6,30 @@ source $(dirname $0)/version
 cd $(dirname $0)/..
 
 if [ "${GIT_TAG}" != "${VERSION}" ]; then
-  VERSION=0.0.0-${VERSION}
+  PROVIDER_VERSION="0.0.0-master"
 else
-  VERSION=${VERSION#"v"}
+  PROVIDER_VERSION=${VERSION#"v"}
 fi
 
-sed "s/%VERSION%/${VERSION}/g" hack/install-terraform-provider-harvester.sh.tpl | sed "s/%ARCH%/${ARCH}/g" > bin/install-terraform-provider-harvester.sh
-chmod +x bin/install-terraform-provider-harvester.sh
+TAG=${TAG:-${VERSION}${SUFFIX}}
+
+if echo $TAG | grep -q dirty; then
+    TAG=dev
+fi
 
 mkdir -p dist/artifacts
-tar -zcvf dist/artifacts/terraform-provider-harvester${SUFFIX}.tar.gz -C bin terraform-provider-harvester install-terraform-provider-harvester.sh
+cp bin/terraform-provider-harvester dist/artifacts/terraform-provider-harvester${SUFFIX}
+
+cd $(dirname $0)/package
+
+IMAGE=${REPO}/terraform-provider-harvester:${TAG}
+DOCKERFILE=Dockerfile
+if [ -e ${DOCKERFILE}.${ARCH} ]; then
+    DOCKERFILE=${DOCKERFILE}.${ARCH}
+fi
+
+rm -rf ./terraform-provider-harvester
+cp ../bin/terraform-provider-harvester .
+
+docker build --build-arg ARCH=${ARCH} --build-arg PROVIDER_VERSION=${PROVIDER_VERSION} -f ${DOCKERFILE} -t ${IMAGE} .
+echo Built ${IMAGE}
