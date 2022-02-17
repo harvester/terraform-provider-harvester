@@ -8,17 +8,8 @@ cd $(dirname $0)/..
 if [ "${GIT_TAG}" != "${VERSION}" ]; then
   PROVIDER_VERSION="0.0.0-master"
 else
-  PROVIDER_VERSION=${VERSION#"v"}
+  PROVIDER_VERSION=${VERSION/[v|V]/}
 fi
-
-TAG=${TAG:-${VERSION}${SUFFIX}}
-
-if echo $TAG | grep -q dirty; then
-    TAG=dev
-fi
-
-mkdir -p dist/artifacts
-cp bin/terraform-provider-harvester dist/artifacts/terraform-provider-harvester${SUFFIX}
 
 cd $(dirname $0)/package
 
