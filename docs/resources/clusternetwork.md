@@ -19,7 +19,7 @@ resource "harvester_clusternetwork" "vlan" {
   }
   name                 = "vlan"
   enable               = true
-  default_physical_nic = "eth0"
+  default_physical_nic = "harvester-mgmt"
 }
 ```
 
@@ -47,5 +47,8 @@ resource "harvester_clusternetwork" "vlan" {
 Import is supported using the following syntax:
 
 ```shell
-terraform import harvester_clusternetwork.foo <Name>
+# There is a vlan clusternetwork in Harvester clusters by default
+# Import it before manage it
+# And don't destroy it after imported
+terraform import harvester_clusternetwork.vlan vlan
 ```
