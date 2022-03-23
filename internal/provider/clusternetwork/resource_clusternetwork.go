@@ -31,17 +31,13 @@ func ResourceClusterNetwork() *schema.Resource {
 }
 
 func resourceClusterNetworkCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	c := meta.(*client.Client)
 	name := d.Get(constants.FieldCommonName).(string)
-	toCreate, err := util.ResourceConstruct(d, Creator("", name))
-	if err != nil {
-		return diag.FromErr(err)
+	switch name {
+	case "vlan":
+		return diag.FromErr(errors.New("can not create the existing vlan clusternetwork, to avoid this error and continue with the plan, use `terraform import harvester_clusternetwork.vlan vlan` to import it first"))
+	default:
+		return diag.FromErr(errors.New("can not create clusternetwork, to avoid this error and continue with the plan, either move clusternetwork to another module or reduce the scope of the plan using the -target flag"))
 	}
-	clusterNetwork, err := c.HarvesterNetworkClient.NetworkV1beta1().ClusterNetworks().Create(ctx, toCreate.(*harvsternetworkv1.ClusterNetwork), metav1.CreateOptions{})
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	return resourceClusterNetworkImport(d, clusterNetwork)
 }
 
 func resourceClusterNetworkUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
