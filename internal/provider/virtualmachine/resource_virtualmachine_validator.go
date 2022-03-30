@@ -84,7 +84,7 @@ func checkKeyPairsInUserData(userdataContent []byte, keyPairs []*harvsterv1.KeyP
 	}
 	var missingKeyPairs []string
 	for _, keyPair := range keyPairs {
-		if ok := inCloudConfig(userData, "ssh_authorized_keys", keyPair.Spec.PublicKey); !ok {
+		if ok := inCloudConfig("", userData, "ssh_authorized_keys", keyPair.Spec.PublicKey); !ok {
 			missingKeyPairs = append(missingKeyPairs, helper.BuildNamespacedName(keyPair.Namespace, keyPair.Name))
 		}
 	}
@@ -95,13 +95,23 @@ Either remove unused ssh keys from "ssh_keys" or add ssh public keys to cloud-in
 	return nil
 }
 
-func inCloudConfig(cf map[interface{}]interface{}, key string, value interface{}) bool {
-	switch section := cf[key].(type) {
-	case []interface{}:
-		for _, v := range section {
-			if v == value {
+func inCloudConfig(parentKey, parent, key, value interface{}) bool {
+	switch section := parent.(type) {
+	case map[interface{}]interface{}:
+		for k, v := range section {
+			if inCloudConfig(k, v, key, value) {
 				return true
 			}
+		}
+	case []interface{}:
+		for _, v := range section {
+			if inCloudConfig(parentKey, v, key, value) {
+				return true
+			}
+		}
+	case interface{}:
+		if parentKey == key && section == value {
+			return true
 		}
 	}
 	return false
