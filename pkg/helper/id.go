@@ -37,17 +37,6 @@ func BuildNamespacedName(namespace, name string) string {
 	return namespace + NamespacedNameSep + name
 }
 
-func BuildNamespacedNameFromID(id string, defaultNamespace string) (string, error) {
-	namespace, name, err := IDParts(id)
-	if err != nil {
-		return "", err
-	}
-	if namespace == defaultNamespace {
-		namespace = ""
-	}
-	return BuildNamespacedName(namespace, name), nil
-}
-
 func NamespacedNameParts(namespacedName string) (string, string, error) {
 	parts := strings.Split(namespacedName, NamespacedNameSep)
 	switch len(parts) {
@@ -70,4 +59,12 @@ func NamespacedNamePartsByDefault(namespacedName string, defaultNamespace string
 		namespace = defaultNamespace
 	}
 	return namespace, name, nil
+}
+
+func RebuildNamespacedName(namespacedName string, defaultNamespace string) (string, error) {
+	namespace, name, err := NamespacedNamePartsByDefault(namespacedName, defaultNamespace)
+	if err != nil {
+		return "", err
+	}
+	return BuildNamespacedName(namespace, name), nil
 }
