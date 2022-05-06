@@ -42,8 +42,9 @@ data "harvester_virtualmachine" "ubuntu20-dev" {
 - **memory** (String)
 - **network_interface** (List of Object) (see [below for nested schema](#nestedatt--network_interface))
 - **node_name** (String)
+- **run_strategy** (String) more info: https://kubevirt.io/user-guide/virtual_machines/run_strategies/
 - **ssh_keys** (List of String)
-- **start** (Boolean)
+- **start** (Boolean, Deprecated)
 - **state** (String)
 - **tags** (Map of String)
 
