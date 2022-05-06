@@ -56,8 +56,8 @@ func (v *VMImporter) SSHKeys() ([]string, error) {
 	if err := json.Unmarshal([]byte(sshNames), &sshKeys); err != nil {
 		return nil, err
 	}
-	for i, sshKeyID := range sshKeys {
-		sshKeyNamespacedName, err := helper.BuildNamespacedNameFromID(sshKeyID, v.Namespace())
+	for i, sshKey := range sshKeys {
+		sshKeyNamespacedName, err := helper.RebuildNamespacedName(sshKey, v.Namespace())
 		if err != nil {
 			return nil, err
 		}
@@ -129,7 +129,7 @@ func (v *VMImporter) pvcVolume(volume kubevirtv1.Volume, state map[string]interf
 			if pvcTemplate.Name == pvcName {
 				state[constants.FieldDiskSize] = pvcTemplate.Spec.Resources.Requests.Storage().String()
 				if imageID := pvcTemplate.Annotations[builder.AnnotationKeyImageID]; imageID != "" {
-					imageNamespacedName, err := helper.BuildNamespacedNameFromID(imageID, v.Namespace())
+					imageNamespacedName, err := helper.RebuildNamespacedName(imageID, v.Namespace())
 					if err != nil {
 						return err
 					}

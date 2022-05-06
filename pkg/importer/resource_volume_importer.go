@@ -31,7 +31,7 @@ func ResourceVolumeStateGetter(obj *corev1.PersistentVolumeClaim) (*StateGetter,
 		states[constants.FieldVolumeAccessMode] = obj.Spec.AccessModes[0]
 	}
 	if imageID := obj.Annotations[builder.AnnotationKeyImageID]; imageID != "" {
-		imageNamespacedName, err := helper.BuildNamespacedNameFromID(imageID, obj.Namespace)
+		imageNamespacedName, err := helper.RebuildNamespacedName(imageID, obj.Namespace)
 		if err != nil {
 			return nil, err
 		}

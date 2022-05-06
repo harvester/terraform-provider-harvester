@@ -79,13 +79,12 @@ func (c *Constructor) Setup() util.Processors {
 		{
 			Field: constants.FieldVirtualMachineSSHKeys,
 			Parser: func(i interface{}) error {
-				sshKeyNamespacedName := i.(string)
-				sshKeyNamespace, sshKeyName, err := helper.NamespacedNamePartsByDefault(sshKeyNamespacedName, c.Builder.VirtualMachine.Namespace)
+				sshKey := i.(string)
+				sshKeyNamespacedName, err := helper.RebuildNamespacedName(sshKey, c.Builder.VirtualMachine.Namespace)
 				if err != nil {
 					return err
 				}
-				sshKeyID := helper.BuildID(sshKeyNamespace, sshKeyName)
-				vmBuilder.SSHKey(sshKeyID)
+				vmBuilder.SSHKey(sshKeyNamespacedName)
 				return nil
 			},
 		},
@@ -161,7 +160,7 @@ func (c *Constructor) Setup() util.Processors {
 						if err != nil {
 							return err
 						}
-						pvcOption.ImageID = helper.BuildID(imageNamespace, imageName)
+						pvcOption.ImageID = helper.BuildNamespacedName(imageNamespace, imageName)
 						storageClassName := builder.BuildImageStorageClassName("", imageName)
 						pvcOption.StorageClassName = pointer.StringPtr(storageClassName)
 					}
