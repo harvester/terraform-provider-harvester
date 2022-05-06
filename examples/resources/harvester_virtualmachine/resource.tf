@@ -49,12 +49,12 @@ resource "harvester_virtualmachine" "ubuntu20-dev" {
   cpu    = 2
   memory = "2Gi"
 
-  start        = true
+  run_strategy = "RerunOnFailure"
   hostname     = "ubuntu-dev"
   machine_type = "q35"
 
   ssh_keys = [
-    "mysshkey"
+    harvester_ssh_key.mysshkey.id
   ]
 
   network_interface {
@@ -123,7 +123,7 @@ resource "harvester_virtualmachine" "ubuntu20-dev" {
           - qemu-guest-agent
       ssh_authorized_keys:
         - >-
-          your ssh public key
+          public_key content of harvester_ssh_key.mysshkey
       EOF
     network_data = ""
   }
