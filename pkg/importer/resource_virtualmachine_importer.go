@@ -39,7 +39,7 @@ func (v *VMImporter) Description() string {
 }
 
 func (v *VMImporter) Memory() string {
-	return v.VirtualMachine.Spec.Template.Spec.Domain.Resources.Requests.Memory().String()
+	return v.VirtualMachine.Spec.Template.Spec.Domain.Resources.Limits.Memory().String()
 }
 
 func (v *VMImporter) CPU() int {
