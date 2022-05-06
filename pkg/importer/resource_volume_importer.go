@@ -6,7 +6,7 @@ import (
 	"github.com/harvester/harvester/pkg/builder"
 	"github.com/harvester/harvester/pkg/ref"
 	corev1 "k8s.io/api/core/v1"
-	kubevirtv1 "kubevirt.io/client-go/api/v1"
+	kubevirtv1 "kubevirt.io/api/core/v1"
 
 	"github.com/harvester/terraform-provider-harvester/pkg/constants"
 	"github.com/harvester/terraform-provider-harvester/pkg/helper"

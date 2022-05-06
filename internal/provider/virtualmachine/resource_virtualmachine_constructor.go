@@ -5,7 +5,7 @@ import (
 	harvesterutil "github.com/harvester/harvester/pkg/util"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/utils/pointer"
-	kubevirtv1 "kubevirt.io/client-go/api/v1"
+	kubevirtv1 "kubevirt.io/api/core/v1"
 
 	"github.com/harvester/terraform-provider-harvester/internal/util"
 	"github.com/harvester/terraform-provider-harvester/pkg/client"
@@ -44,6 +44,14 @@ func (c *Constructor) Setup() util.Processors {
 			Field: constants.FieldVirtualMachineMemory,
 			Parser: func(i interface{}) error {
 				vmBuilder.Memory(i.(string))
+				return nil
+			},
+		},
+		{
+			Field: constants.FieldVirtualMachineRunStrategy,
+			Parser: func(i interface{}) error {
+				runStrategy := kubevirtv1.VirtualMachineRunStrategy(i.(string))
+				vmBuilder.RunStrategy(runStrategy)
 				return nil
 			},
 		},

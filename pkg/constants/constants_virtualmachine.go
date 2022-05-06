@@ -6,6 +6,7 @@ const (
 	FieldVirtualMachineMachineType      = "machine_type"
 	FieldVirtualMachineHostname         = "hostname"
 	FieldVirtualMachineStart            = "start"
+	FieldVirtualMachineRunStrategy      = "run_strategy"
 	FieldVirtualMachineCPU              = "cpu"
 	FieldVirtualMachineMemory           = "memory"
 	FieldVirtualMachineSSHKeys          = "ssh_keys"

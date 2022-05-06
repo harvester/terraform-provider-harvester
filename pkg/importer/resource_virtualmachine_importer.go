@@ -7,7 +7,7 @@ import (
 	"github.com/harvester/harvester/pkg/builder"
 	harvesterutil "github.com/harvester/harvester/pkg/util"
 	corev1 "k8s.io/api/core/v1"
-	kubevirtv1 "kubevirt.io/client-go/api/v1"
+	kubevirtv1 "kubevirt.io/api/core/v1"
 
 	"github.com/harvester/terraform-provider-harvester/pkg/constants"
 	"github.com/harvester/terraform-provider-harvester/pkg/helper"
@@ -48,10 +48,6 @@ func (v *VMImporter) CPU() int {
 
 func (v *VMImporter) EvictionStrategy() bool {
 	return *v.VirtualMachine.Spec.Template.Spec.EvictionStrategy == kubevirtv1.EvictionStrategyLiveMigrate
-}
-
-func (v *VMImporter) Run() bool {
-	return *v.VirtualMachine.Spec.Running
 }
 
 func (v *VMImporter) SSHKeys() ([]string, error) {
@@ -289,6 +285,10 @@ func ResourceVirtualMachineStateGetter(vm *kubevirtv1.VirtualMachine, vmi *kubev
 	if err != nil {
 		return nil, err
 	}
+	runStrategy, err := vm.RunStrategy()
+	if err != nil {
+		return nil, err
+	}
 	return &StateGetter{
 		ID:           helper.BuildID(vm.Namespace, vm.Name),
 		Name:         vm.Name,
@@ -303,7 +303,7 @@ func ResourceVirtualMachineStateGetter(vm *kubevirtv1.VirtualMachine, vmi *kubev
 			constants.FieldVirtualMachineMemory:           vmImporter.Memory(),
 			constants.FieldVirtualMachineHostname:         vmImporter.HostName(),
 			constants.FieldVirtualMachineMachineType:      vmImporter.MachineType(),
-			constants.FieldVirtualMachineStart:            vmImporter.Run(),
+			constants.FieldVirtualMachineRunStrategy:      string(runStrategy),
 			constants.FieldVirtualMachineNetworkInterface: networkInterface,
 			constants.FieldVirtualMachineDisk:             disk,
 			constants.FieldVirtualMachineCloudInit:        cloudInit,

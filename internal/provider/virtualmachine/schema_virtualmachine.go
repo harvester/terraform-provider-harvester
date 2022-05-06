@@ -1,7 +1,11 @@
 package virtualmachine
 
 import (
+	"fmt"
+
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
+	kubevirtv1 "kubevirt.io/api/core/v1"
 
 	"github.com/harvester/terraform-provider-harvester/internal/util"
 	"github.com/harvester/terraform-provider-harvester/pkg/constants"
@@ -19,10 +23,28 @@ func Schema() map[string]*schema.Schema {
 			Optional: true,
 			Computed: true,
 		},
+		constants.FieldVirtualMachineRunStrategy: {
+			Type:     schema.TypeString,
+			Optional: true,
+			Default:  string(kubevirtv1.RunStrategyRerunOnFailure),
+			ValidateFunc: validation.StringInSlice([]string{
+				string(kubevirtv1.RunStrategyAlways),
+				string(kubevirtv1.RunStrategyManual),
+				string(kubevirtv1.RunStrategyHalted),
+				string(kubevirtv1.RunStrategyRerunOnFailure),
+			}, false),
+			Description: "more info: https://kubevirt.io/user-guide/virtual_machines/run_strategies/",
+		},
 		constants.FieldVirtualMachineStart: {
 			Type:     schema.TypeBool,
 			Optional: true,
-			Default:  true,
+			Deprecated: fmt.Sprintf(`
+please use %s instead of this deprecated field:
+	%s = true  ==>  %s = "%s"
+	%s = false  ==>  %s = "%s"
+`, constants.FieldVirtualMachineRunStrategy,
+				constants.FieldVirtualMachineStart, constants.FieldVirtualMachineRunStrategy, kubevirtv1.RunStrategyRerunOnFailure,
+				constants.FieldVirtualMachineStart, constants.FieldVirtualMachineRunStrategy, kubevirtv1.RunStrategyHalted),
 		},
 		constants.FieldVirtualMachineCPU: {
 			Type:     schema.TypeInt,
