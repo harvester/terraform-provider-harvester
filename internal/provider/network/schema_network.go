@@ -39,12 +39,14 @@ func Schema() map[string]*schema.Schema {
 		constants.FieldNetworkRouteCIDR: {
 			Type:          schema.TypeString,
 			Optional:      true,
+			Computed:      true,
 			ConflictsWith: []string{constants.FieldNetworkRouteDHCPServerIP},
 			Description:   "e.g. 172.16.0.1/24",
 		},
 		constants.FieldNetworkRouteGateWay: {
 			Type:          schema.TypeString,
 			Optional:      true,
+			Computed:      true,
 			ConflictsWith: []string{constants.FieldNetworkRouteDHCPServerIP},
 			Description:   "e.g. 172.16.0.1",
 		},
