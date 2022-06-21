@@ -100,10 +100,10 @@ func (c *Constructor) Setup() util.Processors {
 					}
 				case networkutils.Auto:
 					if c.Layer3NetworkConf.CIDR != "" {
-						return errors.New("can not specify route_cidr in auto route type")
+						return errors.New("can not use route_mode auto when route_cidr has been specified")
 					}
 					if c.Layer3NetworkConf.Gateway != "" {
-						return errors.New("can not specify route_gateway in auto route type")
+						return errors.New("can not use route_mode auto when route_gateway has been specified")
 					}
 				}
 				if _, err = networkutils.NewLayer3NetworkConf(layer3NetworkConf); err != nil {
