@@ -25,5 +25,5 @@ func dataSourceClusterNetworkRead(ctx context.Context, d *schema.ResourceData, m
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	return resourceClusterNetworkImport(d, clusterNetwork)
+	return diag.FromErr(resourceClusterNetworkImport(d, clusterNetwork))
 }

@@ -42,7 +42,7 @@ func resourceKeypairCreate(ctx context.Context, d *schema.ResourceData, meta int
 		return diag.FromErr(err)
 	}
 
-	return resourceKeyPairImport(d, obj)
+	return diag.FromErr(resourceKeyPairImport(d, obj))
 }
 
 func resourceKeypairUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -77,7 +77,7 @@ func resourceKeypairRead(ctx context.Context, d *schema.ResourceData, meta inter
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	keyPair, err := c.HarvesterClient.HarvesterhciV1beta1().KeyPairs(namespace).Get(ctx, name, metav1.GetOptions{})
+	obj, err := c.HarvesterClient.HarvesterhciV1beta1().KeyPairs(namespace).Get(ctx, name, metav1.GetOptions{})
 	if err != nil {
 		if apierrors.IsNotFound(err) {
 			d.SetId("")
@@ -85,7 +85,7 @@ func resourceKeypairRead(ctx context.Context, d *schema.ResourceData, meta inter
 		}
 		return diag.FromErr(err)
 	}
-	return resourceKeyPairImport(d, keyPair)
+	return diag.FromErr(resourceKeyPairImport(d, obj))
 }
 
 func resourceKeypairDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -102,10 +102,10 @@ func resourceKeypairDelete(ctx context.Context, d *schema.ResourceData, meta int
 	return nil
 }
 
-func resourceKeyPairImport(d *schema.ResourceData, obj *harvsterv1.KeyPair) diag.Diagnostics {
+func resourceKeyPairImport(d *schema.ResourceData, obj *harvsterv1.KeyPair) error {
 	stateGetter, err := importer.ResourceKeyPairStateGetter(obj)
 	if err != nil {
-		return nil
+		return err
 	}
-	return diag.FromErr(util.ResourceStatesSet(d, stateGetter))
+	return util.ResourceStatesSet(d, stateGetter)
 }
