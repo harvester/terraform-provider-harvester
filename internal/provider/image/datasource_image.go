@@ -26,5 +26,5 @@ func dataSourceImageRead(ctx context.Context, d *schema.ResourceData, meta inter
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	return resourceImageImport(d, obj)
+	return diag.FromErr(resourceImageImport(d, obj))
 }

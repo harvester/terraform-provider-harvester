@@ -2,9 +2,12 @@ package image
 
 import (
 	"context"
+	"errors"
+	"time"
 
 	harvsterv1 "github.com/harvester/harvester/pkg/apis/harvesterhci.io/v1beta1"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -37,11 +40,12 @@ func resourceImageCreate(ctx context.Context, d *schema.ResourceData, meta inter
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	obj, err := c.HarvesterClient.HarvesterhciV1beta1().VirtualMachineImages(namespace).Create(ctx, toCreate.(*harvsterv1.VirtualMachineImage), metav1.CreateOptions{})
+	_, err = c.HarvesterClient.HarvesterhciV1beta1().VirtualMachineImages(namespace).Create(ctx, toCreate.(*harvsterv1.VirtualMachineImage), metav1.CreateOptions{})
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	return resourceImageImport(d, obj)
+	d.SetId(helper.BuildID(namespace, name))
+	return diag.FromErr(resourceImageWaitForState(ctx, d, meta, schema.TimeoutCreate))
 }
 
 func resourceImageUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -83,7 +87,7 @@ func resourceImageRead(ctx context.Context, d *schema.ResourceData, meta interfa
 		}
 		return diag.FromErr(err)
 	}
-	return resourceImageImport(d, obj)
+	return diag.FromErr(resourceImageImport(d, obj))
 }
 
 func resourceImageDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -100,10 +104,47 @@ func resourceImageDelete(ctx context.Context, d *schema.ResourceData, meta inter
 	return nil
 }
 
-func resourceImageImport(d *schema.ResourceData, obj *harvsterv1.VirtualMachineImage) diag.Diagnostics {
+func resourceImageImport(d *schema.ResourceData, obj *harvsterv1.VirtualMachineImage) error {
 	stateGetter, err := importer.ResourceImageStateGetter(obj)
 	if err != nil {
-		return nil
+		return err
 	}
-	return diag.FromErr(util.ResourceStatesSet(d, stateGetter))
+	return util.ResourceStatesSet(d, stateGetter)
+}
+
+func resourceImageWaitForState(ctx context.Context, d *schema.ResourceData, meta interface{}, timeOutKey string) error {
+	stateConf := &resource.StateChangeConf{
+		Pending:    []string{constants.StateImageInitializing, constants.StateImageDownloading, constants.StateImageUploading, constants.StateImageExporting},
+		Target:     []string{constants.StateCommonActive},
+		Refresh:    resourceImageRefresh(ctx, d, meta),
+		Timeout:    d.Timeout(timeOutKey),
+		Delay:      1 * time.Second,
+		MinTimeout: 3 * time.Second,
+	}
+	_, err := stateConf.WaitForStateContext(ctx)
+	return err
+}
+
+func resourceImageRefresh(ctx context.Context, d *schema.ResourceData, meta interface{}) resource.StateRefreshFunc {
+	return func() (interface{}, string, error) {
+		c := meta.(*client.Client)
+		namespace := d.Get(constants.FieldCommonNamespace).(string)
+		name := d.Get(constants.FieldCommonName).(string)
+		obj, err := c.HarvesterClient.HarvesterhciV1beta1().VirtualMachineImages(namespace).Get(ctx, name, metav1.GetOptions{})
+		if err != nil {
+			if apierrors.IsNotFound(err) {
+				return obj, constants.StateCommonRemoved, nil
+			}
+			return obj, constants.StateCommonError, err
+		}
+		if err = resourceImageImport(d, obj); err != nil {
+			return obj, constants.StateCommonError, err
+		}
+		state := d.Get(constants.FieldCommonState).(string)
+		if state == constants.StateCommonFailed {
+			message := d.Get(constants.FieldCommonMessage).(string)
+			return obj, state, errors.New(message)
+		}
+		return obj, state, err
+	}
 }

@@ -25,6 +25,7 @@ func ResourceImageStateGetter(obj *harvsterv1.VirtualMachineImage) (*StateGetter
 	}
 	var (
 		state       string
+		InitMessage string
 		initialized bool
 		imported    bool
 	)
@@ -32,6 +33,7 @@ func ResourceImageStateGetter(obj *harvsterv1.VirtualMachineImage) (*StateGetter
 		switch condition.Type {
 		case harvsterv1.ImageInitialized:
 			initialized = condition.Status == corev1.ConditionTrue
+			InitMessage = condition.Message
 		case harvsterv1.ImageImported:
 			imported = condition.Status == corev1.ConditionTrue
 		}
@@ -49,10 +51,13 @@ func ResourceImageStateGetter(obj *harvsterv1.VirtualMachineImage) (*StateGetter
 				state = constants.StateImageUploading
 			}
 		}
+	} else if InitMessage == "" {
+		state = constants.StateImageInitializing
 	} else {
-		state = constants.StateImageFailed
+		state = constants.StateCommonFailed
 	}
 	states[constants.FieldCommonState] = state
+	states[constants.FieldCommonMessage] = InitMessage
 	return &StateGetter{
 		ID:           helper.BuildID(obj.Namespace, obj.Name),
 		Name:         obj.Name,
