@@ -46,7 +46,7 @@ func resourceClusterNetworkUpdate(ctx context.Context, d *schema.ResourceData, m
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	clusterNetwork, err := c.HarvesterNetworkClient.NetworkV1beta1().ClusterNetworks().Get(ctx, name, metav1.GetOptions{})
+	obj, err := c.HarvesterNetworkClient.NetworkV1beta1().ClusterNetworks().Get(ctx, name, metav1.GetOptions{})
 	if err != nil {
 		if apierrors.IsNotFound(err) {
 			d.SetId("")
@@ -54,7 +54,7 @@ func resourceClusterNetworkUpdate(ctx context.Context, d *schema.ResourceData, m
 		}
 		return diag.FromErr(err)
 	}
-	toUpdate, err := util.ResourceConstruct(d, Updater(clusterNetwork))
+	toUpdate, err := util.ResourceConstruct(d, Updater(obj))
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -71,7 +71,7 @@ func resourceClusterNetworkRead(ctx context.Context, d *schema.ResourceData, met
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	clusterNetwork, err := c.HarvesterNetworkClient.NetworkV1beta1().ClusterNetworks().Get(ctx, name, metav1.GetOptions{})
+	obj, err := c.HarvesterNetworkClient.NetworkV1beta1().ClusterNetworks().Get(ctx, name, metav1.GetOptions{})
 	if err != nil {
 		if apierrors.IsNotFound(err) {
 			d.SetId("")
@@ -79,17 +79,17 @@ func resourceClusterNetworkRead(ctx context.Context, d *schema.ResourceData, met
 		}
 		return diag.FromErr(err)
 	}
-	return resourceClusterNetworkImport(d, clusterNetwork)
+	return diag.FromErr(resourceClusterNetworkImport(d, obj))
 }
 
 func resourceClusterNetworkDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	return diag.FromErr(errors.New("clusternetwork should not be destroyed, to avoid this error and continue with the plan, either move clusternetwork to another module or reduce the scope of the plan using the -target flag"))
 }
 
-func resourceClusterNetworkImport(d *schema.ResourceData, obj *harvsternetworkv1.ClusterNetwork) diag.Diagnostics {
+func resourceClusterNetworkImport(d *schema.ResourceData, obj *harvsternetworkv1.ClusterNetwork) error {
 	stateGetter, err := importer.ResourceClusterNetworkStateGetter(obj)
 	if err != nil {
-		return nil
+		return err
 	}
-	return diag.FromErr(util.ResourceStatesSet(d, stateGetter))
+	return util.ResourceStatesSet(d, stateGetter)
 }

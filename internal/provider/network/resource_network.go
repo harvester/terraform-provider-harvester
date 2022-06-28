@@ -37,11 +37,11 @@ func resourceNetworkCreate(ctx context.Context, d *schema.ResourceData, meta int
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	network, err := c.HarvesterClient.K8sCniCncfIoV1().NetworkAttachmentDefinitions(namespace).Create(ctx, toCreate.(*nadv1.NetworkAttachmentDefinition), metav1.CreateOptions{})
+	obj, err := c.HarvesterClient.K8sCniCncfIoV1().NetworkAttachmentDefinitions(namespace).Create(ctx, toCreate.(*nadv1.NetworkAttachmentDefinition), metav1.CreateOptions{})
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	return resourceNetworkImport(d, network)
+	return diag.FromErr(resourceNetworkImport(d, obj))
 }
 
 func resourceNetworkUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -84,7 +84,7 @@ func resourceNetworkRead(ctx context.Context, d *schema.ResourceData, meta inter
 		return diag.FromErr(err)
 	}
 
-	return resourceNetworkImport(d, obj)
+	return diag.FromErr(resourceNetworkImport(d, obj))
 }
 
 func resourceNetworkDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -101,10 +101,10 @@ func resourceNetworkDelete(ctx context.Context, d *schema.ResourceData, meta int
 	return nil
 }
 
-func resourceNetworkImport(d *schema.ResourceData, obj *nadv1.NetworkAttachmentDefinition) diag.Diagnostics {
+func resourceNetworkImport(d *schema.ResourceData, obj *nadv1.NetworkAttachmentDefinition) error {
 	stateGetter, err := importer.ResourceNetworkStateGetter(obj)
 	if err != nil {
-		return nil
+		return err
 	}
-	return diag.FromErr(util.ResourceStatesSet(d, stateGetter))
+	return util.ResourceStatesSet(d, stateGetter)
 }

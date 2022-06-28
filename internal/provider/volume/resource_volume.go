@@ -42,7 +42,7 @@ func resourceVolumeCreate(ctx context.Context, d *schema.ResourceData, meta inte
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	return resourceVolumeImport(d, obj)
+	return diag.FromErr(resourceVolumeImport(d, obj))
 }
 
 func resourceVolumeUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -51,7 +51,6 @@ func resourceVolumeUpdate(ctx context.Context, d *schema.ResourceData, meta inte
 	if err != nil {
 		return diag.FromErr(err)
 	}
-
 	obj, err := c.KubeClient.CoreV1().PersistentVolumeClaims(namespace).Get(ctx, name, metav1.GetOptions{})
 	if err != nil {
 		if apierrors.IsNotFound(err) {
@@ -85,7 +84,7 @@ func resourceVolumeRead(ctx context.Context, d *schema.ResourceData, meta interf
 		}
 		return diag.FromErr(err)
 	}
-	return resourceVolumeImport(d, obj)
+	return diag.FromErr(resourceVolumeImport(d, obj))
 }
 
 func resourceVolumeDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -102,10 +101,10 @@ func resourceVolumeDelete(ctx context.Context, d *schema.ResourceData, meta inte
 	return nil
 }
 
-func resourceVolumeImport(d *schema.ResourceData, obj *corev1.PersistentVolumeClaim) diag.Diagnostics {
+func resourceVolumeImport(d *schema.ResourceData, obj *corev1.PersistentVolumeClaim) error {
 	stateGetter, err := importer.ResourceVolumeStateGetter(obj)
 	if err != nil {
-		return nil
+		return err
 	}
-	return diag.FromErr(util.ResourceStatesSet(d, stateGetter))
+	return util.ResourceStatesSet(d, stateGetter)
 }

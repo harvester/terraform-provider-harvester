@@ -27,5 +27,5 @@ func dataSourceNetworkRead(ctx context.Context, d *schema.ResourceData, meta int
 		return diag.FromErr(err)
 	}
 
-	return resourceNetworkImport(d, obj)
+	return diag.FromErr(resourceNetworkImport(d, obj))
 }
