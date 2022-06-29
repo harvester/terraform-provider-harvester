@@ -35,6 +35,7 @@ data "harvester_image" "ubuntu20" {
 
 - **description** (String) Any text you want that better describes this resource
 - **display_name** (String)
+- **message** (String)
 - **progress** (Number)
 - **pvc_name** (String)
 - **pvc_namespace** (String)

@@ -40,8 +40,10 @@ data "harvester_virtualmachine" "ubuntu20-dev" {
 - **hostname** (String)
 - **machine_type** (String)
 - **memory** (String)
+- **message** (String)
 - **network_interface** (List of Object) (see [below for nested schema](#nestedatt--network_interface))
 - **node_name** (String)
+- **restart_after_update** (Boolean) restart vm after the vm is updated
 - **run_strategy** (String) more info: https://kubevirt.io/user-guide/virtual_machines/run_strategies/
 - **ssh_keys** (List of String)
 - **start** (Boolean, Deprecated)
@@ -95,5 +97,6 @@ Read-Only:
 - **name** (String)
 - **network_name** (String)
 - **type** (String)
+- **wait_for_lease** (Boolean)
 
 

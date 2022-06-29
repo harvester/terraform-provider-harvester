@@ -53,8 +53,9 @@ resource "harvester_virtualmachine" "k3os" {
 
 
 resource "harvester_virtualmachine" "ubuntu20-dev" {
-  name      = "ubuntu-dev"
-  namespace = "default"
+  name                 = "ubuntu-dev"
+  namespace            = "default"
+  restart_after_update = true
 
   description = "test raw image"
   tags = {
@@ -73,8 +74,9 @@ resource "harvester_virtualmachine" "ubuntu20-dev" {
   ]
 
   network_interface {
-    name         = "nic-1"
-    network_name = harvester_network.vlan1.id
+    name           = "nic-1"
+    network_name   = harvester_network.vlan1.id
+    wait_for_lease = true
   }
 
   network_interface {
@@ -164,6 +166,7 @@ resource "harvester_virtualmachine" "ubuntu20-dev" {
 - **machine_type** (String)
 - **memory** (String)
 - **namespace** (String)
+- **restart_after_update** (Boolean) restart vm after the vm is updated
 - **run_strategy** (String) more info: https://kubevirt.io/user-guide/virtual_machines/run_strategies/
 - **ssh_keys** (List of String)
 - **start** (Boolean, Deprecated)
@@ -171,6 +174,7 @@ resource "harvester_virtualmachine" "ubuntu20-dev" {
 
 ### Read-Only
 
+- **message** (String)
 - **node_name** (String)
 - **state** (String)
 
@@ -211,6 +215,7 @@ Optional:
 - **model** (String)
 - **network_name** (String)
 - **type** (String)
+- **wait_for_lease** (Boolean) wait for this network interface to obtain an IP address
 
 Read-Only:
 

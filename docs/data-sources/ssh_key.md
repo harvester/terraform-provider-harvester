@@ -35,6 +35,7 @@ data "harvester_ssh_key" "mysshkey" {
 
 - **description** (String) Any text you want that better describes this resource
 - **fingerprint** (String)
+- **message** (String)
 - **public_key** (String)
 - **state** (String)
 - **tags** (Map of String)

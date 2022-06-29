@@ -40,6 +40,7 @@ resource "harvester_clusternetwork" "vlan" {
 
 ### Read-Only
 
+- **message** (String)
 - **state** (String)
 
 ## Import
