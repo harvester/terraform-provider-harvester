@@ -246,7 +246,7 @@ func (v *VMImporter) NodeName() string {
 	return v.VirtualMachineInstance.Status.NodeName
 }
 
-func (v *VMImporter) State() string {
+func (v *VMImporter) State(networkInterfaces []map[string]interface{}, oldInstanceUID string) string {
 	if v.VirtualMachineInstance == nil {
 		return constants.StateVirtualMachineStopped
 	}
@@ -254,13 +254,18 @@ func (v *VMImporter) State() string {
 	case "Pending", "Scheduling", "Scheduled":
 		return constants.StateVirtualMachineStarting
 	case "Running":
+		for _, networkInterface := range networkInterfaces {
+			if networkInterface[constants.FiledNetworkInterfaceIPAddress] != "" && string(v.VirtualMachineInstance.UID) != oldInstanceUID {
+				return constants.StateCommonReady
+			}
+		}
 		return constants.StateVirtualMachineRunning
 	case "Succeeded":
 		return constants.StateVirtualMachineStopping
 	case "Failed":
-		return constants.StateVirtualMachineError
+		return constants.StateCommonFailed
 	default:
-		return constants.StateCommonNone
+		return constants.StateCommonUnknown
 	}
 }
 
@@ -271,7 +276,7 @@ func NewVMImporter(vm *kubevirtv1.VirtualMachine, vmi *kubevirtv1.VirtualMachine
 	}
 }
 
-func ResourceVirtualMachineStateGetter(vm *kubevirtv1.VirtualMachine, vmi *kubevirtv1.VirtualMachineInstance) (*StateGetter, error) {
+func ResourceVirtualMachineStateGetter(vm *kubevirtv1.VirtualMachine, vmi *kubevirtv1.VirtualMachineInstance, oldInstanceUID string) (*StateGetter, error) {
 	vmImporter := NewVMImporter(vm, vmi)
 	networkInterface, err := vmImporter.NetworkInterface()
 	if err != nil {
@@ -298,7 +303,7 @@ func ResourceVirtualMachineStateGetter(vm *kubevirtv1.VirtualMachine, vmi *kubev
 			constants.FieldCommonName:                     vm.Name,
 			constants.FieldCommonDescription:              GetDescriptions(vm.Annotations),
 			constants.FieldCommonTags:                     GetTags(vm.Labels),
-			constants.FieldCommonState:                    vmImporter.State(),
+			constants.FieldCommonState:                    vmImporter.State(networkInterface, oldInstanceUID),
 			constants.FieldVirtualMachineCPU:              vmImporter.CPU(),
 			constants.FieldVirtualMachineMemory:           vmImporter.Memory(),
 			constants.FieldVirtualMachineHostname:         vmImporter.HostName(),

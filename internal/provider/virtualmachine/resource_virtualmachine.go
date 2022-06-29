@@ -4,9 +4,11 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
 
 	harvesterutil "github.com/harvester/harvester/pkg/util"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -45,11 +47,19 @@ func resourceVirtualMachineCreate(ctx context.Context, d *schema.ResourceData, m
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	obj, err := c.HarvesterClient.KubevirtV1().VirtualMachines(namespace).Create(ctx, toCreate.(*kubevirtv1.VirtualMachine), metav1.CreateOptions{})
+	vm, err := c.HarvesterClient.KubevirtV1().VirtualMachines(namespace).Create(ctx, toCreate.(*kubevirtv1.VirtualMachine), metav1.CreateOptions{})
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	return resourceVirtualMachineImport(d, obj, nil)
+	d.SetId(helper.BuildID(namespace, name))
+	if err = updateLocalFields(d, constants.FieldVirtualMachineRestartAfterUpdate); err != nil {
+		return diag.FromErr(err)
+	}
+	runStrategy, err := vm.RunStrategy()
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	return diag.FromErr(resourceVirtualMachineWaitForState(ctx, d, meta, runStrategy, namespace, name, schema.TimeoutCreate, ""))
 }
 
 func resourceVirtualMachineUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -70,11 +80,31 @@ func resourceVirtualMachineUpdate(ctx context.Context, d *schema.ResourceData, m
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	_, err = c.HarvesterClient.KubevirtV1().VirtualMachines(namespace).Update(ctx, toUpdate.(*kubevirtv1.VirtualMachine), metav1.UpdateOptions{})
+	vm, err := c.HarvesterClient.KubevirtV1().VirtualMachines(namespace).Update(ctx, toUpdate.(*kubevirtv1.VirtualMachine), metav1.UpdateOptions{})
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	return resourceVirtualMachineRead(ctx, d, meta)
+	if err = updateLocalFields(d, constants.FieldVirtualMachineRestartAfterUpdate); err != nil {
+		return diag.FromErr(err)
+	}
+	runStrategy, err := vm.RunStrategy()
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	oldInstanceUID := ""
+	if IsNeedRestart(d, runStrategy) {
+		vmi, err := c.HarvesterClient.KubevirtV1().VirtualMachineInstances(namespace).Get(ctx, name, metav1.GetOptions{})
+		if err != nil && !apierrors.IsNotFound(err) {
+			return diag.FromErr(err)
+		}
+		if vmi != nil {
+			oldInstanceUID = string(vmi.UID)
+		}
+		if err = c.KubeVirtSubresourceClient.Put().Namespace(namespace).Resource(constants.ResourceVirtualMachine).SubResource(constants.SubresourceRestart).Name(name).Do(ctx).Error(); err != nil {
+			return diag.FromErr(err)
+		}
+	}
+	return diag.FromErr(resourceVirtualMachineWaitForState(ctx, d, meta, runStrategy, namespace, name, schema.TimeoutUpdate, oldInstanceUID))
 }
 
 func resourceVirtualMachineRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -93,12 +123,12 @@ func resourceVirtualMachineRead(ctx context.Context, d *schema.ResourceData, met
 	}
 	vmi, err := c.HarvesterClient.KubevirtV1().VirtualMachineInstances(namespace).Get(ctx, name, metav1.GetOptions{})
 	if err != nil {
-		if apierrors.IsNotFound(err) {
-			return nil
+		if !apierrors.IsNotFound(err) {
+			return diag.FromErr(err)
 		}
-		return diag.FromErr(err)
+		vmi = nil
 	}
-	return resourceVirtualMachineImport(d, vm, vmi)
+	return diag.FromErr(resourceVirtualMachineImport(d, vm, vmi, ""))
 }
 
 func resourceVirtualMachineDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -167,10 +197,79 @@ func resourceVirtualMachineDelete(ctx context.Context, d *schema.ResourceData, m
 	return nil
 }
 
-func resourceVirtualMachineImport(d *schema.ResourceData, vm *kubevirtv1.VirtualMachine, vmi *kubevirtv1.VirtualMachineInstance) diag.Diagnostics {
-	stateGetter, err := importer.ResourceVirtualMachineStateGetter(vm, vmi)
+func resourceVirtualMachineImport(d *schema.ResourceData, vm *kubevirtv1.VirtualMachine, vmi *kubevirtv1.VirtualMachineInstance, oldInstanceUID string) error {
+	stateGetter, err := importer.ResourceVirtualMachineStateGetter(vm, vmi, oldInstanceUID)
 	if err != nil {
-		return diag.FromErr(err)
+		return err
 	}
-	return diag.FromErr(util.ResourceStatesSet(d, stateGetter))
+	return util.ResourceStatesSet(d, stateGetter)
+}
+
+func resourceVirtualMachineWaitForState(ctx context.Context, d *schema.ResourceData, meta interface{}, runStrategy kubevirtv1.VirtualMachineRunStrategy, namespace, name, timeOutKey, oldInstanceUID string) error {
+	var (
+		pending = []string{constants.StateVirtualMachineStarting, constants.StateVirtualMachineStopping, constants.StateVirtualMachineRunning, constants.StateCommonFailed, constants.StateCommonUnknown}
+		target  []string
+	)
+	switch runStrategy {
+	case kubevirtv1.RunStrategyHalted:
+		pending = append(pending, constants.StateCommonReady)
+		target = []string{constants.StateVirtualMachineStopped}
+	case kubevirtv1.RunStrategyAlways, kubevirtv1.RunStrategyRerunOnFailure:
+		pending = append(pending, constants.StateVirtualMachineStopped)
+		target = []string{constants.StateCommonReady}
+	default:
+		return nil
+	}
+	stateConf := &resource.StateChangeConf{
+		Pending:    pending,
+		Target:     target,
+		Refresh:    resourceVirtualMachineRefresh(ctx, d, meta, namespace, name, oldInstanceUID),
+		Timeout:    d.Timeout(timeOutKey),
+		Delay:      10 * time.Second,
+		MinTimeout: 3 * time.Second,
+	}
+	_, err := stateConf.WaitForStateContext(ctx)
+	return err
+}
+
+func resourceVirtualMachineRefresh(ctx context.Context, d *schema.ResourceData, meta interface{}, namespace, name, oldInstanceUID string) resource.StateRefreshFunc {
+	return func() (interface{}, string, error) {
+		c := meta.(*client.Client)
+		vm, err := c.HarvesterClient.KubevirtV1().VirtualMachines(namespace).Get(ctx, name, metav1.GetOptions{})
+		if err != nil {
+			if apierrors.IsNotFound(err) {
+				return vm, constants.StateCommonRemoved, nil
+			}
+			return vm, constants.StateCommonError, err
+		}
+		vmi, err := c.HarvesterClient.KubevirtV1().VirtualMachineInstances(namespace).Get(ctx, name, metav1.GetOptions{})
+		if err != nil {
+			if !apierrors.IsNotFound(err) {
+				return vm, constants.StateCommonError, err
+			}
+			vmi = nil
+		}
+		if err = resourceVirtualMachineImport(d, vm, vmi, oldInstanceUID); err != nil {
+			return vm, constants.StateCommonError, err
+		}
+		state := d.Get(constants.FieldCommonState).(string)
+		return vm, state, nil
+	}
+}
+
+func updateLocalFields(d *schema.ResourceData, keys ...string) error {
+	for _, key := range keys {
+		if err := d.Set(key, d.Get(key)); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func IsNeedRestart(d *schema.ResourceData, runStrategy kubevirtv1.VirtualMachineRunStrategy) bool {
+	switch runStrategy {
+	case kubevirtv1.RunStrategyAlways, kubevirtv1.RunStrategyRerunOnFailure:
+		return d.Get(constants.FieldVirtualMachineRestartAfterUpdate).(bool)
+	}
+	return false
 }
