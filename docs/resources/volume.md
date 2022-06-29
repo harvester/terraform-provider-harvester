@@ -51,6 +51,7 @@ resource "harvester_volume" "ubuntu20-dev-image-disk" {
 ### Read-Only
 
 - **attached_vm** (String)
+- **message** (String)
 - **phase** (String)
 - **state** (String)
 

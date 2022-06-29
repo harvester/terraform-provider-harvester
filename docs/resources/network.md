@@ -57,6 +57,7 @@ resource "harvester_network" "vlan" {
 
 ### Read-Only
 
+- **message** (String)
 - **route_connectivity** (String)
 - **state** (String)
 

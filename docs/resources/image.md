@@ -53,6 +53,7 @@ resource "harvester_image" "ubuntu20" {
 
 ### Read-Only
 
+- **message** (String)
 - **progress** (Number)
 - **size** (Number)
 - **state** (String)

@@ -37,6 +37,7 @@ data "harvester_volume" "ubuntu20-dev-mount-disk" {
 - **attached_vm** (String)
 - **description** (String) Any text you want that better describes this resource
 - **image** (String)
+- **message** (String)
 - **phase** (String)
 - **size** (String)
 - **state** (String)

@@ -34,6 +34,7 @@ data "harvester_clusternetwork" "vlan" {
 - **default_physical_nic** (String)
 - **description** (String) Any text you want that better describes this resource
 - **enable** (Boolean)
+- **message** (String)
 - **state** (String)
 - **tags** (Map of String)
 

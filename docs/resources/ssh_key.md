@@ -39,6 +39,7 @@ resource "harvester_ssh_key" "mysshkey" {
 ### Read-Only
 
 - **fingerprint** (String)
+- **message** (String)
 - **state** (String)
 
 ## Import
