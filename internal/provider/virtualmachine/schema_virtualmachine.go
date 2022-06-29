@@ -23,6 +23,12 @@ func Schema() map[string]*schema.Schema {
 			Optional: true,
 			Computed: true,
 		},
+		constants.FieldVirtualMachineRestartAfterUpdate: {
+			Type:        schema.TypeBool,
+			Optional:    true,
+			Default:     false,
+			Description: "If this field is true, restart vm after the vm is updated",
+		},
 		constants.FieldVirtualMachineRunStrategy: {
 			Type:     schema.TypeString,
 			Optional: true,

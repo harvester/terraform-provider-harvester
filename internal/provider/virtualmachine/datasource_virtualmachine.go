@@ -29,10 +29,10 @@ func dataSourceVirtualMachineRead(ctx context.Context, d *schema.ResourceData, m
 	}
 	vmi, err := c.HarvesterClient.KubevirtV1().VirtualMachineInstances(namespace).Get(ctx, name, metav1.GetOptions{})
 	if err != nil {
-		if apierrors.IsNotFound(err) {
-			return nil
+		if !apierrors.IsNotFound(err) {
+			return diag.FromErr(err)
 		}
-		return diag.FromErr(err)
+		vmi = nil
 	}
-	return resourceVirtualMachineImport(d, vm, vmi)
+	return diag.FromErr(resourceVirtualMachineImport(d, vm, vmi, ""))
 }

@@ -3,23 +3,28 @@ package constants
 const (
 	ResourceTypeVirtualMachine = "harvester_virtualmachine"
 
-	FieldVirtualMachineMachineType      = "machine_type"
-	FieldVirtualMachineHostname         = "hostname"
-	FieldVirtualMachineStart            = "start"
-	FieldVirtualMachineRunStrategy      = "run_strategy"
-	FieldVirtualMachineCPU              = "cpu"
-	FieldVirtualMachineMemory           = "memory"
-	FieldVirtualMachineSSHKeys          = "ssh_keys"
-	FieldVirtualMachineCloudInit        = "cloudinit"
-	FieldVirtualMachineDisk             = "disk"
-	FieldVirtualMachineNetworkInterface = "network_interface"
-	FieldVirtualMachineInstanceNodeName = "node_name"
+	FieldVirtualMachineMachineType        = "machine_type"
+	FieldVirtualMachineHostname           = "hostname"
+	FieldVirtualMachineRestartAfterUpdate = "restart_after_update"
+	FieldVirtualMachineStart              = "start"
+	FieldVirtualMachineRunStrategy        = "run_strategy"
+	FieldVirtualMachineCPU                = "cpu"
+	FieldVirtualMachineMemory             = "memory"
+	FieldVirtualMachineSSHKeys            = "ssh_keys"
+	FieldVirtualMachineCloudInit          = "cloudinit"
+	FieldVirtualMachineDisk               = "disk"
+	FieldVirtualMachineNetworkInterface   = "network_interface"
+	FieldVirtualMachineInstanceNodeName   = "node_name"
 
-	StateVirtualMachineStarting = "starting"
-	StateVirtualMachineRunning  = "running"
-	StateVirtualMachineStopping = "stopping"
-	StateVirtualMachineStopped  = "stopped"
-	StateVirtualMachineError    = "error"
+	StateVirtualMachineStarting = "Starting"
+	StateVirtualMachineRunning  = "Running"
+	StateVirtualMachineStopping = "Stopping"
+	StateVirtualMachineStopped  = "Off"
+)
+
+const (
+	ResourceVirtualMachine = "virtualmachines"
+	SubresourceRestart     = "restart"
 )
 
 const (
