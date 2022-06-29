@@ -1,7 +1,7 @@
 FROM registry.suse.com/bci/bci-base:15.3
 
 RUN zypper -n rm container-suseconnect && \
-    zypper -n install unzip=6.00 curl=7.66.0 vim=8.0.1568 && \
+    zypper -n install unzip=6.00 curl=7.66.0 vim=8.2.5038 && \
     zypper -n clean -a && rm -rf /tmp/* /var/tmp/* /usr/share/doc/packages/*
 
 ARG ARCH=amd64
