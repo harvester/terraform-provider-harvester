@@ -45,6 +45,10 @@ func NonNamespacedSchemaWrap(s map[string]*schema.Schema) {
 		Type:     schema.TypeString,
 		Computed: true,
 	}
+	s[constants.FieldCommonMessage] = &schema.Schema{
+		Type:     schema.TypeString,
+		Computed: true,
+	}
 }
 
 func IsValidName(i interface{}, k string) ([]string, []error) {

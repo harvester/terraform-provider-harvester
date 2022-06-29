@@ -11,8 +11,12 @@ const (
 	FieldCommonTags        = "tags"
 	FieldCommonDescription = "description"
 	FieldCommonState       = "state"
+	FieldCommonMessage     = "message"
 
-	StateCommonNone   = ""
-	StateCommonActive = "Active"
-	StateCommonReady  = "Ready"
+	StateCommonActive  = "Active"
+	StateCommonReady   = "Ready"
+	StateCommonRemoved = "Removed"
+	StateCommonError   = "Error"
+	StateCommonFailed  = "Failed"
+	StateCommonUnknown = "Unknown"
 )
