@@ -46,6 +46,12 @@ func resourceNetworkInterfaceSchema() map[string]*schema.Schema {
 			Type:     schema.TypeString,
 			Computed: true,
 		},
+		constants.FiledNetworkInterfaceWaitForLease: {
+			Type:        schema.TypeBool,
+			Optional:    true,
+			Default:     false,
+			Description: "wait for this network interface to obtain an IP address",
+		},
 		constants.FiledNetworkInterfaceInterfaceName: {
 			Type:     schema.TypeString,
 			Computed: true,

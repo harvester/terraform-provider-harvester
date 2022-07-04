@@ -44,6 +44,7 @@ const (
 	FiledNetworkInterfaceMACAddress    = "mac_address"
 	FiledNetworkInterfaceIPAddress     = "ip_address"
 	FiledNetworkInterfaceInterfaceName = "interface_name"
+	FiledNetworkInterfaceWaitForLease  = "wait_for_lease"
 	FiledNetworkInterfaceNetworkName   = "network_name"
 )
 

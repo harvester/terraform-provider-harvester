@@ -96,6 +96,7 @@ func (c *Constructor) Setup() util.Processors {
 				interfaceType := r[constants.FiledNetworkInterfaceType].(string)
 				interfaceModel := r[constants.FiledNetworkInterfaceModel].(string)
 				interfaceMACAddress := r[constants.FiledNetworkInterfaceMACAddress].(string)
+				interfaceWaitForLease := r[constants.FiledNetworkInterfaceWaitForLease].(bool)
 				networkName := r[constants.FiledNetworkInterfaceNetworkName].(string)
 				if interfaceType == "" {
 					if networkName == "" {
@@ -103,6 +104,9 @@ func (c *Constructor) Setup() util.Processors {
 					} else {
 						interfaceType = builder.NetworkInterfaceTypeBridge
 					}
+				}
+				if interfaceWaitForLease {
+					vmBuilder.WaitForLease(interfaceName)
 				}
 				vmBuilder.NetworkInterface(interfaceName, interfaceModel, interfaceMACAddress, interfaceType, networkName)
 				return nil
