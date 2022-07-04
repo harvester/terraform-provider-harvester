@@ -38,8 +38,9 @@ resource "harvester_virtualmachine" "k3os" {
 
 
 resource "harvester_virtualmachine" "ubuntu20-dev" {
-  name      = "ubuntu-dev"
-  namespace = "default"
+  name                 = "ubuntu-dev"
+  namespace            = "default"
+  restart_after_update = true
 
   description = "test raw image"
   tags = {
@@ -58,8 +59,9 @@ resource "harvester_virtualmachine" "ubuntu20-dev" {
   ]
 
   network_interface {
-    name         = "nic-1"
-    network_name = harvester_network.vlan1.id
+    name           = "nic-1"
+    network_name   = harvester_network.vlan1.id
+    wait_for_lease = true
   }
 
   network_interface {
