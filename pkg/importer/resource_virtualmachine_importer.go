@@ -67,6 +67,21 @@ func (v *VMImporter) SSHKeys() ([]string, error) {
 }
 
 func (v *VMImporter) NetworkInterface() ([]map[string]interface{}, error) {
+	var (
+		waitForLeaseInterfaces   []string
+		waitForLeaseInterfaceMap = map[string]struct{}{}
+	)
+
+	waitForLeaseInterfaceNames := v.VirtualMachine.Spec.Template.ObjectMeta.Annotations[builder.AnnotationKeyVirtualMachineWaitForLeaseInterfaceNames]
+	if waitForLeaseInterfaceNames != "" {
+		if err := json.Unmarshal([]byte(waitForLeaseInterfaceNames), &waitForLeaseInterfaces); err != nil {
+			return nil, err
+		}
+		for _, waitForLeaseInterface := range waitForLeaseInterfaces {
+			waitForLeaseInterfaceMap[waitForLeaseInterface] = struct{}{}
+		}
+	}
+
 	interfaceStatusMap := map[string]kubevirtv1.VirtualMachineInstanceNetworkInterface{}
 	if v.VirtualMachineInstance != nil {
 		interfaceStatuses := v.VirtualMachineInstance.Status.Interfaces
@@ -106,6 +121,8 @@ func (v *VMImporter) NetworkInterface() ([]map[string]interface{}, error) {
 			networkInterfaceState[constants.FiledNetworkInterfaceIPAddress] = interfaceStatus.IP
 			networkInterfaceState[constants.FiledNetworkInterfaceInterfaceName] = interfaceStatus.InterfaceName
 		}
+		_, ok := waitForLeaseInterfaceMap[networkInterface.Name]
+		networkInterfaceState[constants.FiledNetworkInterfaceWaitForLease] = ok
 		networkInterfaceStates = append(networkInterfaceStates, networkInterfaceState)
 	}
 	return networkInterfaceStates, nil
@@ -254,12 +271,15 @@ func (v *VMImporter) State(networkInterfaces []map[string]interface{}, oldInstan
 	case "Pending", "Scheduling", "Scheduled":
 		return constants.StateVirtualMachineStarting
 	case "Running":
+		if string(v.VirtualMachineInstance.UID) == oldInstanceUID {
+			return constants.StateVirtualMachineRunning
+		}
 		for _, networkInterface := range networkInterfaces {
-			if networkInterface[constants.FiledNetworkInterfaceIPAddress] != "" && string(v.VirtualMachineInstance.UID) != oldInstanceUID {
-				return constants.StateCommonReady
+			if networkInterface[constants.FiledNetworkInterfaceWaitForLease].(bool) && networkInterface[constants.FiledNetworkInterfaceIPAddress] == "" {
+				return constants.StateVirtualMachineRunning
 			}
 		}
-		return constants.StateVirtualMachineRunning
+		return constants.StateCommonReady
 	case "Succeeded":
 		return constants.StateVirtualMachineStopping
 	case "Failed":

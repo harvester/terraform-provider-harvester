@@ -27,7 +27,7 @@ func Schema() map[string]*schema.Schema {
 			Type:        schema.TypeBool,
 			Optional:    true,
 			Default:     false,
-			Description: "If this field is true, restart vm after the vm is updated",
+			Description: "restart vm after the vm is updated",
 		},
 		constants.FieldVirtualMachineRunStrategy: {
 			Type:     schema.TypeString,
