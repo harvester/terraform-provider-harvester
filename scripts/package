@@ -1,9 +1,13 @@
 #!/bin/bash
 set -e
 
-source $(dirname $0)/version
+TOP_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )/.." &> /dev/null && pwd )"
+SCRIPTS_DIR="${TOP_DIR}/scripts"
+PACKAGE_DIR="${TOP_DIR}/package"
 
-cd $(dirname $0)/..
+source $SCRIPTS_DIR/version
+
+cd $TOP_DIR
 
 if [ "${GIT_TAG}" != "${VERSION}" ]; then
   PROVIDER_VERSION="0.0.0-master"
@@ -20,7 +24,7 @@ fi
 mkdir -p dist/artifacts
 cp bin/terraform-provider-harvester dist/artifacts/terraform-provider-harvester${SUFFIX}
 
-cd $(dirname $0)/package
+cd ${PACKAGE_DIR}
 
 IMAGE=${REPO}/terraform-provider-harvester:${TAG}
 DOCKERFILE=Dockerfile
