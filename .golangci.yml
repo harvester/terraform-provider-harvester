@@ -6,14 +6,12 @@ linters:
   enable:
     - vet
     - staticcheck
-    - bodyclose
     - errcheck
     - gofmt
     - goimports
     - whitespace
     - deadcode
     - unused
-    - unparam
     - ineffassign
     - prealloc
     - stylecheck

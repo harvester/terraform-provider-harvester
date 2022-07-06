@@ -1,4 +1,4 @@
-FROM registry.suse.com/bci/golang:1.16
+FROM registry.suse.com/bci/golang:1.18
 
 ARG DAPPER_HOST_ARCH
 ENV ARCH $DAPPER_HOST_ARCH
@@ -7,11 +7,11 @@ RUN zypper -n rm container-suseconnect && \
     zypper -n install curl docker gzip tar wget awk zip
 
 # install goimports
-RUN GO111MODULE=on go get golang.org/x/tools/cmd/goimports@v0.1.9
+RUN GO111MODULE=on go install golang.org/x/tools/cmd/goimports@v0.1.11
 
 ## install golangci-lint
 RUN if [ "${ARCH}" = "amd64" ]; then \
-        curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s v1.44.0; \
+        curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s v1.46.2; \
     fi
 
 ENV DAPPER_ENV REPO TAG DRONE_TAG CROSS

@@ -226,10 +226,10 @@ func (v *VMImporter) Volume() ([]map[string]interface{}, []map[string]interface{
 			)
 			if disk.CDRom != nil {
 				diskType = builder.DiskTypeCDRom
-				diskBus = disk.CDRom.Bus
+				diskBus = string(disk.CDRom.Bus)
 			} else if disk.Disk != nil {
 				diskType = builder.DiskTypeDisk
-				diskBus = disk.Disk.Bus
+				diskBus = string(disk.Disk.Bus)
 			} else {
 				return nil, nil, fmt.Errorf("unsupported volume type found on volume %s. ", disk.Name)
 			}
