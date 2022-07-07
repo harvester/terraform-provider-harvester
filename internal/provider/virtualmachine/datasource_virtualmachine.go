@@ -25,10 +25,6 @@ func dataSourceVirtualMachineRead(ctx context.Context, d *schema.ResourceData, m
 	name := d.Get(constants.FieldCommonName).(string)
 	vm, err := c.HarvesterClient.KubevirtV1().VirtualMachines(namespace).Get(ctx, name, metav1.GetOptions{})
 	if err != nil {
-		if apierrors.IsNotFound(err) {
-			d.SetId("")
-			return nil
-		}
 		return diag.FromErr(err)
 	}
 	vmi, err := c.HarvesterClient.KubevirtV1().VirtualMachineInstances(namespace).Get(ctx, name, metav1.GetOptions{})

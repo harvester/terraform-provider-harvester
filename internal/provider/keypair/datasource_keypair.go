@@ -5,7 +5,6 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/harvester/terraform-provider-harvester/pkg/client"
@@ -25,10 +24,6 @@ func dataSourceKeypairRead(ctx context.Context, d *schema.ResourceData, meta int
 	name := d.Get(constants.FieldCommonName).(string)
 	keyPair, err := c.HarvesterClient.HarvesterhciV1beta1().KeyPairs(namespace).Get(ctx, name, metav1.GetOptions{})
 	if err != nil {
-		if apierrors.IsNotFound(err) {
-			d.SetId("")
-			return nil
-		}
 		return diag.FromErr(err)
 	}
 	return resourceKeyPairImport(d, keyPair)
