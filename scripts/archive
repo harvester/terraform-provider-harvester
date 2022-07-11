@@ -1,0 +1,52 @@
+#!/bin/bash
+set -e
+
+source $(dirname $0)/version
+
+cd $(dirname $0)/..
+
+BIN_NAME_PREFIX="terraform-provider-harvester"
+BUILD_DIR="./build"
+BUILD_BIN_DIR="${BUILD_DIR}/bin"
+if [ -z "$(ls -A ${BUILD_BIN_DIR})" ]; then
+  exit 0
+fi
+
+VERSION_NO_V=${VERSION/[v|V]/}
+echo "==> Packaging binaries version ${VERSION_NO_V} ..."
+
+DIST=$(pwd)/dist/artifacts
+
+mkdir -p "${DIST}"
+
+for i in "${BUILD_BIN_DIR}"/*; do
+    if [ ! -e "${i}" ]; then
+        continue
+    fi
+
+    ARCHIVE_DIR=${BUILD_DIR}/archive
+
+    rm -rf "${ARCHIVE_DIR}"
+    mkdir -p "${ARCHIVE_DIR}"
+
+    EXT=
+    if [[ $i =~ .*windows.* ]]; then
+        EXT=.exe
+    fi
+
+    cp "${i}" "${ARCHIVE_DIR}/${BIN_NAME_PREFIX}_${VERSION}${EXT}"
+
+    (
+        cd "${ARCHIVE_DIR}"
+        NAME=$(basename "${i}" | cut -f1 -d_)
+        ARCH=$(basename "${i}" | cut -f2,3 -d_ | cut -f1 -d.)
+        ARCHIVE_FILE="${NAME}_${VERSION_NO_V}_${ARCH}.zip"
+        echo "Packaging $DIST/${ARCHIVE_FILE} ..."
+        zip -q "${DIST}/${ARCHIVE_FILE}" ./*
+    )
+done
+
+(
+    cd "${DIST}"
+    shasum -a 256 ./* > "${BIN_NAME_PREFIX}_${VERSION_NO_V}_SHA256SUMS"
+)

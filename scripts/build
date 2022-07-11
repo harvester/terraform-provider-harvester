@@ -5,6 +5,33 @@ source $(dirname $0)/version
 
 cd $(dirname $0)/..
 
+declare -A OS_ARCH_ARG
+
+OS_PLATFORM_ARG=(linux darwin)
+OS_ARCH_ARG[linux]="amd64 arm64"
+OS_ARCH_ARG[darwin]="amd64 arm64"
+
+BIN_NAME="terraform-provider-harvester"
+BUILD_DIR="./build"
+BUILD_BIN_DIR="${BUILD_DIR}/bin"
+
 mkdir -p bin
 [ "$(uname)" != "Darwin" ] && LINKFLAGS="-extldflags -static -s"
-CGO_ENABLED=0 go build -ldflags "-X main.VERSION=$VERSION $LINKFLAGS" -o bin/terraform-provider-harvester
+CGO_ENABLED=0 go build -ldflags "-X main.VERSION=${VERSION} ${LINKFLAGS}" -o bin/${BIN_NAME}
+
+if [ -n "${CROSS}" ]; then
+    rm -rf "${BUILD_BIN_DIR}"
+    mkdir -p "${BUILD_BIN_DIR}"
+    for OS in "${OS_PLATFORM_ARG[@]}"; do
+        for ARCH in ${OS_ARCH_ARG[${OS}]}; do
+            OUTPUT_BIN="${BUILD_BIN_DIR}/${BIN_NAME}_${OS}_${ARCH}"
+            if test "${OS}" = "windows"; then
+                OUTPUT_BIN="${OUTPUT_BIN}.exe"
+            fi
+            echo "Building binary for ${OS}/${ARCH}..."
+            GOARCH=${ARCH} GOOS=${OS} CGO_ENABLED=0 go build \
+                  -ldflags="-w -X main.VERSION=$VERSION" \
+                  -o "${OUTPUT_BIN}" ./
+        done
+    done
+fi
