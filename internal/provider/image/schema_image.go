@@ -63,5 +63,10 @@ func Schema() map[string]*schema.Schema {
 }
 
 func DataSourceSchema() map[string]*schema.Schema {
-	return util.DataSourceSchemaWrap(Schema())
+	s := util.DataSourceSchemaWrap(Schema())
+	s[constants.FieldCommonName].Required = false
+	s[constants.FieldCommonName].Optional = true
+	s[constants.FieldImageDisplayName].Computed = false
+	s[constants.FieldImageDisplayName].Optional = true
+	return s
 }
