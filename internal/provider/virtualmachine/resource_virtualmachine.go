@@ -207,16 +207,16 @@ func resourceVirtualMachineImport(d *schema.ResourceData, vm *kubevirtv1.Virtual
 
 func resourceVirtualMachineWaitForState(ctx context.Context, d *schema.ResourceData, meta interface{}, runStrategy kubevirtv1.VirtualMachineRunStrategy, namespace, name, timeOutKey, oldInstanceUID string) error {
 	var (
-		pending = []string{constants.StateVirtualMachineStarting, constants.StateVirtualMachineStopping, constants.StateVirtualMachineRunning, constants.StateCommonFailed, constants.StateCommonUnknown}
+		pending = []string{constants.StateVirtualMachineStarting, constants.StateVirtualMachineStopping, constants.StateCommonFailed, constants.StateCommonUnknown}
 		target  []string
 	)
 	switch runStrategy {
 	case kubevirtv1.RunStrategyHalted:
-		pending = append(pending, constants.StateCommonReady)
+		pending = append(pending, constants.StateCommonReady, constants.StateVirtualMachineRunning)
 		target = []string{constants.StateVirtualMachineStopped}
 	case kubevirtv1.RunStrategyAlways, kubevirtv1.RunStrategyRerunOnFailure:
 		pending = append(pending, constants.StateVirtualMachineStopped)
-		target = []string{constants.StateCommonReady}
+		target = append([]string{constants.StateCommonReady}, constants.StateVirtualMachineRunning)
 	default:
 		return nil
 	}
