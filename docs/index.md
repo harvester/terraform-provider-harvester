@@ -32,4 +32,4 @@ provider "harvester" {
 
 ### Optional
 
-- **kubeconfig** (String) harvester kubeconfig
+- **kubeconfig** (String) kubeconfig file path, users can use the KUBECONFIG environment variable instead
