@@ -23,7 +23,7 @@ func Provider() *schema.Provider {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Default:     "",
-				Description: "harvester kubeconfig",
+				Description: "kubeconfig file path, users can use the KUBECONFIG environment variable instead",
 			},
 		},
 		DataSourcesMap: map[string]*schema.Resource{
