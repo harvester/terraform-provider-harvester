@@ -97,6 +97,17 @@ please use %s instead of this deprecated field:
 			Type:     schema.TypeString,
 			Computed: true,
 		},
+		constants.FieldVirtualMachineEFI: {
+			Type:     schema.TypeBool,
+			Optional: true,
+			Default:  false,
+		},
+		constants.FieldVirtualMachineSecureBoot: {
+			Type:        schema.TypeBool,
+			Description: "EFI must be enabled to use this feature",
+			Optional:    true,
+			Default:     false,
+		},
 	}
 	util.NamespacedSchemaWrap(s, false)
 	return s

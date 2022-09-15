@@ -46,6 +46,15 @@ func (v *VMImporter) CPU() int {
 	return int(v.VirtualMachine.Spec.Template.Spec.Domain.CPU.Cores)
 }
 
+func (v *VMImporter) EFI() bool {
+	firmware := v.VirtualMachine.Spec.Template.Spec.Domain.Firmware
+	return firmware != nil && firmware.Bootloader != nil && firmware.Bootloader.EFI != nil
+}
+
+func (v *VMImporter) SecureBoot() bool {
+	return v.EFI() && *v.VirtualMachine.Spec.Template.Spec.Domain.Firmware.Bootloader.EFI.SecureBoot
+}
+
 func (v *VMImporter) EvictionStrategy() bool {
 	return *v.VirtualMachine.Spec.Template.Spec.EvictionStrategy == kubevirtv1.EvictionStrategyLiveMigrate
 }
@@ -334,6 +343,8 @@ func ResourceVirtualMachineStateGetter(vm *kubevirtv1.VirtualMachine, vmi *kubev
 			constants.FieldVirtualMachineCloudInit:        cloudInit,
 			constants.FieldVirtualMachineSSHKeys:          sshKeys,
 			constants.FieldVirtualMachineInstanceNodeName: vmImporter.NodeName(),
+			constants.FieldVirtualMachineEFI:              vmImporter.EFI(),
+			constants.FieldVirtualMachineSecureBoot:       vmImporter.SecureBoot(),
 		},
 	}, nil
 }

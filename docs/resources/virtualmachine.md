@@ -26,6 +26,9 @@ resource "harvester_virtualmachine" "k3os" {
   cpu    = 4
   memory = "4Gi"
 
+  efi         = true
+  secure_boot = false
+
   network_interface {
     name         = "nic-1"
     network_name = harvester_network.vlan1.id
@@ -64,6 +67,9 @@ resource "harvester_virtualmachine" "ubuntu20-dev" {
 
   cpu    = 2
   memory = "2Gi"
+
+  efi         = true
+  secure_boot = true
 
   run_strategy = "RerunOnFailure"
   hostname     = "ubuntu-dev"
@@ -161,6 +167,7 @@ resource "harvester_virtualmachine" "ubuntu20-dev" {
 - **cloudinit** (Block List, Max: 1) (see [below for nested schema](#nestedblock--cloudinit))
 - **cpu** (Number)
 - **description** (String) Any text you want that better describes this resource
+- **efi** (Boolean)
 - **hostname** (String)
 - **id** (String) The ID of this resource.
 - **machine_type** (String)
@@ -168,6 +175,7 @@ resource "harvester_virtualmachine" "ubuntu20-dev" {
 - **namespace** (String)
 - **restart_after_update** (Boolean) restart vm after the vm is updated
 - **run_strategy** (String) more info: https://kubevirt.io/user-guide/virtual_machines/run_strategies/
+- **secure_boot** (Boolean)
 - **ssh_keys** (List of String)
 - **start** (Boolean, Deprecated)
 - **tags** (Map of String)
