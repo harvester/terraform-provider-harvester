@@ -37,6 +37,7 @@ data "harvester_virtualmachine" "ubuntu20-dev" {
 - **cpu** (Number)
 - **description** (String) Any text you want that better describes this resource
 - **disk** (List of Object) (see [below for nested schema](#nestedatt--disk))
+- **efi** (Boolean)
 - **hostname** (String)
 - **machine_type** (String)
 - **memory** (String)
@@ -45,6 +46,7 @@ data "harvester_virtualmachine" "ubuntu20-dev" {
 - **node_name** (String)
 - **restart_after_update** (Boolean) restart vm after the vm is updated
 - **run_strategy** (String) more info: https://kubevirt.io/user-guide/virtual_machines/run_strategies/
+- **secure_boot** (Boolean)
 - **ssh_keys** (List of String)
 - **start** (Boolean, Deprecated)
 - **state** (String)

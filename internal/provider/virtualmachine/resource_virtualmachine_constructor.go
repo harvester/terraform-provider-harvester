@@ -1,6 +1,8 @@
 package virtualmachine
 
 import (
+	"errors"
+
 	"github.com/harvester/harvester/pkg/builder"
 	harvesterutil "github.com/harvester/harvester/pkg/util"
 	corev1 "k8s.io/api/core/v1"
@@ -44,6 +46,36 @@ func (c *Constructor) Setup() util.Processors {
 			Field: constants.FieldVirtualMachineMemory,
 			Parser: func(i interface{}) error {
 				vmBuilder.Memory(i.(string))
+				return nil
+			},
+		},
+		{
+			Field: constants.FieldVirtualMachineEFI,
+			Parser: func(i interface{}) error {
+				var firmware *kubevirtv1.Firmware
+				if i.(bool) {
+					firmware = &kubevirtv1.Firmware{
+						Bootloader: &kubevirtv1.Bootloader{
+							EFI: &kubevirtv1.EFI{
+								SecureBoot: pointer.Bool(false),
+							},
+						},
+					}
+				}
+				vmBuilder.VirtualMachine.Spec.Template.Spec.Domain.Firmware = firmware
+				return nil
+			},
+			Required: true,
+		},
+		{
+			Field: constants.FieldVirtualMachineSecureBoot,
+			Parser: func(i interface{}) error {
+				firmware := vmBuilder.VirtualMachine.Spec.Template.Spec.Domain.Firmware
+				if firmware == nil || firmware.Bootloader == nil || firmware.Bootloader.EFI == nil {
+					return errors.New("EFI must be enabled to use Secure Boot. ")
+				}
+				firmware.Bootloader.EFI.SecureBoot = pointer.Bool(true)
+				vmBuilder.VirtualMachine.Spec.Template.Spec.Domain.Firmware = firmware
 				return nil
 			},
 		},

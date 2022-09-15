@@ -15,6 +15,8 @@ const (
 	FieldVirtualMachineDisk               = "disk"
 	FieldVirtualMachineNetworkInterface   = "network_interface"
 	FieldVirtualMachineInstanceNodeName   = "node_name"
+	FieldVirtualMachineEFI                = "efi"
+	FieldVirtualMachineSecureBoot         = "secure_boot"
 
 	StateVirtualMachineStarting = "Starting"
 	StateVirtualMachineRunning  = "Running"

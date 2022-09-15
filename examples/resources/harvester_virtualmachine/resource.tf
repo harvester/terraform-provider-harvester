@@ -11,6 +11,9 @@ resource "harvester_virtualmachine" "k3os" {
   cpu    = 4
   memory = "4Gi"
 
+  efi         = true
+  secure_boot = false
+
   network_interface {
     name         = "nic-1"
     network_name = harvester_network.vlan1.id
@@ -49,6 +52,9 @@ resource "harvester_virtualmachine" "ubuntu20-dev" {
 
   cpu    = 2
   memory = "2Gi"
+
+  efi         = true
+  secure_boot = true
 
   run_strategy = "RerunOnFailure"
   hostname     = "ubuntu-dev"
