@@ -76,6 +76,15 @@ func (c *Constructor) Setup() util.Processors {
 				}
 				firmware.Bootloader.EFI.SecureBoot = pointer.Bool(true)
 				vmBuilder.VirtualMachine.Spec.Template.Spec.Domain.Firmware = firmware
+
+				features := vmBuilder.VirtualMachine.Spec.Template.Spec.Domain.Features
+				if features == nil {
+					features = &kubevirtv1.Features{}
+				}
+				features.SMM = &kubevirtv1.FeatureState{
+					Enabled: pointer.Bool(true),
+				}
+				vmBuilder.VirtualMachine.Spec.Template.Spec.Domain.Features = features
 				return nil
 			},
 		},
