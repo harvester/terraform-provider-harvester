@@ -175,7 +175,7 @@ resource "harvester_virtualmachine" "ubuntu20-dev" {
 - **namespace** (String)
 - **restart_after_update** (Boolean) restart vm after the vm is updated
 - **run_strategy** (String) more info: https://kubevirt.io/user-guide/virtual_machines/run_strategies/
-- **secure_boot** (Boolean)
+- **secure_boot** (Boolean) EFI must be enabled to use this feature
 - **ssh_keys** (List of String)
 - **start** (Boolean, Deprecated)
 - **tags** (Map of String)
@@ -221,9 +221,9 @@ Optional:
 
 - **mac_address** (String)
 - **model** (String)
-- **network_name** (String)
+- **network_name** (String) if the value is empty, management network is used
 - **type** (String)
-- **wait_for_lease** (Boolean) wait for this network interface to obtain an IP address
+- **wait_for_lease** (Boolean) wait for this network interface to obtain an IP address. If a non-management network is used, this feature requires qemu-guest-agent installed and started in the VM, otherwise, VM creation will stuck until timeout
 
 Read-Only:
 
