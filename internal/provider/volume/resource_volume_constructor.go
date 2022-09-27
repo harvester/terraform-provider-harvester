@@ -76,7 +76,9 @@ func (c *Constructor) Setup() util.Processors {
 				}
 				c.Volume.Annotations[builder.AnnotationKeyImageID] = helper.BuildNamespacedName(imageNamespace, imageName)
 				storageClassName := builder.BuildImageStorageClassName("", imageName)
-				c.Volume.Spec.StorageClassName = pointer.StringPtr(storageClassName)
+				if c.Volume.Spec.StorageClassName == nil {
+					c.Volume.Spec.StorageClassName = pointer.StringPtr(storageClassName)
+				}
 				return nil
 			},
 		},

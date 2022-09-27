@@ -191,9 +191,6 @@ func (c *Constructor) Setup() util.Processors {
 						VolumeMode: corev1.PersistentVolumeBlock,
 						AccessMode: corev1.ReadWriteMany,
 					}
-					if storageClassName := r[constants.FieldVolumeStorageClassName].(string); storageClassName != "" {
-						pvcOption.StorageClassName = pointer.StringPtr(storageClassName)
-					}
 					if volumeMode := r[constants.FieldVolumeMode].(string); volumeMode != "" {
 						pvcOption.VolumeMode = corev1.PersistentVolumeMode(volumeMode)
 					}
@@ -207,6 +204,9 @@ func (c *Constructor) Setup() util.Processors {
 						}
 						pvcOption.ImageID = helper.BuildNamespacedName(imageNamespace, imageName)
 						storageClassName := builder.BuildImageStorageClassName("", imageName)
+						pvcOption.StorageClassName = pointer.StringPtr(storageClassName)
+					}
+					if storageClassName := r[constants.FieldVolumeStorageClassName].(string); storageClassName != "" {
 						pvcOption.StorageClassName = pointer.StringPtr(storageClassName)
 					}
 					if autoDelete := r[constants.FieldDiskAutoDelete].(bool); autoDelete {
