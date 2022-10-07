@@ -7,6 +7,7 @@ import (
 	"github.com/rancher/wrangler/pkg/kubeconfig"
 	kubeschema "k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/kubernetes"
+	storageclient "k8s.io/client-go/kubernetes/typed/storage/v1"
 	"k8s.io/client-go/rest"
 )
 
@@ -14,6 +15,7 @@ type Client struct {
 	RestConfig                *rest.Config
 	KubeVirtSubresourceClient *rest.RESTClient
 	KubeClient                *kubernetes.Clientset
+	StorageClassClient        *storageclient.StorageV1Client
 	HarvesterClient           *harvclient.Clientset
 	HarvesterNetworkClient    *harvnetworkclient.Clientset
 }
@@ -32,11 +34,15 @@ func NewClient(kubeConfig, kubeContext string) (*Client, error) {
 	if err != nil {
 		return nil, err
 	}
-	harvClient, err := harvclient.NewForConfig(restConfig)
+	kubeClient, err := kubernetes.NewForConfig(restConfig)
 	if err != nil {
 		return nil, err
 	}
-	kubeClient, err := kubernetes.NewForConfig(restConfig)
+	storageClassClient, err := storageclient.NewForConfig(restConfig)
+	if err != nil {
+		return nil, err
+	}
+	harvClient, err := harvclient.NewForConfig(restConfig)
 	if err != nil {
 		return nil, err
 	}
@@ -48,6 +54,7 @@ func NewClient(kubeConfig, kubeContext string) (*Client, error) {
 		RestConfig:                restConfig,
 		KubeVirtSubresourceClient: restClient,
 		KubeClient:                kubeClient,
+		StorageClassClient:        storageClassClient,
 		HarvesterClient:           harvClient,
 		HarvesterNetworkClient:    harvNetworkClient,
 	}, nil
