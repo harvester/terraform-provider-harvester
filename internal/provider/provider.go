@@ -10,6 +10,7 @@ import (
 	"github.com/harvester/terraform-provider-harvester/internal/provider/image"
 	"github.com/harvester/terraform-provider-harvester/internal/provider/keypair"
 	"github.com/harvester/terraform-provider-harvester/internal/provider/network"
+	"github.com/harvester/terraform-provider-harvester/internal/provider/storageclass"
 	"github.com/harvester/terraform-provider-harvester/internal/provider/virtualmachine"
 	"github.com/harvester/terraform-provider-harvester/internal/provider/volume"
 	"github.com/harvester/terraform-provider-harvester/pkg/client"
@@ -39,6 +40,7 @@ func Provider() *schema.Provider {
 			constants.ResourceTypeVirtualMachine: virtualmachine.DataSourceVirtualMachine(),
 			constants.ResourceTypeVolume:         volume.DataSourceVolume(),
 			constants.ResourceTypeClusterNetwork: clusternetwork.DataSourceClusterNetwork(),
+			constants.ResourceTypeStorageClass:   storageclass.DataSourceStorageClass(),
 		},
 		ResourcesMap: map[string]*schema.Resource{
 			constants.ResourceTypeImage:          image.ResourceImage(),
@@ -47,6 +49,7 @@ func Provider() *schema.Provider {
 			constants.ResourceTypeVirtualMachine: virtualmachine.ResourceVirtualMachine(),
 			constants.ResourceTypeVolume:         volume.ResourceVolume(),
 			constants.ResourceTypeClusterNetwork: clusternetwork.ResourceClusterNetwork(),
+			constants.ResourceTypeStorageClass:   storageclass.ResourceStorageClass(),
 		},
 	}
 	p.ConfigureContextFunc = configure(p)

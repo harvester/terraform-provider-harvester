@@ -1,0 +1,1 @@
+terraform import harvester_storageclass.foo <Name>
