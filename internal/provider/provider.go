@@ -12,6 +12,7 @@ import (
 	"github.com/harvester/terraform-provider-harvester/internal/provider/network"
 	"github.com/harvester/terraform-provider-harvester/internal/provider/storageclass"
 	"github.com/harvester/terraform-provider-harvester/internal/provider/virtualmachine"
+	"github.com/harvester/terraform-provider-harvester/internal/provider/vlanconfig"
 	"github.com/harvester/terraform-provider-harvester/internal/provider/volume"
 	"github.com/harvester/terraform-provider-harvester/pkg/client"
 	"github.com/harvester/terraform-provider-harvester/pkg/constants"
@@ -41,6 +42,7 @@ func Provider() *schema.Provider {
 			constants.ResourceTypeVolume:         volume.DataSourceVolume(),
 			constants.ResourceTypeClusterNetwork: clusternetwork.DataSourceClusterNetwork(),
 			constants.ResourceTypeStorageClass:   storageclass.DataSourceStorageClass(),
+			constants.ResourceTypeVLANConfig:     vlanconfig.DataSourceVLANConfig(),
 		},
 		ResourcesMap: map[string]*schema.Resource{
 			constants.ResourceTypeImage:          image.ResourceImage(),
@@ -50,6 +52,7 @@ func Provider() *schema.Provider {
 			constants.ResourceTypeVolume:         volume.ResourceVolume(),
 			constants.ResourceTypeClusterNetwork: clusternetwork.ResourceClusterNetwork(),
 			constants.ResourceTypeStorageClass:   storageclass.ResourceStorageClass(),
+			constants.ResourceTypeVLANConfig:     vlanconfig.ResourceVLANConfig(),
 		},
 	}
 	p.ConfigureContextFunc = configure(p)
