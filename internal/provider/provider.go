@@ -19,11 +19,17 @@ import (
 func Provider() *schema.Provider {
 	p := &schema.Provider{
 		Schema: map[string]*schema.Schema{
-			constants.FiledProviderKubeConfig: {
+			constants.FieldProviderKubeConfig: {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Default:     "",
 				Description: "kubeconfig file path, users can use the KUBECONFIG environment variable instead",
+			},
+			constants.FieldProviderKubeContext: {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Default:     "",
+				Description: "name of the kubernetes context to use",
 			},
 		},
 		DataSourcesMap: map[string]*schema.Resource{
@@ -49,8 +55,9 @@ func Provider() *schema.Provider {
 
 func configure(p *schema.Provider) schema.ConfigureContextFunc {
 	return func(ctx context.Context, d *schema.ResourceData) (interface{}, diag.Diagnostics) {
-		kubeConfig := d.Get(constants.FiledProviderKubeConfig).(string)
-		c, err := client.NewClient(kubeConfig)
+		kubeConfig := d.Get(constants.FieldProviderKubeConfig).(string)
+		kubeContext := d.Get(constants.FieldProviderKubeContext).(string)
+		c, err := client.NewClient(kubeConfig, kubeContext)
 		if err != nil {
 			return nil, diag.FromErr(err)
 		}

@@ -18,8 +18,8 @@ type Client struct {
 	HarvesterNetworkClient    *harvnetworkclient.Clientset
 }
 
-func NewClient(kubeConfig string) (*Client, error) {
-	clientConfig := kubeconfig.GetNonInteractiveClientConfig(kubeConfig)
+func NewClient(kubeConfig, kubeContext string) (*Client, error) {
+	clientConfig := kubeconfig.GetNonInteractiveClientConfigWithContext(kubeConfig, kubeContext)
 	restConfig, err := clientConfig.ClientConfig()
 	if err != nil {
 		return nil, err
