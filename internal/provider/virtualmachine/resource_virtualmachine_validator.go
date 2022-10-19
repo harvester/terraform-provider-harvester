@@ -1,7 +1,6 @@
 package virtualmachine
 
 import (
-	"context"
 	"encoding/base64"
 	"fmt"
 	"strings"
@@ -24,7 +23,7 @@ func (c *Constructor) getKeyPairs(sshNames []string, defaultNamespace string) ([
 		if err != nil {
 			return nil, err
 		}
-		keyPair, err := c.Client.HarvesterClient.HarvesterhciV1beta1().KeyPairs(keyPairNamespace).Get(context.Background(), keyPairName, metav1.GetOptions{})
+		keyPair, err := c.Client.HarvesterClient.HarvesterhciV1beta1().KeyPairs(keyPairNamespace).Get(c.Context, keyPairName, metav1.GetOptions{})
 		if err != nil {
 			return nil, err
 		}
@@ -62,7 +61,7 @@ func (c *Constructor) checkKeyPairsInCloudInit(keyPairs []*harvsterv1.KeyPair) e
 }
 
 func (c *Constructor) checkKeyPairsInUserDataSecret(userDataSecretNamespace, userDataSecretName string, keyPairs []*harvsterv1.KeyPair) error {
-	userDataSecret, err := c.Client.KubeClient.CoreV1().Secrets(userDataSecretNamespace).Get(context.Background(), userDataSecretName, metav1.GetOptions{})
+	userDataSecret, err := c.Client.KubeClient.CoreV1().Secrets(userDataSecretNamespace).Get(c.Context, userDataSecretName, metav1.GetOptions{})
 	if err != nil {
 		return err
 	}

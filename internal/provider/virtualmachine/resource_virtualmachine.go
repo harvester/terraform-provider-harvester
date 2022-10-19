@@ -12,7 +12,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/watch"
 	kubevirtv1 "kubevirt.io/api/core/v1"
 
 	"github.com/harvester/terraform-provider-harvester/internal/util"
@@ -43,7 +42,7 @@ func resourceVirtualMachineCreate(ctx context.Context, d *schema.ResourceData, m
 	c := meta.(*client.Client)
 	namespace := d.Get(constants.FieldCommonNamespace).(string)
 	name := d.Get(constants.FieldCommonName).(string)
-	toCreate, err := util.ResourceConstruct(d, Creator(c, namespace, name))
+	toCreate, err := util.ResourceConstruct(d, Creator(c, ctx, namespace, name))
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -76,7 +75,7 @@ func resourceVirtualMachineUpdate(ctx context.Context, d *schema.ResourceData, m
 		}
 		return diag.FromErr(err)
 	}
-	toUpdate, err := util.ResourceConstruct(d, Updater(c, obj))
+	toUpdate, err := util.ResourceConstruct(d, Updater(c, ctx, obj))
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -174,23 +173,11 @@ func resourceVirtualMachineDelete(ctx context.Context, d *schema.ResourceData, m
 	if err = c.HarvesterClient.KubevirtV1().VirtualMachines(namespace).Delete(ctx, name, deleteOptions); err != nil && !apierrors.IsNotFound(err) {
 		return diag.FromErr(err)
 	}
-	timeoutSeconds := int64(vmDeleteTimeout)
-	events, err := c.HarvesterClient.KubevirtV1().VirtualMachines(namespace).Watch(ctx, metav1.ListOptions{
-		FieldSelector:  fmt.Sprintf("metadata.name=%s", name),
-		Watch:          true,
-		TimeoutSeconds: &timeoutSeconds,
-	})
+	events, err := c.HarvesterClient.KubevirtV1().VirtualMachines(namespace).Watch(ctx, util.WatchOptions(name, int64(vmDeleteTimeout)))
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	deleted := false
-	for event := range events.ResultChan() {
-		if event.Type == watch.Deleted {
-			events.Stop()
-			deleted = true
-		}
-	}
-	if !deleted {
+	if !util.HasDeleted(events) {
 		return diag.FromErr(fmt.Errorf("timeout waiting for virtualmachine %s to be deleted", d.Id()))
 	}
 	d.SetId("")
