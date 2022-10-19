@@ -54,6 +54,15 @@ func Schema() map[string]*schema.Schema {
 			Computed: true,
 		},
 		constants.FieldImageStorageClassName: {
+			Type:         schema.TypeString,
+			Optional:     true,
+			ValidateFunc: util.IsValidName,
+		},
+		constants.FieldImageStorageClassParameters: {
+			Type:     schema.TypeMap,
+			Computed: true,
+		},
+		constants.FieldImageVolumeStorageClassName: {
 			Type:     schema.TypeString,
 			Computed: true,
 		},

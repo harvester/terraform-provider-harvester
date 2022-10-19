@@ -18,9 +18,9 @@ data "harvester_image" "ubuntu20" {
   namespace = "harvester-public"
 }
 
-data "harvester_image" "opensuse" {
+data "harvester_image" "opensuse154" {
   namespace    = "harvester-public"
-  display_name = "openSUSE-Leap-42.1-OpenStack.x86_64.qcow2"
+  display_name = "openSUSE-Leap-15.4.x86_64-NoCloud.qcow2"
 }
 ```
 
@@ -45,7 +45,9 @@ data "harvester_image" "opensuse" {
 - **source_type** (String)
 - **state** (String)
 - **storage_class_name** (String)
+- **storage_class_parameters** (Map of String)
 - **tags** (Map of String)
 - **url** (String) supports the `raw` and `qcow2` image formats which are supported by [qemu](https://www.qemu.org/docs/master/system/images.html#disk-image-file-formats). Bootable ISO images can also be used and are treated like `raw` images.
+- **volume_storage_class_name** (String)
 
 
