@@ -1,6 +1,8 @@
 package volume
 
 import (
+	"fmt"
+
 	"github.com/harvester/harvester/pkg/builder"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -27,14 +29,6 @@ func (c *Constructor) Setup() util.Processors {
 			Parser: func(i interface{}) error {
 				size := i.(string)
 				c.Volume.Spec.Resources.Requests[corev1.ResourceStorage] = resource.MustParse(size)
-				return nil
-			},
-		},
-		{
-			Field: constants.FieldVolumeStorageClassName,
-			Parser: func(i interface{}) error {
-				storageClassName := i.(string)
-				c.Volume.Spec.StorageClassName = pointer.StringPtr(storageClassName)
 				return nil
 			},
 		},
@@ -77,6 +71,18 @@ func (c *Constructor) Setup() util.Processors {
 				c.Volume.Annotations[builder.AnnotationKeyImageID] = helper.BuildNamespacedName(imageNamespace, imageName)
 				storageClassName := builder.BuildImageStorageClassName("", imageName)
 				c.Volume.Spec.StorageClassName = pointer.StringPtr(storageClassName)
+				return nil
+			},
+		},
+		{
+			Field: constants.FieldVolumeStorageClassName,
+			Parser: func(i interface{}) error {
+				storageClassName := i.(string)
+				if c.Volume.Annotations[builder.AnnotationKeyImageID] != "" && c.Volume.Spec.StorageClassName != nil && storageClassName != *c.Volume.Spec.StorageClassName {
+					return fmt.Errorf("the %s of an image can only be defined during image creation", constants.FieldVolumeStorageClassName)
+				} else {
+					c.Volume.Spec.StorageClassName = pointer.StringPtr(storageClassName)
+				}
 				return nil
 			},
 		},

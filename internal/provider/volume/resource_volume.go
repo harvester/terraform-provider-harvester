@@ -2,11 +2,11 @@ package volume
 
 import (
 	"context"
-
-	corev1 "k8s.io/api/core/v1"
+	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -15,6 +15,10 @@ import (
 	"github.com/harvester/terraform-provider-harvester/pkg/constants"
 	"github.com/harvester/terraform-provider-harvester/pkg/helper"
 	"github.com/harvester/terraform-provider-harvester/pkg/importer"
+)
+
+const (
+	volumeDeleteTimeout = 300
 )
 
 func ResourceVolume() *schema.Resource {
@@ -93,9 +97,15 @@ func resourceVolumeDelete(ctx context.Context, d *schema.ResourceData, meta inte
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	err = c.KubeClient.CoreV1().PersistentVolumeClaims(namespace).Delete(ctx, name, metav1.DeleteOptions{})
-	if err != nil && !apierrors.IsNotFound(err) {
+	if err = c.KubeClient.CoreV1().PersistentVolumeClaims(namespace).Delete(ctx, name, metav1.DeleteOptions{}); err != nil && !apierrors.IsNotFound(err) {
 		return diag.FromErr(err)
+	}
+	events, err := c.KubeClient.CoreV1().PersistentVolumeClaims(namespace).Watch(ctx, util.WatchOptions(name, int64(volumeDeleteTimeout)))
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	if !util.HasDeleted(events) {
+		return diag.FromErr(fmt.Errorf("timeout waiting for volume %s to be deleted", d.Id()))
 	}
 	d.SetId("")
 	return nil
