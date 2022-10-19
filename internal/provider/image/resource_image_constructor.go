@@ -4,6 +4,7 @@ import (
 	"errors"
 
 	harvsterv1 "github.com/harvester/harvester/pkg/apis/harvesterhci.io/v1beta1"
+	harvsterutil "github.com/harvester/harvester/pkg/util"
 
 	"github.com/harvester/terraform-provider-harvester/internal/util"
 	"github.com/harvester/terraform-provider-harvester/pkg/constants"
@@ -57,6 +58,14 @@ func (c *Constructor) Setup() util.Processors {
 				return nil
 			},
 			Required: true,
+		},
+		{
+			Field: constants.FieldImageStorageClassName,
+			Parser: func(i interface{}) error {
+				storageClassName := i.(string)
+				c.Image.Annotations[harvsterutil.AnnotationStorageClassName] = storageClassName
+				return nil
+			},
 		},
 	}
 	return append(processors, customProcessors...)
