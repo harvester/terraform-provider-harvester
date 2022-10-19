@@ -1,15 +1,18 @@
 package network
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"strconv"
+	"time"
 
 	networkutils "github.com/harvester/harvester-network-controller/pkg/utils"
 	"github.com/harvester/harvester/pkg/builder"
 	nadv1 "github.com/k8snetworkplumbingwg/network-attachment-definition-client/pkg/apis/k8s.cni.cncf.io/v1"
 
 	"github.com/harvester/terraform-provider-harvester/internal/util"
+	"github.com/harvester/terraform-provider-harvester/pkg/client"
 	"github.com/harvester/terraform-provider-harvester/pkg/constants"
 )
 
@@ -18,6 +21,9 @@ var (
 )
 
 type Constructor struct {
+	Client  *client.Client
+	Context context.Context
+
 	Network           *nadv1.NetworkAttachmentDefinition
 	Layer3NetworkConf *networkutils.Layer3NetworkConf
 }
@@ -25,6 +31,14 @@ type Constructor struct {
 func (c *Constructor) Setup() util.Processors {
 	processors := util.NewProcessors().Tags(&c.Network.Labels).Description(&c.Network.Annotations)
 	customProcessors := []util.Processor{
+		{
+			Field: constants.FieldNetworkClusterNetworkName,
+			Parser: func(i interface{}) error {
+				clusterNetworkName := i.(string)
+				c.Network.Labels[networkutils.KeyClusterNetworkLabel] = clusterNetworkName
+				return nil
+			},
+		},
 		{
 			Field: constants.FieldNetworkVlanID,
 			Parser: func(i interface{}) error {
@@ -34,14 +48,13 @@ func (c *Constructor) Setup() util.Processors {
 				)
 				if vlanID != 0 {
 					networkType = builder.NetworkTypeVLAN
-					c.Network.Spec.Config = fmt.Sprintf(builder.NetworkVLANConfigTemplate, c.Network.Name, vlanID)
+					clusterNetworkName := c.Network.Labels[networkutils.KeyClusterNetworkLabel]
+					c.Network.Spec.Config = fmt.Sprintf(builder.NetworkVLANConfigTemplate, c.Network.Name, clusterNetworkName, vlanID)
 				} else {
 					networkType = builder.NetworkTypeCustom
 				}
-				c.Network.Labels = map[string]string{
-					builder.LabelKeyNetworkType: networkType,
-					networkutils.KeyVlanLabel:   strconv.Itoa(vlanID),
-				}
+				c.Network.Labels[networkutils.KeyVlanLabel] = strconv.Itoa(vlanID)
+				c.Network.Labels[builder.LabelKeyNetworkType] = networkType
 				return nil
 			},
 			Required: true,
@@ -121,6 +134,10 @@ func (c *Constructor) Setup() util.Processors {
 }
 
 func (c *Constructor) Validate() error {
+	clusterNetworkName := c.Network.Labels[networkutils.KeyClusterNetworkLabel]
+	if err := c.waitForClusterNetworkReady(clusterNetworkName, 1*time.Minute); err != nil {
+		return fmt.Errorf("can not use the unready clusternetwork %s in networks, err: %v", clusterNetworkName, err)
+	}
 	return nil
 }
 
@@ -128,20 +145,22 @@ func (c *Constructor) Result() (interface{}, error) {
 	return c.Network, nil
 }
 
-func newNetworkConstructor(network *nadv1.NetworkAttachmentDefinition) util.Constructor {
+func newNetworkConstructor(c *client.Client, ctx context.Context, network *nadv1.NetworkAttachmentDefinition) util.Constructor {
 	return &Constructor{
+		Client:            c,
+		Context:           ctx,
 		Network:           network,
 		Layer3NetworkConf: &networkutils.Layer3NetworkConf{},
 	}
 }
 
-func Creator(namespace, name string) util.Constructor {
+func Creator(c *client.Client, ctx context.Context, namespace, name string) util.Constructor {
 	Network := &nadv1.NetworkAttachmentDefinition{
 		ObjectMeta: util.NewObjectMeta(namespace, name),
 	}
-	return newNetworkConstructor(Network)
+	return newNetworkConstructor(c, ctx, Network)
 }
 
-func Updater(network *nadv1.NetworkAttachmentDefinition) util.Constructor {
-	return newNetworkConstructor(network)
+func Updater(c *client.Client, ctx context.Context, network *nadv1.NetworkAttachmentDefinition) util.Constructor {
+	return newNetworkConstructor(c, ctx, network)
 }

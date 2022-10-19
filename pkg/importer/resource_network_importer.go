@@ -5,7 +5,6 @@ import (
 
 	networkutils "github.com/harvester/harvester-network-controller/pkg/utils"
 	"github.com/harvester/harvester/pkg/builder"
-	"github.com/harvester/harvester/pkg/webhook/resources/network"
 	nadv1 "github.com/k8snetworkplumbingwg/network-attachment-definition-client/pkg/apis/k8s.cni.cncf.io/v1"
 
 	"github.com/harvester/terraform-provider-harvester/pkg/constants"
@@ -24,7 +23,7 @@ func ResourceNetworkStateGetter(obj *nadv1.NetworkAttachmentDefinition) (*StateG
 		networkType = obj.Labels[builder.LabelKeyNetworkType]
 	}
 	if networkType == builder.NetworkTypeVLAN {
-		netconf := &network.NetConf{}
+		netconf := &networkutils.NetConf{}
 		if err = json.Unmarshal([]byte(obj.Spec.Config), netconf); err != nil {
 			return nil, err
 		}
@@ -41,17 +40,18 @@ func ResourceNetworkStateGetter(obj *nadv1.NetworkAttachmentDefinition) (*StateG
 	}
 
 	states := map[string]interface{}{
-		constants.FieldCommonNamespace:          obj.Namespace,
-		constants.FieldCommonName:               obj.Name,
-		constants.FieldCommonDescription:        GetDescriptions(obj.Annotations),
-		constants.FieldCommonTags:               GetTags(obj.Labels),
-		constants.FieldNetworkVlanID:            vlanID,
-		constants.FieldNetworkConfig:            obj.Spec.Config,
-		constants.FieldNetworkRouteMode:         layer3NetworkConf.Mode,
-		constants.FieldNetworkRouteDHCPServerIP: layer3NetworkConf.ServerIPAddr,
-		constants.FieldNetworkRouteCIDR:         layer3NetworkConf.CIDR,
-		constants.FieldNetworkRouteGateWay:      layer3NetworkConf.Gateway,
-		constants.FieldNetworkRouteConnectivity: layer3NetworkConf.Connectivity,
+		constants.FieldCommonNamespace:           obj.Namespace,
+		constants.FieldCommonName:                obj.Name,
+		constants.FieldCommonDescription:         GetDescriptions(obj.Annotations),
+		constants.FieldCommonTags:                GetTags(obj.Labels),
+		constants.FieldNetworkVlanID:             vlanID,
+		constants.FieldNetworkConfig:             obj.Spec.Config,
+		constants.FieldNetworkRouteMode:          layer3NetworkConf.Mode,
+		constants.FieldNetworkRouteDHCPServerIP:  layer3NetworkConf.ServerIPAddr,
+		constants.FieldNetworkRouteCIDR:          layer3NetworkConf.CIDR,
+		constants.FieldNetworkRouteGateWay:       layer3NetworkConf.Gateway,
+		constants.FieldNetworkRouteConnectivity:  layer3NetworkConf.Connectivity,
+		constants.FieldNetworkClusterNetworkName: obj.Labels[networkutils.KeyClusterNetworkLabel],
 	}
 	return &StateGetter{
 		ID:           helper.BuildID(obj.Namespace, obj.Name),

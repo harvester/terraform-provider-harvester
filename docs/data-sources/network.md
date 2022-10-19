@@ -33,6 +33,7 @@ data "harvester_network" "vlan1" {
 
 ### Read-Only
 
+- **cluster_network_name** (String)
 - **config** (String)
 - **description** (String) Any text you want that better describes this resource
 - **message** (String)
