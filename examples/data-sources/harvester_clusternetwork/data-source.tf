@@ -1,3 +1,3 @@
-data "harvester_clusternetwork" "vlan" {
-  name = "vlan"
+data "harvester_clusternetwork" "mgmt" {
+  name = "mgmt"
 }
