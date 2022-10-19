@@ -51,7 +51,7 @@ func (p Processors) Description(annotations *map[string]string) Processors {
 	return append(p, Processor{
 		Field: constants.FieldCommonDescription,
 		Parser: func(i interface{}) error {
-			*annotations = mapMerge(*annotations, builder.AnnotationPrefixCattleField, map[string]interface{}{
+			*annotations = MapMerge(*annotations, builder.AnnotationPrefixCattleField, map[string]interface{}{
 				constants.FieldCommonDescription: i,
 			})
 			return nil
@@ -68,7 +68,7 @@ func (p Processors) Tags(labels *map[string]string) Processors {
 	return append(p, Processor{
 		Field: constants.FieldCommonTags,
 		Parser: func(i interface{}) error {
-			*labels = mapMerge(*labels, builder.LabelPrefixHarvesterTag, i.(map[string]interface{}))
+			*labels = MapMerge(*labels, builder.LabelPrefixHarvesterTag, i.(map[string]interface{}))
 			return nil
 		},
 	})
@@ -111,7 +111,7 @@ func ResourceConstruct(d *schema.ResourceData, c Constructor) (interface{}, erro
 	return c.Result()
 }
 
-func mapMerge(dst map[string]string, prefix string, values map[string]interface{}) map[string]string {
+func MapMerge(dst map[string]string, prefix string, values map[string]interface{}) map[string]string {
 	if dst == nil {
 		dst = map[string]string{}
 	}
