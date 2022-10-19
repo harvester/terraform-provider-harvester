@@ -22,6 +22,11 @@ func Schema() map[string]*schema.Schema {
 			Optional: true,
 			Computed: true,
 		},
+		constants.FieldNetworkClusterNetworkName: {
+			Type:        schema.TypeString,
+			Required:    true,
+			Description: "", //TODO
+		},
 		constants.FieldNetworkRouteMode: {
 			Type:     schema.TypeString,
 			Optional: true,
