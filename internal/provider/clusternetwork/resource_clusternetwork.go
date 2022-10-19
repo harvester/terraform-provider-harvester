@@ -2,7 +2,7 @@ package clusternetwork
 
 import (
 	"context"
-	"errors"
+	"fmt"
 
 	harvsternetworkv1 "github.com/harvester/harvester-network-controller/pkg/apis/network.harvesterhci.io/v1beta1"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -31,13 +31,21 @@ func ResourceClusterNetwork() *schema.Resource {
 }
 
 func resourceClusterNetworkCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	c := meta.(*client.Client)
 	name := d.Get(constants.FieldCommonName).(string)
-	switch name {
-	case "vlan":
-		return diag.FromErr(errors.New("can not create the existing vlan clusternetwork, to avoid this error and continue with the plan, use `terraform import harvester_clusternetwork.vlan vlan` to import it first"))
-	default:
-		return diag.FromErr(errors.New("can not create clusternetwork, to avoid this error and continue with the plan, either move clusternetwork to another module or reduce the scope of the plan using the -target flag"))
+	if name == constants.ManagementClusterNetworkName {
+		return diag.FromErr(fmt.Errorf("can not create the existing %s clusternetwork, to avoid this error and continue with the plan, use `terraform import harvester_clusternetwork.%s %s` to import it first", name, name, name))
 	}
+	toCreate, err := util.ResourceConstruct(d, Creator(name))
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	obj, err := c.HarvesterNetworkClient.NetworkV1beta1().ClusterNetworks().Create(ctx, toCreate.(*harvsternetworkv1.ClusterNetwork), metav1.CreateOptions{})
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	d.SetId(helper.BuildID("", name))
+	return diag.FromErr(resourceClusterNetworkImport(d, obj))
 }
 
 func resourceClusterNetworkUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -83,7 +91,21 @@ func resourceClusterNetworkRead(ctx context.Context, d *schema.ResourceData, met
 }
 
 func resourceClusterNetworkDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	return diag.FromErr(errors.New("clusternetwork should not be destroyed, to avoid this error and continue with the plan, either move clusternetwork to another module or reduce the scope of the plan using the -target flag"))
+	c := meta.(*client.Client)
+	_, name, err := helper.IDParts(d.Id())
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	if name == constants.ManagementClusterNetworkName {
+		return diag.FromErr(fmt.Errorf("clusternetwork %s should not be destroyed, to avoid this error and continue with the plan, either move clusternetwork %s to another module or reduce the scope of the plan using the -target flag", name, name))
+	}
+
+	err = c.HarvesterNetworkClient.NetworkV1beta1().ClusterNetworks().Delete(ctx, name, metav1.DeleteOptions{})
+	if err != nil && !apierrors.IsNotFound(err) {
+		return diag.FromErr(err)
+	}
+	d.SetId("")
+	return nil
 }
 
 func resourceClusterNetworkImport(d *schema.ResourceData, obj *harvsternetworkv1.ClusterNetwork) error {

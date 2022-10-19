@@ -13,8 +13,8 @@ description: |-
 ## Example Usage
 
 ```terraform
-data "harvester_clusternetwork" "vlan" {
-  name = "vlan"
+data "harvester_clusternetwork" "mgmt" {
+  name = "mgmt"
 }
 ```
 
@@ -31,9 +31,7 @@ data "harvester_clusternetwork" "vlan" {
 
 ### Read-Only
 
-- **default_physical_nic** (String)
 - **description** (String) Any text you want that better describes this resource
-- **enable** (Boolean)
 - **message** (String)
 - **state** (String)
 - **tags** (Map of String)

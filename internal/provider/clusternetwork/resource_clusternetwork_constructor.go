@@ -1,12 +1,9 @@
 package clusternetwork
 
 import (
-	"fmt"
-
 	harvsternetworkv1 "github.com/harvester/harvester-network-controller/pkg/apis/network.harvesterhci.io/v1beta1"
 
 	"github.com/harvester/terraform-provider-harvester/internal/util"
-	"github.com/harvester/terraform-provider-harvester/pkg/constants"
 )
 
 var (
@@ -18,25 +15,8 @@ type Constructor struct {
 }
 
 func (c *Constructor) Setup() util.Processors {
-	if c.ClusterNetwork.Config == nil {
-		c.ClusterNetwork.Config = map[string]string{}
-	}
-	processors := util.NewProcessors().Tags(&c.ClusterNetwork.Labels).Description(&c.ClusterNetwork.Annotations).
-		Bool(constants.FieldClusterNetworkEnable, &c.ClusterNetwork.Enable, true)
-	customProcessors := []util.Processor{
-		{
-			Field: constants.FieldClusterNetworkDefaultPhysicalNIC,
-			Parser: func(i interface{}) error {
-				defaultPhysicalNIC := i.(string)
-				if c.ClusterNetwork.Enable && defaultPhysicalNIC == "" {
-					return fmt.Errorf("%s is true, please specify %s", constants.FieldClusterNetworkEnable, constants.FieldClusterNetworkDefaultPhysicalNIC)
-				}
-				c.ClusterNetwork.Config[constants.ClusterNetworkConfigKeyDefaultPhysicalNIC] = defaultPhysicalNIC
-				return nil
-			},
-			Required: true,
-		},
-	}
+	processors := util.NewProcessors().Tags(&c.ClusterNetwork.Labels).Description(&c.ClusterNetwork.Annotations)
+	customProcessors := []util.Processor{}
 	return append(processors, customProcessors...)
 }
 
@@ -54,9 +34,9 @@ func newClusterNetworkConstructor(clusterNetwork *harvsternetworkv1.ClusterNetwo
 	}
 }
 
-func Creator(namespace, name string) util.Constructor {
+func Creator(name string) util.Constructor {
 	clusterNetwork := &harvsternetworkv1.ClusterNetwork{
-		ObjectMeta: util.NewObjectMeta(namespace, name),
+		ObjectMeta: util.NewObjectMeta("", name),
 	}
 	return newClusterNetworkConstructor(clusterNetwork)
 }
