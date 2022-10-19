@@ -8,7 +8,6 @@ replace (
 	github.com/docker/docker => github.com/docker/docker v1.4.2-0.20200203170920-46ec8731fbce
 	github.com/go-kit/kit => github.com/go-kit/kit v0.3.0
 	github.com/googleapis/gnostic => github.com/googleapis/gnostic v0.4.1
-	github.com/harvester/harvester => github.com/harvester/harvester v0.0.2-0.20220802102220-e15570022723
 	github.com/knative/pkg => github.com/rancher/pkg v0.0.0-20190514055449-b30ab9de040e
 	github.com/openshift/api => github.com/openshift/api v0.0.0-20191219222812-2987a591a72c
 	github.com/openshift/client-go => github.com/openshift/client-go v0.0.0-20200521150516-05eb9880269c
@@ -44,27 +43,28 @@ replace (
 	k8s.io/pod-security-admission => k8s.io/pod-security-admission v0.23.7
 	k8s.io/sample-apiserver => k8s.io/sample-apiserver v0.23.7
 
-	kubevirt.io/api => github.com/kubevirt/api v0.53.1
-	kubevirt.io/client-go => github.com/kubevirt/client-go v0.53.1
-	kubevirt.io/containerized-data-importer-api => github.com/kubevirt/containerized-data-importer-api v1.47.0
+	kubevirt.io/api => github.com/kubevirt/api v0.54.0
+	kubevirt.io/client-go => github.com/kubevirt/client-go v0.54.0
+	launchpad.net/gocheck v0.0.0-20140225173054-000000000087 => github.com/go-check/check v0.0.0-20180628173108-788fd7840127
 	sigs.k8s.io/cluster-api => sigs.k8s.io/cluster-api v1.1.4
 	sigs.k8s.io/structured-merge-diff => sigs.k8s.io/structured-merge-diff v0.0.0-20190302045857-e85c7b244fd2
 )
 
 require (
-	github.com/harvester/harvester v1.0.3-rc1
-	github.com/harvester/harvester-network-controller v0.2.7
+	github.com/harvester/harvester v1.1.0-rc3
+	github.com/harvester/harvester-network-controller v0.3.0-rc3
 	github.com/hashicorp/hcl/v2 v2.8.2 // indirect
 	github.com/hashicorp/terraform-plugin-docs v0.4.0
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.6.1
 	github.com/k8snetworkplumbingwg/network-attachment-definition-client v0.0.0-20200331171230-d50e42f2b669
+	github.com/longhorn/longhorn-manager v1.3.1
 	github.com/rancher/wrangler v1.0.1-0.20220520195731-8eeded9bae2a
 	gopkg.in/yaml.v2 v2.4.0
 	k8s.io/api v0.24.0
 	k8s.io/apimachinery v0.24.0
 	k8s.io/client-go v12.0.0+incompatible
 	k8s.io/utils v0.0.0-20211116205334-6203023598ed
-	kubevirt.io/api v0.0.0-20220430221853-33880526e414
+	kubevirt.io/api v0.54.0
 )
 
 require (
@@ -73,8 +73,10 @@ require (
 	github.com/Masterminds/goutils v1.1.1 // indirect
 	github.com/Masterminds/semver v1.5.0 // indirect
 	github.com/Masterminds/sprig v2.22.0+incompatible // indirect
+	github.com/Microsoft/go-winio v0.5.1 // indirect
 	github.com/PuerkitoBio/purell v1.1.1 // indirect
 	github.com/PuerkitoBio/urlesc v0.0.0-20170810143723-de5bf2ad4578 // indirect
+	github.com/achanda/go-sysctl v0.0.0-20160222034550-6be7678c45d2 // indirect
 	github.com/agext/levenshtein v1.2.2 // indirect
 	github.com/apparentlymart/go-textseg/v12 v12.0.0 // indirect
 	github.com/apparentlymart/go-textseg/v13 v13.0.0 // indirect
@@ -84,14 +86,15 @@ require (
 	github.com/bgentry/go-netrc v0.0.0-20140422174119-9fd32a8b3d3d // indirect
 	github.com/bgentry/speakeasy v0.1.0 // indirect
 	github.com/blang/semver v3.5.1+incompatible // indirect
+	github.com/c9s/goprocinfo v0.0.0-20210130143923-c95fcf8c64a8 // indirect
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
-	github.com/containernetworking/cni v0.8.1 // indirect
+	github.com/containernetworking/cni v1.1.2 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/emicklei/go-restful v2.15.0+incompatible // indirect
 	github.com/evanphx/json-patch v4.12.0+incompatible // indirect
 	github.com/fatih/color v1.13.0 // indirect
+	github.com/felixge/httpsnoop v1.0.1 // indirect
 	github.com/fsnotify/fsnotify v1.5.1 // indirect
-	github.com/ghodss/yaml v1.0.0 // indirect
 	github.com/go-logr/logr v1.2.3 // indirect
 	github.com/go-openapi/jsonpointer v0.19.5 // indirect
 	github.com/go-openapi/jsonreference v0.19.6 // indirect
@@ -105,6 +108,7 @@ require (
 	github.com/google/uuid v1.3.0 // indirect
 	github.com/googleapis/gax-go/v2 v2.1.1 // indirect
 	github.com/googleapis/gnostic v0.5.5 // indirect
+	github.com/gorilla/handlers v1.5.1 // indirect
 	github.com/hashicorp/errwrap v1.0.0 // indirect
 	github.com/hashicorp/go-checkpoint v0.5.0 // indirect
 	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
@@ -127,11 +131,10 @@ require (
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
-	github.com/k3s-io/helm-controller v0.11.7 // indirect
 	github.com/klauspost/compress v1.14.2 // indirect
+	github.com/kr/pretty v0.3.0 // indirect
 	github.com/kubernetes-csi/external-snapshotter/v2 v2.1.1 // indirect
-	github.com/kubernetes/dashboard v1.10.1 // indirect
-	github.com/longhorn/longhorn-manager v1.3.0-rc2 // indirect
+	github.com/longhorn/go-iscsi-helper v0.0.0-20220805034259-7b59e22574bb // indirect
 	github.com/mailru/easyjson v0.7.7 // indirect
 	github.com/mattn/go-colorable v0.1.12 // indirect
 	github.com/mattn/go-isatty v0.0.14 // indirect
@@ -151,20 +154,14 @@ require (
 	github.com/pborman/uuid v1.2.0 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/posener/complete v1.2.3 // indirect
+	github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring v0.52.0 // indirect
 	github.com/prometheus/client_golang v1.12.1 // indirect
 	github.com/prometheus/client_model v0.2.0 // indirect
 	github.com/prometheus/common v0.32.1 // indirect
 	github.com/prometheus/procfs v0.7.3 // indirect
-	github.com/rancher/aks-operator v1.0.2 // indirect
-	github.com/rancher/eks-operator v1.1.1 // indirect
-	github.com/rancher/fleet/pkg/apis v0.0.0-20210918015053-5a141a6b18f0 // indirect
-	github.com/rancher/gke-operator v1.1.1 // indirect
 	github.com/rancher/lasso v0.0.0-20220519004610-700f167d8324 // indirect
-	github.com/rancher/norman v0.0.0-20220520225714-4cc2f5a97011 // indirect
-	github.com/rancher/rancher v0.0.0-20211208233239-77392a65423d // indirect
-	github.com/rancher/rancher/pkg/apis v0.0.0 // indirect
-	github.com/rancher/rke v1.3.3-rc4 // indirect
 	github.com/rancher/system-upgrade-controller/pkg/apis v0.0.0-20210727200656-10b094e30007 // indirect
+	github.com/rogpeppe/go-internal v1.8.0 // indirect
 	github.com/russross/blackfriday v1.6.0 // indirect
 	github.com/sirupsen/logrus v1.8.1 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
@@ -190,15 +187,13 @@ require (
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/yaml.v3 v3.0.0 // indirect
 	k8s.io/apiextensions-apiserver v0.24.0 // indirect
-	k8s.io/apiserver v0.23.7 // indirect
 	k8s.io/component-base v0.23.7 // indirect
 	k8s.io/gengo v0.0.0-20211129171323-c02415ce4185 // indirect
 	k8s.io/klog/v2 v2.40.1 // indirect
 	k8s.io/kube-openapi v0.0.0-20220124234850-424119656bbf // indirect
 	kubevirt.io/containerized-data-importer-api v1.47.0 // indirect
 	kubevirt.io/controller-lifecycle-operator-sdk/api v0.0.0-20220329064328-f3cc58c6ed90 // indirect
-	kubevirt.io/kubevirt v0.53.1 // indirect
-	sigs.k8s.io/cli-utils v0.27.0 // indirect
+	kubevirt.io/kubevirt v0.54.0 // indirect
 	sigs.k8s.io/cluster-api v0.4.4 // indirect
 	sigs.k8s.io/controller-runtime v0.11.2 // indirect
 	sigs.k8s.io/json v0.0.0-20211020170558-c049b76a60c6 // indirect
