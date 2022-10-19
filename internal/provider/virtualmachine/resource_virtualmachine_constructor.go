@@ -1,11 +1,14 @@
 package virtualmachine
 
 import (
+	"context"
 	"errors"
+	"fmt"
 
 	"github.com/harvester/harvester/pkg/builder"
 	harvesterutil "github.com/harvester/harvester/pkg/util"
 	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/pointer"
 	kubevirtv1 "kubevirt.io/api/core/v1"
 
@@ -24,8 +27,10 @@ var (
 )
 
 type Constructor struct {
-	Builder *builder.VMBuilder
 	Client  *client.Client
+	Context context.Context
+
+	Builder *builder.VMBuilder
 }
 
 func (c *Constructor) Setup() util.Processors {
@@ -191,23 +196,40 @@ func (c *Constructor) Setup() util.Processors {
 						VolumeMode: corev1.PersistentVolumeBlock,
 						AccessMode: corev1.ReadWriteMany,
 					}
-					if storageClassName := r[constants.FieldVolumeStorageClassName].(string); storageClassName != "" {
-						pvcOption.StorageClassName = pointer.StringPtr(storageClassName)
+					// storageClass
+					storageClassName := r[constants.FieldVolumeStorageClassName].(string)
+					if imageNamespacedName != "" {
+						if storageClassName == "" {
+							imageNamespace, imageName, err := helper.NamespacedNamePartsByDefault(imageNamespacedName, c.Builder.VirtualMachine.Namespace)
+							if err != nil {
+								return err
+							}
+							pvcOption.ImageID = helper.BuildNamespacedName(imageNamespace, imageName)
+							storageClassName = builder.BuildImageStorageClassName("", imageName)
+						} else {
+							return fmt.Errorf("the %s of an image can only be defined during image creation", constants.FieldVolumeStorageClassName)
+						}
+					} else {
+						if storageClassName == "" {
+							storageClasses, err := c.Client.StorageClassClient.StorageClasses().List(c.Context, metav1.ListOptions{})
+							if err != nil {
+								return err
+							}
+							for _, storageClass := range storageClasses.Items {
+								if storageClass.Annotations[harvesterutil.AnnotationIsDefaultStorageClassName] == "true" {
+									storageClassName = storageClass.Name
+									break
+								}
+							}
+						}
 					}
+					pvcOption.StorageClassName = pointer.StringPtr(storageClassName)
+
 					if volumeMode := r[constants.FieldVolumeMode].(string); volumeMode != "" {
 						pvcOption.VolumeMode = corev1.PersistentVolumeMode(volumeMode)
 					}
 					if accessMode := r[constants.FieldVolumeAccessMode].(string); accessMode != "" {
 						pvcOption.AccessMode = corev1.PersistentVolumeAccessMode(accessMode)
-					}
-					if imageNamespacedName != "" {
-						imageNamespace, imageName, err := helper.NamespacedNamePartsByDefault(imageNamespacedName, c.Builder.VirtualMachine.Namespace)
-						if err != nil {
-							return err
-						}
-						pvcOption.ImageID = helper.BuildNamespacedName(imageNamespace, imageName)
-						storageClassName := builder.BuildImageStorageClassName("", imageName)
-						pvcOption.StorageClassName = pointer.StringPtr(storageClassName)
 					}
 					if autoDelete := r[constants.FieldDiskAutoDelete].(bool); autoDelete {
 						pvcOption.Annotations = map[string]string{
@@ -266,28 +288,29 @@ func (c *Constructor) Result() (interface{}, error) {
 	return c.Builder.VM()
 }
 
-func newVMConstructor(c *client.Client, vmBuilder *builder.VMBuilder) util.Constructor {
+func newVMConstructor(c *client.Client, ctx context.Context, vmBuilder *builder.VMBuilder) util.Constructor {
 	return &Constructor{
-		Builder: vmBuilder,
 		Client:  c,
+		Context: ctx,
+		Builder: vmBuilder,
 	}
 }
 
-func Creator(c *client.Client, namespace, name string) util.Constructor {
+func Creator(c *client.Client, ctx context.Context, namespace, name string) util.Constructor {
 	vmBuilder := builder.NewVMBuilder(vmCreator).
 		Namespace(namespace).Name(name).
 		EvictionStrategy(true).
 		DefaultPodAntiAffinity()
-	return newVMConstructor(c, vmBuilder)
+	return newVMConstructor(c, ctx, vmBuilder)
 }
 
-func Updater(c *client.Client, vm *kubevirtv1.VirtualMachine) util.Constructor {
+func Updater(c *client.Client, ctx context.Context, vm *kubevirtv1.VirtualMachine) util.Constructor {
 	vm.Spec.Template.Spec.Networks = []kubevirtv1.Network{}
 	vm.Spec.Template.Spec.Domain.Devices.Interfaces = []kubevirtv1.Interface{}
 	vm.Spec.Template.Spec.Domain.Devices.Disks = []kubevirtv1.Disk{}
 	vm.Spec.Template.Spec.Volumes = []kubevirtv1.Volume{}
 	vm.Annotations[harvesterutil.AnnotationVolumeClaimTemplates] = "[]"
-	return newVMConstructor(c, &builder.VMBuilder{
+	return newVMConstructor(c, ctx, &builder.VMBuilder{
 		VirtualMachine: vm,
 	})
 }
