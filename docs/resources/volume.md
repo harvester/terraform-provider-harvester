@@ -43,7 +43,7 @@ resource "harvester_volume" "ubuntu20-image-disk" {
   namespace = "default"
 
   size  = "10Gi"
-  image = "harvester-public/ubuntu20"
+  image = harvester_image.ubuntu20.id
 }
 
 resource "harvester_volume" "opensuse154-image-disk" {
@@ -51,7 +51,7 @@ resource "harvester_volume" "opensuse154-image-disk" {
   namespace = "default"
 
   size  = "10Gi"
-  image = "harvester-public/opensuse154"
+  image = harvester_image.opensuse154.id
 }
 ```
 
