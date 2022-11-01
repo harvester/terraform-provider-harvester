@@ -58,6 +58,7 @@ require (
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.6.1
 	github.com/k8snetworkplumbingwg/network-attachment-definition-client v0.0.0-20200331171230-d50e42f2b669
 	github.com/longhorn/longhorn-manager v1.3.1
+	github.com/mitchellh/go-homedir v1.1.0
 	github.com/rancher/wrangler v1.0.1-0.20220520195731-8eeded9bae2a
 	gopkg.in/yaml.v2 v2.4.0
 	k8s.io/api v0.24.0
@@ -141,7 +142,6 @@ require (
 	github.com/matttproud/golang_protobuf_extensions v1.0.2-0.20181231171920-c182affec369 // indirect
 	github.com/mitchellh/cli v1.1.2 // indirect
 	github.com/mitchellh/copystructure v1.2.0 // indirect
-	github.com/mitchellh/go-homedir v1.1.0 // indirect
 	github.com/mitchellh/go-testing-interface v1.0.4 // indirect
 	github.com/mitchellh/go-wordwrap v1.0.0 // indirect
 	github.com/mitchellh/mapstructure v1.4.3 // indirect

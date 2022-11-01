@@ -7,6 +7,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/mitchellh/go-homedir"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/harvester/terraform-provider-harvester/internal/provider/clusternetwork"
@@ -64,8 +65,12 @@ func Provider() *schema.Provider {
 
 func configure(p *schema.Provider) schema.ConfigureContextFunc {
 	return func(ctx context.Context, d *schema.ResourceData) (interface{}, diag.Diagnostics) {
-		kubeConfig := d.Get(constants.FieldProviderKubeConfig).(string)
 		kubeContext := d.Get(constants.FieldProviderKubeContext).(string)
+		kubeConfig, err := homedir.Expand(d.Get(constants.FieldProviderKubeConfig).(string))
+		if err != nil {
+			return nil, diag.FromErr(err)
+		}
+
 		c, err := client.NewClient(kubeConfig, kubeContext)
 		if err != nil {
 			return nil, diag.FromErr(err)
