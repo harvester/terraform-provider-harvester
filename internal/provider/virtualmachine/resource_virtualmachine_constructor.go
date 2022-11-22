@@ -199,14 +199,14 @@ func (c *Constructor) Setup() util.Processors {
 					// storageClass
 					storageClassName := r[constants.FieldVolumeStorageClassName].(string)
 					if imageNamespacedName != "" {
+						imageNamespace, imageName, err := helper.NamespacedNamePartsByDefault(imageNamespacedName, c.Builder.VirtualMachine.Namespace)
+						if err != nil {
+							return err
+						}
 						if storageClassName == "" {
-							imageNamespace, imageName, err := helper.NamespacedNamePartsByDefault(imageNamespacedName, c.Builder.VirtualMachine.Namespace)
-							if err != nil {
-								return err
-							}
 							pvcOption.ImageID = helper.BuildNamespacedName(imageNamespace, imageName)
 							storageClassName = builder.BuildImageStorageClassName("", imageName)
-						} else {
+						} else if storageClassName != builder.BuildImageStorageClassName("", imageName) {
 							return fmt.Errorf("the %s of an image can only be defined during image creation", constants.FieldVolumeStorageClassName)
 						}
 					} else {
