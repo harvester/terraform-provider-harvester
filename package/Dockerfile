@@ -1,7 +1,8 @@
 FROM registry.suse.com/bci/bci-base:15.3
 
+# hadolint ignore=DL3037
 RUN zypper -n rm container-suseconnect && \
-    zypper -n install unzip=6.00 curl=7.66.0 vim=9.0.0313 && \
+    zypper -n install unzip curl vim && \
     zypper -n clean -a && rm -rf /tmp/* /var/tmp/* /usr/share/doc/packages/*
 
 ARG ARCH=amd64
