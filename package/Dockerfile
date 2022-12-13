@@ -1,4 +1,4 @@
-FROM registry.suse.com/bci/bci-base:15.3
+FROM registry.suse.com/bci/bci-base:15.4
 
 # hadolint ignore=DL3037
 RUN zypper -n rm container-suseconnect && \
