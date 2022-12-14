@@ -109,9 +109,7 @@ func (c *Constructor) Setup() util.Processors {
 				if _, err = networkutils.NewLayer3NetworkConf(layer3NetworkConf); err != nil {
 					return err
 				}
-				c.Network.Annotations = map[string]string{
-					networkutils.KeyNetworkConf: layer3NetworkConf,
-				}
+				c.Network.Annotations[networkutils.KeyNetworkConf] = layer3NetworkConf
 				return nil
 			},
 			Required: true,
