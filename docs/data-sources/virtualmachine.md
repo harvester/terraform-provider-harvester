@@ -44,6 +44,7 @@ data "harvester_virtualmachine" "opensuse154" {
 - **disk** (List of Object) (see [below for nested schema](#nestedatt--disk))
 - **efi** (Boolean)
 - **hostname** (String)
+- **input** (List of Object) (see [below for nested schema](#nestedatt--input))
 - **machine_type** (String)
 - **memory** (String)
 - **message** (String)
@@ -90,6 +91,16 @@ Read-Only:
 - **type** (String)
 - **volume_mode** (String)
 - **volume_name** (String)
+
+
+<a id="nestedatt--input"></a>
+### Nested Schema for `input`
+
+Read-Only:
+
+- **bus** (String)
+- **name** (String)
+- **type** (String)
 
 
 <a id="nestedatt--network_interface"></a>

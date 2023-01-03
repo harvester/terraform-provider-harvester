@@ -93,6 +93,13 @@ please use %s instead of this deprecated field:
 				Schema: resourceNetworkInterfaceSchema(),
 			},
 		},
+		constants.FieldVirtualMachineInput: {
+			Type:     schema.TypeList,
+			Optional: true,
+			Elem: &schema.Resource{
+				Schema: resourceInputSchema(),
+			},
+		},
 		constants.FieldVirtualMachineInstanceNodeName: {
 			Type:     schema.TypeString,
 			Computed: true,
