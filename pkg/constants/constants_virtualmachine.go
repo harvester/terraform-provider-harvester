@@ -14,6 +14,7 @@ const (
 	FieldVirtualMachineCloudInit          = "cloudinit"
 	FieldVirtualMachineDisk               = "disk"
 	FieldVirtualMachineNetworkInterface   = "network_interface"
+	FieldVirtualMachineInput              = "input"
 	FieldVirtualMachineInstanceNodeName   = "node_name"
 	FieldVirtualMachineEFI                = "efi"
 	FieldVirtualMachineSecureBoot         = "secure_boot"
@@ -63,4 +64,10 @@ const (
 	FieldDiskVolumeName         = "volume_name"
 
 	AnnotationDiskAutoDelete = "terraform-provider-harvester-auto-delete"
+)
+
+const (
+	FieldInputName = "name"
+	FieldInputType = "type"
+	FieldInputBus  = "bus"
 )

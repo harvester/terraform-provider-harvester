@@ -52,6 +52,12 @@ resource "harvester_virtualmachine" "k3os" {
     bus        = "virtio"
     boot_order = 1
   }
+
+  input {
+    name = "tablet"
+    type = "tablet"
+    bus  = "usb"
+  }
 }
 
 
@@ -225,6 +231,7 @@ resource "harvester_virtualmachine" "opensuse154" {
 - **efi** (Boolean)
 - **hostname** (String)
 - **id** (String) The ID of this resource.
+- **input** (Block List) (see [below for nested schema](#nestedblock--input))
 - **machine_type** (String)
 - **memory** (String)
 - **namespace** (String)
@@ -298,6 +305,19 @@ Optional:
 - **user_data** (String)
 - **user_data_base64** (String)
 - **user_data_secret_name** (String)
+
+
+<a id="nestedblock--input"></a>
+### Nested Schema for `input`
+
+Required:
+
+- **name** (String)
+
+Optional:
+
+- **bus** (String)
+- **type** (String)
 
 ## Import
 

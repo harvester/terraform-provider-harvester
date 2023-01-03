@@ -37,6 +37,12 @@ resource "harvester_virtualmachine" "k3os" {
     bus        = "virtio"
     boot_order = 1
   }
+
+  input {
+    name = "tablet"
+    type = "tablet"
+    bus  = "usb"
+  }
 }
 
 

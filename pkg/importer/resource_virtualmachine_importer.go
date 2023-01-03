@@ -75,6 +75,20 @@ func (v *VMImporter) SSHKeys() ([]string, error) {
 	return sshKeys, nil
 }
 
+func (v *VMImporter) Input() ([]map[string]interface{}, error) {
+	inputs := v.VirtualMachine.Spec.Template.Spec.Domain.Devices.Inputs
+	var inputStates = make([]map[string]interface{}, 0, len(inputs))
+	for _, input := range inputs {
+		inputState := map[string]interface{}{
+			constants.FieldInputName: input.Name,
+			constants.FieldInputType: input.Type,
+			constants.FieldInputBus:  input.Bus,
+		}
+		inputStates = append(inputStates, inputState)
+	}
+	return inputStates, nil
+}
+
 func (v *VMImporter) NetworkInterface() ([]map[string]interface{}, error) {
 	var (
 		waitForLeaseInterfaces   []string
@@ -315,6 +329,10 @@ func ResourceVirtualMachineStateGetter(vm *kubevirtv1.VirtualMachine, vmi *kubev
 	if err != nil {
 		return nil, err
 	}
+	input, err := vmImporter.Input()
+	if err != nil {
+		return nil, err
+	}
 	sshKeys, err := vmImporter.SSHKeys()
 	if err != nil {
 		return nil, err
@@ -340,6 +358,7 @@ func ResourceVirtualMachineStateGetter(vm *kubevirtv1.VirtualMachine, vmi *kubev
 			constants.FieldVirtualMachineRunStrategy:      string(runStrategy),
 			constants.FieldVirtualMachineNetworkInterface: networkInterface,
 			constants.FieldVirtualMachineDisk:             disk,
+			constants.FieldVirtualMachineInput:            input,
 			constants.FieldVirtualMachineCloudInit:        cloudInit,
 			constants.FieldVirtualMachineSSHKeys:          sshKeys,
 			constants.FieldVirtualMachineInstanceNodeName: vmImporter.NodeName(),

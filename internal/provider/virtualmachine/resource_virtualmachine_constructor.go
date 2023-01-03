@@ -269,6 +269,18 @@ func (c *Constructor) Setup() util.Processors {
 				return nil
 			},
 		},
+		{
+			Field: constants.FieldVirtualMachineInput,
+			Parser: func(i interface{}) error {
+				r := i.(map[string]interface{})
+				inputName := r[constants.FieldInputName].(string)
+				inputType := r[constants.FieldInputType].(string)
+				inputBus := r[constants.FieldInputBus].(string)
+				vmBuilder.Input(inputName, inputType, inputBus)
+				return nil
+			},
+			Required: true,
+		},
 	}
 	return append(processors, customProcessors...)
 }
