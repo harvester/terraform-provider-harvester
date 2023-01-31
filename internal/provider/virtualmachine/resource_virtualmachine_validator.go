@@ -94,7 +94,7 @@ Either remove unused ssh keys from "ssh_keys" or add ssh public keys to cloud-in
 	return nil
 }
 
-func inCloudConfig(parentKey, parent, key, value interface{}) bool {
+func inCloudConfig(parentKey, parent, key interface{}, value string) bool {
 	switch section := parent.(type) {
 	case map[interface{}]interface{}:
 		for k, v := range section {
@@ -109,8 +109,10 @@ func inCloudConfig(parentKey, parent, key, value interface{}) bool {
 			}
 		}
 	case interface{}:
-		if parentKey == key && section == value {
-			return true
+		if parentKey == key {
+			if sectionStr, ok := section.(string); ok && strings.TrimSpace(sectionStr) == strings.TrimSpace(value) {
+				return true
+			}
 		}
 	}
 	return false
