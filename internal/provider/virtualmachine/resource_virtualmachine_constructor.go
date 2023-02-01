@@ -123,6 +123,15 @@ func (c *Constructor) Setup() util.Processors {
 			},
 		},
 		{
+			Field: constants.FieldVirtualMachineReservedMemory,
+			Parser: func(i interface{}) error {
+				vmBuilder.Annotations(map[string]string{
+					harvesterutil.AnnotationReservedMemory: i.(string),
+				})
+				return nil
+			},
+		},
+		{
 			Field: constants.FieldVirtualMachineSSHKeys,
 			Parser: func(i interface{}) error {
 				sshKey := i.(string)

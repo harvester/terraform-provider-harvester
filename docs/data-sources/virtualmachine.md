@@ -49,6 +49,7 @@ data "harvester_virtualmachine" "opensuse154" {
 - **message** (String)
 - **network_interface** (List of Object) (see [below for nested schema](#nestedatt--network_interface))
 - **node_name** (String)
+- **reserved_memory** (String)
 - **restart_after_update** (Boolean) restart vm after the vm is updated
 - **run_strategy** (String) more info: https://kubevirt.io/user-guide/virtual_machines/run_strategies/
 - **secure_boot** (Boolean) EFI must be enabled to use this feature

@@ -34,6 +34,10 @@ func (v *VMImporter) HostName() string {
 	return v.VirtualMachine.Spec.Template.Spec.Hostname
 }
 
+func (v *VMImporter) ReservedMemory() string {
+	return v.VirtualMachine.Annotations[harvesterutil.AnnotationReservedMemory]
+}
+
 func (v *VMImporter) Description() string {
 	return v.VirtualMachine.Annotations[builder.AnnotationKeyDescription]
 }
@@ -336,6 +340,7 @@ func ResourceVirtualMachineStateGetter(vm *kubevirtv1.VirtualMachine, vmi *kubev
 			constants.FieldVirtualMachineCPU:              vmImporter.CPU(),
 			constants.FieldVirtualMachineMemory:           vmImporter.Memory(),
 			constants.FieldVirtualMachineHostname:         vmImporter.HostName(),
+			constants.FieldVirtualMachineReservedMemory:   vmImporter.ReservedMemory(),
 			constants.FieldVirtualMachineMachineType:      vmImporter.MachineType(),
 			constants.FieldVirtualMachineRunStrategy:      string(runStrategy),
 			constants.FieldVirtualMachineNetworkInterface: networkInterface,

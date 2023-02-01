@@ -71,9 +71,10 @@ resource "harvester_virtualmachine" "ubuntu20" {
   efi         = true
   secure_boot = true
 
-  run_strategy = "RerunOnFailure"
-  hostname     = "ubuntu20"
-  machine_type = "q35"
+  run_strategy    = "RerunOnFailure"
+  hostname        = "ubuntu20"
+  reserved_memory = "100Mi"
+  machine_type    = "q35"
 
   network_interface {
     name           = "nic-1"
@@ -228,6 +229,7 @@ resource "harvester_virtualmachine" "opensuse154" {
 - **machine_type** (String)
 - **memory** (String)
 - **namespace** (String)
+- **reserved_memory** (String)
 - **restart_after_update** (Boolean) restart vm after the vm is updated
 - **run_strategy** (String) more info: https://kubevirt.io/user-guide/virtual_machines/run_strategies/
 - **secure_boot** (Boolean) EFI must be enabled to use this feature
