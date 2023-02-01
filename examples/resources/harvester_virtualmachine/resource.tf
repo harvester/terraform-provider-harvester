@@ -62,9 +62,10 @@ resource "harvester_virtualmachine" "ubuntu20" {
   efi         = true
   secure_boot = true
 
-  run_strategy = "RerunOnFailure"
-  hostname     = "ubuntu20"
-  machine_type = "q35"
+  run_strategy    = "RerunOnFailure"
+  hostname        = "ubuntu20"
+  reserved_memory = "100Mi"
+  machine_type    = "q35"
 
   network_interface {
     name           = "nic-1"

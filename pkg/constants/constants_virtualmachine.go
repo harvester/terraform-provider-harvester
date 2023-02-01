@@ -5,6 +5,7 @@ const (
 
 	FieldVirtualMachineMachineType        = "machine_type"
 	FieldVirtualMachineHostname           = "hostname"
+	FieldVirtualMachineReservedMemory     = "reserved_memory"
 	FieldVirtualMachineRestartAfterUpdate = "restart_after_update"
 	FieldVirtualMachineStart              = "start"
 	FieldVirtualMachineRunStrategy        = "run_strategy"
