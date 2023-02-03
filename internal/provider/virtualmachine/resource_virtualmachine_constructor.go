@@ -186,7 +186,7 @@ func (c *Constructor) Setup() util.Processors {
 				if diskSize == "" {
 					diskSize = util.If(existingVolumeName == "", "", builder.DefaultDiskSize).(string)
 				}
-				vmBuilder.Disk(diskName, diskBus, isCDRom, bootOrder)
+				vmBuilder.Disk(diskName, diskBus, isCDRom, uint(bootOrder))
 				if existingVolumeName != "" {
 					vmBuilder.ExistingPVCVolume(diskName, existingVolumeName, hotPlug)
 				} else if containerImageName != "" {
