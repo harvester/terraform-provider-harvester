@@ -26,7 +26,6 @@ func Schema() map[string]*schema.Schema {
 		constants.FieldVirtualMachineReservedMemory: {
 			Type:     schema.TypeString,
 			Optional: true,
-			Computed: true,
 		},
 		constants.FieldVirtualMachineRestartAfterUpdate: {
 			Type:        schema.TypeBool,
