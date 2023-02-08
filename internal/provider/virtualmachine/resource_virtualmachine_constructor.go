@@ -128,7 +128,7 @@ func (c *Constructor) Setup() util.Processors {
 				reservedMemory := i.(string)
 				if reservedMemory != "" {
 					vmBuilder.Annotations(map[string]string{
-						harvesterutil.AnnotationReservedMemory: i.(string),
+						harvesterutil.AnnotationReservedMemory: reservedMemory,
 					})
 				} else {
 					delete(vmBuilder.VirtualMachine.Annotations, harvesterutil.AnnotationReservedMemory)
