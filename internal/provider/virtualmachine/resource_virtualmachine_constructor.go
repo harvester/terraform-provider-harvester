@@ -125,11 +125,17 @@ func (c *Constructor) Setup() util.Processors {
 		{
 			Field: constants.FieldVirtualMachineReservedMemory,
 			Parser: func(i interface{}) error {
-				vmBuilder.Annotations(map[string]string{
-					harvesterutil.AnnotationReservedMemory: i.(string),
-				})
+				reservedMemory := i.(string)
+				if reservedMemory != "" {
+					vmBuilder.Annotations(map[string]string{
+						harvesterutil.AnnotationReservedMemory: i.(string),
+					})
+				} else {
+					delete(vmBuilder.VirtualMachine.Annotations, harvesterutil.AnnotationReservedMemory)
+				}
 				return nil
 			},
+			Required: true,
 		},
 		{
 			Field: constants.FieldVirtualMachineSSHKeys,
