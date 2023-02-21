@@ -295,6 +295,13 @@ func (c *Constructor) Setup() util.Processors {
 				return nil
 			},
 		},
+		{
+			Field: constants.FieldVirtualMachineTPM,
+			Parser: func(i interface{}) error {
+				vmBuilder.TPM()
+				return nil
+			},
+		},
 	}
 	return append(processors, customProcessors...)
 }
@@ -333,6 +340,7 @@ func Creator(c *client.Client, ctx context.Context, namespace, name string) util
 
 func Updater(c *client.Client, ctx context.Context, vm *kubevirtv1.VirtualMachine) util.Constructor {
 	vm.Spec.Template.Spec.Networks = []kubevirtv1.Network{}
+	vm.Spec.Template.Spec.Domain.Devices.TPM = nil
 	vm.Spec.Template.Spec.Domain.Devices.Interfaces = []kubevirtv1.Interface{}
 	vm.Spec.Template.Spec.Domain.Devices.Disks = []kubevirtv1.Disk{}
 	vm.Spec.Template.Spec.Domain.Devices.Inputs = []kubevirtv1.Input{}

@@ -104,6 +104,14 @@ please use %s instead of this deprecated field:
 				Schema: resourceInputSchema(),
 			},
 		},
+		constants.FieldVirtualMachineTPM: {
+			Type:     schema.TypeList,
+			Optional: true,
+			MaxItems: 1,
+			Elem: &schema.Resource{
+				Schema: resourceTPMSchema(),
+			},
+		},
 		constants.FieldVirtualMachineInstanceNodeName: {
 			Type:     schema.TypeString,
 			Computed: true,
