@@ -16,6 +16,7 @@ const (
 	FieldVirtualMachineDisk               = "disk"
 	FieldVirtualMachineNetworkInterface   = "network_interface"
 	FieldVirtualMachineInput              = "input"
+	FieldVirtualMachineTPM                = "tpm"
 	FieldVirtualMachineInstanceNodeName   = "node_name"
 	FieldVirtualMachineEFI                = "efi"
 	FieldVirtualMachineSecureBoot         = "secure_boot"
@@ -71,4 +72,8 @@ const (
 	FieldInputName = "name"
 	FieldInputType = "type"
 	FieldInputBus  = "bus"
+)
+
+const (
+	FieldTPMName = "name"
 )

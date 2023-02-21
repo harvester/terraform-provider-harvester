@@ -93,6 +93,16 @@ func (v *VMImporter) Input() ([]map[string]interface{}, error) {
 	return inputStates, nil
 }
 
+func (v *VMImporter) TPM() []map[string]interface{} {
+	tpm := v.VirtualMachine.Spec.Template.Spec.Domain.Devices.TPM
+	tpmStates := make([]map[string]interface{}, 0, 1)
+	if tpm != nil {
+		tpmState := map[string]interface{}{}
+		tpmStates = append(tpmStates, tpmState)
+	}
+	return tpmStates
+}
+
 func (v *VMImporter) NetworkInterface() ([]map[string]interface{}, error) {
 	var (
 		waitForLeaseInterfaces   []string
@@ -364,6 +374,7 @@ func ResourceVirtualMachineStateGetter(vm *kubevirtv1.VirtualMachine, vmi *kubev
 			constants.FieldVirtualMachineNetworkInterface: networkInterface,
 			constants.FieldVirtualMachineDisk:             disk,
 			constants.FieldVirtualMachineInput:            input,
+			constants.FieldVirtualMachineTPM:              vmImporter.TPM(),
 			constants.FieldVirtualMachineCloudInit:        cloudInit,
 			constants.FieldVirtualMachineSSHKeys:          sshKeys,
 			constants.FieldVirtualMachineInstanceNodeName: vmImporter.NodeName(),
