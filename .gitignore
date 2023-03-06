@@ -4,6 +4,7 @@
 /.vscode
 /bin
 /dist
+/vendor
 .terraform.lock.hcl
 .terraform/
 crash.log
