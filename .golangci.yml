@@ -10,7 +10,6 @@ linters:
     - gofmt
     - goimports
     - whitespace
-    - deadcode
     - unused
     - ineffassign
     - prealloc
