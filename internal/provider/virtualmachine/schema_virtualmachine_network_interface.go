@@ -10,11 +10,11 @@ import (
 
 func resourceNetworkInterfaceSchema() map[string]*schema.Schema {
 	s := map[string]*schema.Schema{
-		constants.FiledNetworkInterfaceName: {
+		constants.FieldNetworkInterfaceName: {
 			Type:     schema.TypeString,
 			Required: true,
 		},
-		constants.FiledNetworkInterfaceType: {
+		constants.FieldNetworkInterfaceType: {
 			Type:     schema.TypeString,
 			Optional: true,
 			Computed: true,
@@ -24,7 +24,7 @@ func resourceNetworkInterfaceSchema() map[string]*schema.Schema {
 				"",
 			}, false),
 		},
-		constants.FiledNetworkInterfaceModel: {
+		constants.FieldNetworkInterfaceModel: {
 			Type:     schema.TypeString,
 			Optional: true,
 			Default:  "virtio",
@@ -37,26 +37,26 @@ func resourceNetworkInterfaceSchema() map[string]*schema.Schema {
 				"rtl8139",
 			}, false),
 		},
-		constants.FiledNetworkInterfaceMACAddress: {
+		constants.FieldNetworkInterfaceMACAddress: {
 			Type:     schema.TypeString,
 			Optional: true,
 			Computed: true,
 		},
-		constants.FiledNetworkInterfaceIPAddress: {
+		constants.FieldNetworkInterfaceIPAddress: {
 			Type:     schema.TypeString,
 			Computed: true,
 		},
-		constants.FiledNetworkInterfaceWaitForLease: {
+		constants.FieldNetworkInterfaceWaitForLease: {
 			Type:        schema.TypeBool,
 			Optional:    true,
 			Default:     false,
 			Description: "wait for this network interface to obtain an IP address. If a non-management network is used, this feature requires qemu-guest-agent installed and started in the VM, otherwise, VM creation will stuck until timeout",
 		},
-		constants.FiledNetworkInterfaceInterfaceName: {
+		constants.FieldNetworkInterfaceInterfaceName: {
 			Type:     schema.TypeString,
 			Computed: true,
 		},
-		constants.FiledNetworkInterfaceNetworkName: {
+		constants.FieldNetworkInterfaceNetworkName: {
 			Type:        schema.TypeString,
 			Optional:    true,
 			Description: "if the value is empty, management network is used",
