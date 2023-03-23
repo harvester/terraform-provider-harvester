@@ -138,18 +138,18 @@ func (v *VMImporter) NetworkInterface() ([]map[string]interface{}, error) {
 			}
 		}
 		networkInterfaceState := map[string]interface{}{
-			constants.FiledNetworkInterfaceName:        networkInterface.Name,
-			constants.FiledNetworkInterfaceType:        interfaceType,
-			constants.FiledNetworkInterfaceModel:       networkInterface.Model,
-			constants.FiledNetworkInterfaceMACAddress:  networkInterface.MacAddress,
-			constants.FiledNetworkInterfaceNetworkName: networkName,
+			constants.FieldNetworkInterfaceName:        networkInterface.Name,
+			constants.FieldNetworkInterfaceType:        interfaceType,
+			constants.FieldNetworkInterfaceModel:       networkInterface.Model,
+			constants.FieldNetworkInterfaceMACAddress:  networkInterface.MacAddress,
+			constants.FieldNetworkInterfaceNetworkName: networkName,
 		}
 		if interfaceStatus, ok := interfaceStatusMap[networkInterface.Name]; ok {
-			networkInterfaceState[constants.FiledNetworkInterfaceIPAddress] = interfaceStatus.IP
-			networkInterfaceState[constants.FiledNetworkInterfaceInterfaceName] = interfaceStatus.InterfaceName
+			networkInterfaceState[constants.FieldNetworkInterfaceIPAddress] = interfaceStatus.IP
+			networkInterfaceState[constants.FieldNetworkInterfaceInterfaceName] = interfaceStatus.InterfaceName
 		}
 		_, ok := waitForLeaseInterfaceMap[networkInterface.Name]
-		networkInterfaceState[constants.FiledNetworkInterfaceWaitForLease] = ok
+		networkInterfaceState[constants.FieldNetworkInterfaceWaitForLease] = ok
 		networkInterfaceStates = append(networkInterfaceStates, networkInterfaceState)
 	}
 	return networkInterfaceStates, nil
@@ -302,7 +302,7 @@ func (v *VMImporter) State(networkInterfaces []map[string]interface{}, oldInstan
 			return constants.StateVirtualMachineRunning
 		}
 		for _, networkInterface := range networkInterfaces {
-			if networkInterface[constants.FiledNetworkInterfaceWaitForLease].(bool) && networkInterface[constants.FiledNetworkInterfaceIPAddress] == "" {
+			if networkInterface[constants.FieldNetworkInterfaceWaitForLease].(bool) && networkInterface[constants.FieldNetworkInterfaceIPAddress] == "" {
 				return constants.StateVirtualMachineRunning
 			}
 		}

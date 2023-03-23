@@ -153,12 +153,12 @@ func (c *Constructor) Setup() util.Processors {
 			Field: constants.FieldVirtualMachineNetworkInterface,
 			Parser: func(i interface{}) error {
 				r := i.(map[string]interface{})
-				interfaceName := r[constants.FiledNetworkInterfaceName].(string)
-				interfaceType := r[constants.FiledNetworkInterfaceType].(string)
-				interfaceModel := r[constants.FiledNetworkInterfaceModel].(string)
-				interfaceMACAddress := r[constants.FiledNetworkInterfaceMACAddress].(string)
-				interfaceWaitForLease := r[constants.FiledNetworkInterfaceWaitForLease].(bool)
-				networkName := r[constants.FiledNetworkInterfaceNetworkName].(string)
+				interfaceName := r[constants.FieldNetworkInterfaceName].(string)
+				interfaceType := r[constants.FieldNetworkInterfaceType].(string)
+				interfaceModel := r[constants.FieldNetworkInterfaceModel].(string)
+				interfaceMACAddress := r[constants.FieldNetworkInterfaceMACAddress].(string)
+				interfaceWaitForLease := r[constants.FieldNetworkInterfaceWaitForLease].(bool)
+				networkName := r[constants.FieldNetworkInterfaceNetworkName].(string)
 				if interfaceType == "" {
 					if networkName == "" {
 						interfaceType = builder.NetworkInterfaceTypeMasquerade

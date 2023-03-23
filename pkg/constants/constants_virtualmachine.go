@@ -42,14 +42,14 @@ const (
 )
 
 const (
-	FiledNetworkInterfaceName          = "name"
-	FiledNetworkInterfaceType          = "type"
-	FiledNetworkInterfaceModel         = "model"
-	FiledNetworkInterfaceMACAddress    = "mac_address"
-	FiledNetworkInterfaceIPAddress     = "ip_address"
-	FiledNetworkInterfaceInterfaceName = "interface_name"
-	FiledNetworkInterfaceWaitForLease  = "wait_for_lease"
-	FiledNetworkInterfaceNetworkName   = "network_name"
+	FieldNetworkInterfaceName          = "name"
+	FieldNetworkInterfaceType          = "type"
+	FieldNetworkInterfaceModel         = "model"
+	FieldNetworkInterfaceMACAddress    = "mac_address"
+	FieldNetworkInterfaceIPAddress     = "ip_address"
+	FieldNetworkInterfaceInterfaceName = "interface_name"
+	FieldNetworkInterfaceWaitForLease  = "wait_for_lease"
+	FieldNetworkInterfaceNetworkName   = "network_name"
 )
 
 const (
