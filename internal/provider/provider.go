@@ -10,6 +10,7 @@ import (
 	"github.com/mitchellh/go-homedir"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	"github.com/harvester/terraform-provider-harvester/internal/provider/cloudinitsecret"
 	"github.com/harvester/terraform-provider-harvester/internal/provider/clusternetwork"
 	"github.com/harvester/terraform-provider-harvester/internal/provider/image"
 	"github.com/harvester/terraform-provider-harvester/internal/provider/keypair"
@@ -39,24 +40,26 @@ func Provider() *schema.Provider {
 			},
 		},
 		DataSourcesMap: map[string]*schema.Resource{
-			constants.ResourceTypeImage:          image.DataSourceImage(),
-			constants.ResourceTypeKeyPair:        keypair.DataSourceKeypair(),
-			constants.ResourceTypeNetwork:        network.DataSourceNetwork(),
-			constants.ResourceTypeVirtualMachine: virtualmachine.DataSourceVirtualMachine(),
-			constants.ResourceTypeVolume:         volume.DataSourceVolume(),
-			constants.ResourceTypeClusterNetwork: clusternetwork.DataSourceClusterNetwork(),
-			constants.ResourceTypeStorageClass:   storageclass.DataSourceStorageClass(),
-			constants.ResourceTypeVLANConfig:     vlanconfig.DataSourceVLANConfig(),
+			constants.ResourceTypeImage:           image.DataSourceImage(),
+			constants.ResourceTypeKeyPair:         keypair.DataSourceKeypair(),
+			constants.ResourceTypeNetwork:         network.DataSourceNetwork(),
+			constants.ResourceTypeVirtualMachine:  virtualmachine.DataSourceVirtualMachine(),
+			constants.ResourceTypeVolume:          volume.DataSourceVolume(),
+			constants.ResourceTypeClusterNetwork:  clusternetwork.DataSourceClusterNetwork(),
+			constants.ResourceTypeStorageClass:    storageclass.DataSourceStorageClass(),
+			constants.ResourceTypeVLANConfig:      vlanconfig.DataSourceVLANConfig(),
+			constants.ResourceTypeCloudInitSecret: cloudinitsecret.DataSourceCloudInitSecret(),
 		},
 		ResourcesMap: map[string]*schema.Resource{
-			constants.ResourceTypeImage:          image.ResourceImage(),
-			constants.ResourceTypeKeyPair:        keypair.ResourceKeypair(),
-			constants.ResourceTypeNetwork:        network.ResourceNetwork(),
-			constants.ResourceTypeVirtualMachine: virtualmachine.ResourceVirtualMachine(),
-			constants.ResourceTypeVolume:         volume.ResourceVolume(),
-			constants.ResourceTypeClusterNetwork: clusternetwork.ResourceClusterNetwork(),
-			constants.ResourceTypeStorageClass:   storageclass.ResourceStorageClass(),
-			constants.ResourceTypeVLANConfig:     vlanconfig.ResourceVLANConfig(),
+			constants.ResourceTypeImage:           image.ResourceImage(),
+			constants.ResourceTypeKeyPair:         keypair.ResourceKeypair(),
+			constants.ResourceTypeNetwork:         network.ResourceNetwork(),
+			constants.ResourceTypeVirtualMachine:  virtualmachine.ResourceVirtualMachine(),
+			constants.ResourceTypeVolume:          volume.ResourceVolume(),
+			constants.ResourceTypeClusterNetwork:  clusternetwork.ResourceClusterNetwork(),
+			constants.ResourceTypeStorageClass:    storageclass.ResourceStorageClass(),
+			constants.ResourceTypeVLANConfig:      vlanconfig.ResourceVLANConfig(),
+			constants.ResourceTypeCloudInitSecret: cloudinitsecret.ResourceCloudInitSecret(),
 		},
 	}
 	p.ConfigureContextFunc = configure(p)
