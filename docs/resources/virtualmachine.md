@@ -243,6 +243,7 @@ resource "harvester_virtualmachine" "opensuse154" {
 - **ssh_keys** (List of String)
 - **start** (Boolean, Deprecated)
 - **tags** (Map of String)
+- **tpm** (Block List, Max: 1) (see [below for nested schema](#nestedblock--tpm))
 
 ### Read-Only
 
@@ -320,6 +321,14 @@ Optional:
 
 - **bus** (String)
 - **type** (String)
+
+
+<a id="nestedblock--tpm"></a>
+### Nested Schema for `tpm`
+
+Optional:
+
+- **name** (String) just add this field for doc generation
 
 ## Import
 

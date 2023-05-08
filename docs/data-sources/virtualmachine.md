@@ -58,6 +58,7 @@ data "harvester_virtualmachine" "opensuse154" {
 - **start** (Boolean, Deprecated)
 - **state** (String)
 - **tags** (Map of String)
+- **tpm** (List of Object) (see [below for nested schema](#nestedatt--tpm))
 
 <a id="nestedatt--cloudinit"></a>
 ### Nested Schema for `cloudinit`
@@ -117,5 +118,13 @@ Read-Only:
 - **network_name** (String)
 - **type** (String)
 - **wait_for_lease** (Boolean)
+
+
+<a id="nestedatt--tpm"></a>
+### Nested Schema for `tpm`
+
+Read-Only:
+
+- **name** (String)
 
 
