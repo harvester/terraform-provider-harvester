@@ -10,7 +10,7 @@ source $SCRIPTS_DIR/version
 cd $TOP_DIR
 
 if [ "${GIT_TAG}" != "${VERSION}" ]; then
-  PROVIDER_VERSION="0.0.0-master"
+  PROVIDER_VERSION="0.0.0-dev"
 else
   PROVIDER_VERSION=${VERSION#"v"}
 fi
