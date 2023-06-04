@@ -1,13 +1,13 @@
 #!/bin/bash
 set -e
 
-TOP_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )/.." &> /dev/null && pwd )"
+TOP_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." &>/dev/null && pwd)"
 SCRIPTS_DIR="${TOP_DIR}/scripts"
 PACKAGE_DIR="${TOP_DIR}/package"
 
-source $SCRIPTS_DIR/version
+source "$SCRIPTS_DIR"/version
 
-cd $TOP_DIR
+cd "$TOP_DIR"
 
 if [ "${GIT_TAG}" != "${VERSION}" ]; then
   PROVIDER_VERSION="0.0.0-dev"
@@ -17,23 +17,23 @@ fi
 
 TAG=${TAG:-${VERSION}${SUFFIX}}
 
-if echo $TAG | grep -q dirty; then
-    TAG=dev
+if echo "$TAG" | grep -q dirty; then
+  TAG=dev
 fi
 
 mkdir -p dist/artifacts
-cp bin/terraform-provider-harvester dist/artifacts/terraform-provider-harvester${SUFFIX}
+cp bin/terraform-provider-harvester dist/artifacts/terraform-provider-harvester"${SUFFIX}"
 
-cd ${PACKAGE_DIR}
+cd "${PACKAGE_DIR}"
 
 IMAGE=${REPO}/terraform-provider-harvester:${TAG}
 DOCKERFILE=Dockerfile
-if [ -e ${DOCKERFILE}.${ARCH} ]; then
-    DOCKERFILE=${DOCKERFILE}.${ARCH}
+if [ -e ${DOCKERFILE}."${ARCH}" ]; then
+  DOCKERFILE=${DOCKERFILE}.${ARCH}
 fi
 
 rm -rf ./terraform-provider-harvester
 cp ../bin/terraform-provider-harvester .
 
-docker build --build-arg ARCH=${ARCH} --build-arg PROVIDER_VERSION=${PROVIDER_VERSION} -f ${DOCKERFILE} -t ${IMAGE} .
-echo Built ${IMAGE}
+docker build --build-arg ARCH="${ARCH}" --build-arg PROVIDER_VERSION="${PROVIDER_VERSION}" -f "${DOCKERFILE}" -t "${IMAGE}" .
+echo Built "${IMAGE}"

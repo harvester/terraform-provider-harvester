@@ -1,5 +1,4 @@
-Terraform Provider for Harvester
-==================================
+# Terraform Provider for Harvester
 
 ## Requirements
 
@@ -9,6 +8,7 @@ Terraform Provider for Harvester
 ## Install The Provider
 
 copy and paste this code into your Terraform configuration. Then, run `terraform init` to initialize it.
+
 ```hcl
 terraform {
   required_providers {

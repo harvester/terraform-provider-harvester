@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-cd $(dirname $0)/..
+cd $(dirname "$0")/..
 
 echo Running validation
 
@@ -18,4 +18,4 @@ echo Running: golangci-lint
 golangci-lint run --timeout 5m
 
 echo Running: go fmt
-test -z "$(go fmt ${PACKAGES} | tee /dev/stderr)"
+test -z "$(go fmt "${PACKAGES}" | tee /dev/stderr)"
