@@ -15,8 +15,8 @@ func ResourceCloudInitSecretStateGetter(obj *corev1.Secret) (*StateGetter, error
 		constants.FieldCommonName:                       obj.Name,
 		constants.FieldCommonDescription:                GetDescriptions(obj.Annotations),
 		constants.FieldCommonTags:                       GetTags(obj.Labels),
-		constants.FieldCloudInitSecretUserDataBase64:    base64.StdEncoding.EncodeToString(obj.Data["userdata"]),
-		constants.FieldCloudInitSecretNetworkDataBase64: base64.StdEncoding.EncodeToString(obj.Data["networkdata"]),
+		constants.FieldCloudInitSecretUserDataBase64:    base64.StdEncoding.EncodeToString(obj.Data[constants.SecretDataKeyUserData]),
+		constants.FieldCloudInitSecretNetworkDataBase64: base64.StdEncoding.EncodeToString(obj.Data[constants.SecretDataKeyNetworkData]),
 	}
 
 	return &StateGetter{

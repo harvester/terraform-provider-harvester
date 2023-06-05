@@ -29,7 +29,7 @@ func (c *Constructor) Setup() util.Processors {
 		{
 			Field: constants.FieldCloudInitSecretUserData,
 			Parser: func(i interface{}) error {
-				c.CloudInitSecret.StringData["userdata"] = i.(string)
+				c.CloudInitSecret.StringData[constants.SecretDataKeyUserData] = i.(string)
 				return nil
 			},
 		},
@@ -40,14 +40,14 @@ func (c *Constructor) Setup() util.Processors {
 				if err != nil {
 					return fmt.Errorf("failed to decode %s string: %w", constants.FieldCloudInitSecretUserDataBase64, err)
 				}
-				c.CloudInitSecret.StringData["userdata"] = string(value)
+				c.CloudInitSecret.StringData[constants.SecretDataKeyUserData] = string(value)
 				return nil
 			},
 		},
 		{
 			Field: constants.FieldCloudInitSecretNetworkData,
 			Parser: func(i interface{}) error {
-				c.CloudInitSecret.StringData["networkdata"] = i.(string)
+				c.CloudInitSecret.StringData[constants.SecretDataKeyNetworkData] = i.(string)
 				return nil
 			},
 		},
@@ -58,7 +58,7 @@ func (c *Constructor) Setup() util.Processors {
 				if err != nil {
 					return fmt.Errorf("failed to decode %s string: %w", constants.FieldCloudInitSecretNetworkDataBase64, err)
 				}
-				c.CloudInitSecret.StringData["networkdata"] = string(value)
+				c.CloudInitSecret.StringData[constants.SecretDataKeyNetworkData] = string(value)
 				return nil
 			},
 		},
