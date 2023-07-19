@@ -92,22 +92,8 @@ resource "harvester_virtualmachine" "ubuntu20" {
   }
 
   cloudinit {
-    user_data    = <<-EOF
-      #cloud-config
-      password: 123456
-      chpasswd:
-        expire: false
-      ssh_pwauth: true
-      package_update: true
-      packages:
-        - qemu-guest-agent
-      runcmd:
-        - - systemctl
-          - enable
-          - '--now'
-          - qemu-guest-agent
-      EOF
-    network_data = ""
+    user_data_secret_name    = harvester_cloudinit_secret.cloud-config-ubuntu20.name
+    network_data_secret_name = harvester_cloudinit_secret.cloud-config-ubuntu20.name
   }
 }
 
@@ -177,24 +163,7 @@ resource "harvester_virtualmachine" "opensuse154" {
   }
 
   cloudinit {
-    user_data    = <<-EOF
-      #cloud-config
-      password: 123456
-      chpasswd:
-        expire: false
-      ssh_pwauth: true
-      package_update: true
-      packages:
-        - qemu-guest-agent
-      runcmd:
-        - - systemctl
-          - enable
-          - '--now'
-          - qemu-guest-agent
-      ssh_authorized_keys:
-        - >-
-          public_key content of harvester_ssh_key.mysshkey
-      EOF
-    network_data = ""
+    user_data_secret_name    = harvester_cloudinit_secret.cloud-config-opensuse154.name
+    network_data_secret_name = harvester_cloudinit_secret.cloud-config-opensuse154.name
   }
 }

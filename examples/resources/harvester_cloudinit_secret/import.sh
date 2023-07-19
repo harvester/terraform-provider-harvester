@@ -1,0 +1,1 @@
+terraform import harvester_cloudinit_secret.foo <Namespace>/<Name>
