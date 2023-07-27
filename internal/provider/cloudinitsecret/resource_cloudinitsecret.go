@@ -111,20 +111,20 @@ func resourceCloudInitSecretImport(d *schema.ResourceData, obj *corev1.Secret) e
 	}
 
 	if d.Get(constants.FieldCloudInitSecretUserData) != "" && d.Get(constants.FieldCloudInitSecretUserDataBase64) == "" {
-		userdata, err := base64.StdEncoding.DecodeString(stateGetter.States[constants.FieldCloudInitSecretUserDataBase64].(string))
+		userData, err := base64.StdEncoding.DecodeString(stateGetter.States[constants.FieldCloudInitSecretUserDataBase64].(string))
 		if err != nil {
 			return fmt.Errorf("can't decode userdata: %v", err)
 		}
-		stateGetter.States[constants.FieldCloudInitSecretUserData] = string(userdata)
+		stateGetter.States[constants.FieldCloudInitSecretUserData] = string(userData)
 		stateGetter.States[constants.FieldCloudInitSecretUserDataBase64] = ""
 	}
 	if d.Get(constants.FieldCloudInitSecretNetworkData) != "" && d.Get(constants.FieldCloudInitSecretNetworkDataBase64) == "" {
-		networkdata, err := base64.StdEncoding.DecodeString(stateGetter.States[constants.FieldCloudInitSecretNetworkDataBase64].(string))
+		networkData, err := base64.StdEncoding.DecodeString(stateGetter.States[constants.FieldCloudInitSecretNetworkDataBase64].(string))
 		if err != nil {
-			return fmt.Errorf("can't decode userdata: %v", err)
+			return fmt.Errorf("can't decode networkdata: %v", err)
 		}
-		stateGetter.States[constants.FieldCloudInitSecretUserData] = string(networkdata)
-		stateGetter.States[constants.FieldCloudInitSecretUserDataBase64] = ""
+		stateGetter.States[constants.FieldCloudInitSecretNetworkData] = string(networkData)
+		stateGetter.States[constants.FieldCloudInitSecretNetworkDataBase64] = ""
 	}
 
 	return util.ResourceStatesSet(d, stateGetter)
