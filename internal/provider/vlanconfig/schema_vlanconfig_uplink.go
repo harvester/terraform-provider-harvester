@@ -34,7 +34,7 @@ func resourceUplinkSchema() map[string]*schema.Schema {
 		constants.FieldUplinkBondMiimon: {
 			Type:         schema.TypeInt,
 			Optional:     true,
-			ValidateFunc: validation.IntAtLeast(0),
+			ValidateFunc: validation.IntAtLeast(-1),
 			Description:  "refer to https://www.kernel.org/doc/Documentation/networking/bonding.txt",
 		},
 		constants.FieldUplinkMTU: {
