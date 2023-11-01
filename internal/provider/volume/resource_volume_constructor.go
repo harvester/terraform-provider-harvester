@@ -70,7 +70,7 @@ func (c *Constructor) Setup() util.Processors {
 				}
 				c.Volume.Annotations[builder.AnnotationKeyImageID] = helper.BuildNamespacedName(imageNamespace, imageName)
 				storageClassName := builder.BuildImageStorageClassName("", imageName)
-				c.Volume.Spec.StorageClassName = pointer.StringPtr(storageClassName)
+				c.Volume.Spec.StorageClassName = pointer.String(storageClassName)
 				return nil
 			},
 		},
@@ -81,7 +81,7 @@ func (c *Constructor) Setup() util.Processors {
 				if c.Volume.Annotations[builder.AnnotationKeyImageID] != "" && c.Volume.Spec.StorageClassName != nil && storageClassName != *c.Volume.Spec.StorageClassName {
 					return fmt.Errorf("the %s of an image can only be defined during image creation", constants.FieldVolumeStorageClassName)
 				} else {
-					c.Volume.Spec.StorageClassName = pointer.StringPtr(storageClassName)
+					c.Volume.Spec.StorageClassName = pointer.String(storageClassName)
 				}
 				return nil
 			},

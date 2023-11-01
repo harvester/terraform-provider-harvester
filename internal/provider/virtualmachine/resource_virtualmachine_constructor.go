@@ -239,7 +239,7 @@ func (c *Constructor) Setup() util.Processors {
 							}
 						}
 					}
-					pvcOption.StorageClassName = pointer.StringPtr(storageClassName)
+					pvcOption.StorageClassName = pointer.String(storageClassName)
 
 					if volumeMode := r[constants.FieldVolumeMode].(string); volumeMode != "" {
 						pvcOption.VolumeMode = corev1.PersistentVolumeMode(volumeMode)

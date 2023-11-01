@@ -30,7 +30,7 @@ func ResourceNetworkStateGetter(obj *nadv1.NetworkAttachmentDefinition) (*StateG
 		vlanID = netconf.Vlan
 	}
 	if obj.Annotations != nil {
-		networkConf = obj.Annotations[networkutils.KeyNetworkConf]
+		networkConf = obj.Annotations[networkutils.KeyNetworkRoute]
 	}
 	if networkConf != "" {
 		layer3NetworkConf, err = networkutils.NewLayer3NetworkConf(networkConf)
