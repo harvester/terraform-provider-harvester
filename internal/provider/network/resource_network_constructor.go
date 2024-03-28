@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"strconv"
 	"time"
 
 	networkutils "github.com/harvester/harvester-network-controller/pkg/utils"
@@ -24,8 +23,9 @@ type Constructor struct {
 	Client  *client.Client
 	Context context.Context
 
-	Network           *nadv1.NetworkAttachmentDefinition
-	Layer3NetworkConf *networkutils.Layer3NetworkConf
+	ClusterNetworkName string
+	Network            *nadv1.NetworkAttachmentDefinition
+	Layer3NetworkConf  *networkutils.Layer3NetworkConf
 }
 
 func (c *Constructor) Setup() util.Processors {
@@ -34,42 +34,16 @@ func (c *Constructor) Setup() util.Processors {
 		{
 			Field: constants.FieldNetworkClusterNetworkName,
 			Parser: func(i interface{}) error {
-				clusterNetworkName := i.(string)
-				c.Network.Labels[networkutils.KeyClusterNetworkLabel] = clusterNetworkName
+				c.ClusterNetworkName = i.(string)
 				return nil
 			},
 		},
 		{
 			Field: constants.FieldNetworkVlanID,
 			Parser: func(i interface{}) error {
-				var (
-					networkType string
-					vlanID      = i.(int)
-				)
-				if vlanID != 0 {
-					networkType = builder.NetworkTypeVLAN
-					clusterNetworkName := c.Network.Labels[networkutils.KeyClusterNetworkLabel]
-					c.Network.Spec.Config = fmt.Sprintf(builder.NetworkVLANConfigTemplate, c.Network.Name, clusterNetworkName, vlanID)
-				} else {
-					networkType = builder.NetworkTypeCustom
-				}
-				c.Network.Labels[networkutils.KeyVlanLabel] = strconv.Itoa(vlanID)
-				c.Network.Labels[builder.LabelKeyNetworkType] = networkType
-				return nil
-			},
-			Required: true,
-		},
-		{
-			Field: constants.FieldNetworkConfig,
-			Parser: func(i interface{}) error {
-				if c.Network.Labels[builder.LabelKeyNetworkType] == builder.NetworkTypeVLAN {
-					return nil
-				}
-				config := i.(string)
-				if config == "" {
-					return errors.New("must specify config in custom network type")
-				}
-				c.Network.Spec.Config = config
+				vlanID := i.(int)
+				c.Network.Spec.Config = fmt.Sprintf(builder.NetworkVLANConfigTemplate, c.Network.Name, c.ClusterNetworkName, vlanID)
+
 				return nil
 			},
 			Required: true,
@@ -132,9 +106,8 @@ func (c *Constructor) Setup() util.Processors {
 }
 
 func (c *Constructor) Validate() error {
-	clusterNetworkName := c.Network.Labels[networkutils.KeyClusterNetworkLabel]
-	if err := c.waitForClusterNetworkReady(clusterNetworkName, 1*time.Minute); err != nil {
-		return fmt.Errorf("can not use the unready clusternetwork %s in networks, err: %v", clusterNetworkName, err)
+	if err := c.waitForClusterNetworkReady(c.ClusterNetworkName, 1*time.Minute); err != nil {
+		return fmt.Errorf("can not use the unready clusternetwork %s in networks, err: %v", c.ClusterNetworkName, err)
 	}
 	return nil
 }
