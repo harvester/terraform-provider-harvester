@@ -50,8 +50,8 @@ func TestAccNetwork_basic(t *testing.T) {
 		CheckDestroy: testAccCheckNetworkDestroy(ctx),
 		Steps: []resource.TestStep{
 			{
-				Config:      buildNetworkConfig(testAccNetworkName, testAccNetworkDescription, "0"),
-				ExpectError: regexp.MustCompile(fmt.Sprintf(`expected %s to be in the range \(1 - 4094\)`, constants.FieldNetworkVlanID)),
+				Config:      buildNetworkConfig(testAccNetworkName, testAccNetworkDescription, "4045"),
+				ExpectError: regexp.MustCompile(fmt.Sprintf(`expected %s to be in the range \(0 - 4094\)`, constants.FieldNetworkVlanID)),
 			},
 			{
 				Config: buildNetworkConfig(testAccNetworkName, testAccNetworkDescription, testAccNetworkVlanID),

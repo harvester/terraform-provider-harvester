@@ -14,8 +14,8 @@ func Schema() map[string]*schema.Schema {
 		constants.FieldNetworkVlanID: {
 			Type:         schema.TypeInt,
 			Required:     true,
-			ValidateFunc: validation.IntBetween(1, 4094),
-			Description:  "e.g. 1-4094",
+			ValidateFunc: validation.IntBetween(0, 4094),
+			Description:  "e.g. 0-4094",
 		},
 		constants.FieldNetworkConfig: {
 			Type:     schema.TypeString,
@@ -23,9 +23,10 @@ func Schema() map[string]*schema.Schema {
 			Computed: true,
 		},
 		constants.FieldNetworkClusterNetworkName: {
-			Type:        schema.TypeString,
-			Required:    true,
-			Description: "", //TODO
+			Type:         schema.TypeString,
+			Required:     true,
+			Description:  "", //TODO
+			ValidateFunc: validation.StringIsNotEmpty,
 		},
 		constants.FieldNetworkRouteMode: {
 			Type:     schema.TypeString,
