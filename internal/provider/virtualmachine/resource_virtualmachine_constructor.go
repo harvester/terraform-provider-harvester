@@ -289,8 +289,8 @@ func (c *Constructor) Setup() util.Processors {
 			Parser: func(i interface{}) error {
 				r := i.(map[string]interface{})
 				inputName := r[constants.FieldInputName].(string)
-				inputType := r[constants.FieldInputType].(string)
-				inputBus := r[constants.FieldInputBus].(string)
+				inputType := r[constants.FieldInputType].(kubevirtv1.InputType)
+				inputBus := r[constants.FieldInputBus].(kubevirtv1.InputBus)
 				vmBuilder.Input(inputName, inputType, inputBus)
 				return nil
 			},
