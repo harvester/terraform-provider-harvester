@@ -218,8 +218,12 @@ func (c *Constructor) Setup() util.Processors {
 						if err != nil {
 							return err
 						}
+						vmimage, err := c.Client.HarvesterClient.HarvesterhciV1beta1().VirtualMachineImages(imageNamespace).Get(c.Context, imageName, metav1.GetOptions{})
+						if err != nil {
+							return err
+						}
 						pvcOption.ImageID = helper.BuildNamespacedName(imageNamespace, imageName)
-						scName := builder.BuildImageStorageClassName("", imageName)
+						scName := vmimage.Status.StorageClassName
 						if storageClassName == "" {
 							storageClassName = scName
 						} else if storageClassName != scName {
