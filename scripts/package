@@ -33,17 +33,6 @@ DOCKERFILE=Dockerfile
 rm -rf ./terraform-provider-harvester-*
 cp ../bin/terraform-provider-harvester-* .
 
-docker run --privileged --rm tonistiigi/binfmt --install all
-buildx create --platform linux/arm64,linux/amd64 --use
-buildx ls
-
-# In old docker version, it doesn't support multiple values in --platform with --load.
-# So we only load image with current platform.
-# Ref: https://github.com/docker/buildx/issues/59#issuecomment-616050491
-buildx build \
-  --build-arg PROVIDER_VERSION=${PROVIDER_VERSION} \
-  --platform linux/amd64,linux/arm64 \
-  -f ${DOCKERFILE} -t ${IMAGE} .
 buildx build --load \
   --build-arg PROVIDER_VERSION=${PROVIDER_VERSION} \
   -f ${DOCKERFILE} -t ${IMAGE} .
