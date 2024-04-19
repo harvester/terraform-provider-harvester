@@ -3,6 +3,7 @@ package vlanconfig
 import (
 	"context"
 	"fmt"
+	"time"
 
 	harvsternetworkv1 "github.com/harvester/harvester-network-controller/pkg/apis/network.harvesterhci.io/v1beta1"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -17,10 +18,6 @@ import (
 	"github.com/harvester/terraform-provider-harvester/pkg/importer"
 )
 
-const (
-	vlanConfigDeleteTimeout = 300
-)
-
 func ResourceVLANConfig() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: resourceVLANConfigCreate,
@@ -31,6 +28,13 @@ func ResourceVLANConfig() *schema.Resource {
 			StateContext: schema.ImportStatePassthroughContext,
 		},
 		Schema: Schema(),
+		Timeouts: &schema.ResourceTimeout{
+			Create:  schema.DefaultTimeout(2 * time.Minute),
+			Read:    schema.DefaultTimeout(2 * time.Minute),
+			Update:  schema.DefaultTimeout(2 * time.Minute),
+			Delete:  schema.DefaultTimeout(5 * time.Minute),
+			Default: schema.DefaultTimeout(2 * time.Minute),
+		},
 	}
 }
 
@@ -100,7 +104,12 @@ func resourceVLANConfigDelete(ctx context.Context, d *schema.ResourceData, meta 
 	if err = c.HarvesterNetworkClient.NetworkV1beta1().VlanConfigs().Delete(ctx, name, metav1.DeleteOptions{}); err != nil && !apierrors.IsNotFound(err) {
 		return diag.FromErr(err)
 	}
-	events, err := c.HarvesterNetworkClient.NetworkV1beta1().VlanConfigs().Watch(ctx, util.WatchOptions(name, int64(vlanConfigDeleteTimeout)))
+
+	ctxDeadline, _ := ctx.Deadline()
+	events, err := c.HarvesterNetworkClient.
+		NetworkV1beta1().
+		VlanConfigs().
+		Watch(ctx, util.WatchOptions(name, time.Until(ctxDeadline)))
 	if err != nil {
 		return diag.FromErr(err)
 	}

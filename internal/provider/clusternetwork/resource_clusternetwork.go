@@ -3,6 +3,7 @@ package clusternetwork
 import (
 	"context"
 	"fmt"
+	"time"
 
 	harvsternetworkv1 "github.com/harvester/harvester-network-controller/pkg/apis/network.harvesterhci.io/v1beta1"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -27,6 +28,13 @@ func ResourceClusterNetwork() *schema.Resource {
 			StateContext: schema.ImportStatePassthroughContext,
 		},
 		Schema: Schema(),
+		Timeouts: &schema.ResourceTimeout{
+			Create:  schema.DefaultTimeout(2 * time.Minute),
+			Read:    schema.DefaultTimeout(2 * time.Minute),
+			Update:  schema.DefaultTimeout(2 * time.Minute),
+			Delete:  schema.DefaultTimeout(2 * time.Minute),
+			Default: schema.DefaultTimeout(2 * time.Minute),
+		},
 	}
 }
 

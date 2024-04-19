@@ -2,7 +2,7 @@ package volume
 
 import (
 	"context"
-	"fmt"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -17,10 +17,6 @@ import (
 	"github.com/harvester/terraform-provider-harvester/pkg/importer"
 )
 
-const (
-	volumeDeleteTimeout = 300
-)
-
 func ResourceVolume() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: resourceVolumeCreate,
@@ -31,6 +27,13 @@ func ResourceVolume() *schema.Resource {
 			StateContext: schema.ImportStatePassthroughContext,
 		},
 		Schema: Schema(),
+		Timeouts: &schema.ResourceTimeout{
+			Create:  schema.DefaultTimeout(2 * time.Minute),
+			Read:    schema.DefaultTimeout(2 * time.Minute),
+			Update:  schema.DefaultTimeout(2 * time.Minute),
+			Delete:  schema.DefaultTimeout(5 * time.Minute),
+			Default: schema.DefaultTimeout(2 * time.Minute),
+		},
 	}
 }
 
@@ -100,12 +103,14 @@ func resourceVolumeDelete(ctx context.Context, d *schema.ResourceData, meta inte
 	if err = c.KubeClient.CoreV1().PersistentVolumeClaims(namespace).Delete(ctx, name, metav1.DeleteOptions{}); err != nil && !apierrors.IsNotFound(err) {
 		return diag.FromErr(err)
 	}
-	events, err := c.KubeClient.CoreV1().PersistentVolumeClaims(namespace).Watch(ctx, util.WatchOptions(name, int64(volumeDeleteTimeout)))
+
+	ctxDeadline, _ := ctx.Deadline()
+	events, err := c.KubeClient.CoreV1().PersistentVolumeClaims(namespace).Watch(ctx, util.WatchOptions(name, time.Until(ctxDeadline)))
 	if err != nil {
 		return diag.FromErr(err)
 	}
 	if !util.HasDeleted(events) {
-		return diag.FromErr(fmt.Errorf("timeout waiting for volume %s to be deleted", d.Id()))
+		return diag.Errorf("timeout waiting for volume %s to be deleted", d.Id())
 	}
 	d.SetId("")
 	return nil

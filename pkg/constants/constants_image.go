@@ -18,4 +18,5 @@ const (
 	StateImageDownloading  = "Downloading"
 	StateImageExporting    = "Exporting"
 	StateImageInitializing = "Initializing"
+	StateImageTerminating  = "Terminating"
 )
