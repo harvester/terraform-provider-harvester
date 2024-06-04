@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -28,6 +29,13 @@ func ResourceCloudInitSecret() *schema.Resource {
 			StateContext: schema.ImportStatePassthroughContext,
 		},
 		Schema: Schema(),
+		Timeouts: &schema.ResourceTimeout{
+			Create:  schema.DefaultTimeout(2 * time.Minute),
+			Read:    schema.DefaultTimeout(2 * time.Minute),
+			Update:  schema.DefaultTimeout(2 * time.Minute),
+			Delete:  schema.DefaultTimeout(2 * time.Minute),
+			Default: schema.DefaultTimeout(2 * time.Minute),
+		},
 	}
 }
 
@@ -100,6 +108,7 @@ func resourceCloudInitSecretDelete(ctx context.Context, d *schema.ResourceData, 
 	if err != nil && !apierrors.IsNotFound(err) {
 		return diag.FromErr(err)
 	}
+
 	d.SetId("")
 	return nil
 }

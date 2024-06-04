@@ -3,6 +3,7 @@ package network
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -17,10 +18,6 @@ import (
 	"github.com/harvester/terraform-provider-harvester/pkg/importer"
 )
 
-const (
-	networkDeleteTimeout = 300
-)
-
 func ResourceNetwork() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: resourceNetworkCreate,
@@ -31,6 +28,13 @@ func ResourceNetwork() *schema.Resource {
 			StateContext: schema.ImportStatePassthroughContext,
 		},
 		Schema: Schema(),
+		Timeouts: &schema.ResourceTimeout{
+			Create:  schema.DefaultTimeout(2 * time.Minute),
+			Read:    schema.DefaultTimeout(2 * time.Minute),
+			Update:  schema.DefaultTimeout(2 * time.Minute),
+			Delete:  schema.DefaultTimeout(5 * time.Minute),
+			Default: schema.DefaultTimeout(2 * time.Minute),
+		},
 	}
 }
 
@@ -101,7 +105,12 @@ func resourceNetworkDelete(ctx context.Context, d *schema.ResourceData, meta int
 	if err = c.HarvesterClient.K8sCniCncfIoV1().NetworkAttachmentDefinitions(namespace).Delete(ctx, name, metav1.DeleteOptions{}); err != nil && !apierrors.IsNotFound(err) {
 		return diag.FromErr(err)
 	}
-	events, err := c.HarvesterClient.K8sCniCncfIoV1().NetworkAttachmentDefinitions(namespace).Watch(ctx, util.WatchOptions(name, int64(networkDeleteTimeout)))
+
+	ctxDeadline, _ := ctx.Deadline()
+	events, err := c.HarvesterClient.
+		K8sCniCncfIoV1().
+		NetworkAttachmentDefinitions(namespace).
+		Watch(ctx, util.WatchOptions(name, time.Until(ctxDeadline)))
 	if err != nil {
 		return diag.FromErr(err)
 	}

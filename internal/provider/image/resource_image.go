@@ -29,6 +29,13 @@ func ResourceImage() *schema.Resource {
 			StateContext: schema.ImportStatePassthroughContext,
 		},
 		Schema: Schema(),
+		Timeouts: &schema.ResourceTimeout{
+			Create:  schema.DefaultTimeout(5 * time.Minute),
+			Read:    schema.DefaultTimeout(2 * time.Minute),
+			Update:  schema.DefaultTimeout(5 * time.Minute),
+			Delete:  schema.DefaultTimeout(2 * time.Minute),
+			Default: schema.DefaultTimeout(2 * time.Minute),
+		},
 	}
 }
 
@@ -100,6 +107,20 @@ func resourceImageDelete(ctx context.Context, d *schema.ResourceData, meta inter
 	if err != nil && !apierrors.IsNotFound(err) {
 		return diag.FromErr(err)
 	}
+
+	stateConf := &resource.StateChangeConf{
+		Pending:    []string{constants.StateImageTerminating, constants.StateCommonActive},
+		Target:     []string{constants.StateCommonRemoved},
+		Refresh:    resourceImageRefresh(ctx, d, meta),
+		Timeout:    d.Timeout(schema.TimeoutDelete),
+		Delay:      1 * time.Second,
+		MinTimeout: 3 * time.Second,
+	}
+	_, err = stateConf.WaitForStateContext(ctx)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
 	d.SetId("")
 	return nil
 }
