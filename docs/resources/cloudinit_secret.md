@@ -14,7 +14,7 @@ description: |-
 
 ```terraform
 resource "harvester_cloudinit_secret" "cloud-config-opensuse154" {
-  name      = "cloud-config-opensuse154"
+  name      = "cloud-config-opensuse156"
   namespace = "default"
 
   depends_on = [
@@ -39,7 +39,15 @@ resource "harvester_cloudinit_secret" "cloud-config-opensuse154" {
       - >-
         public_key content of harvester_ssh_key.mysshkey
     EOF
-  network_data = ""
+  network_data = <<-EOF
+    network:
+      version: 2
+      ethernets:
+        eth0:
+          dhcp4: true
+          nameservers:
+            addresses: [8.8.8.8,8.8.4.4,1.1.1.1]
+    EOF
 }
 
 resource "harvester_cloudinit_secret" "cloud-config-ubuntu20" {
@@ -60,8 +68,16 @@ resource "harvester_cloudinit_secret" "cloud-config-ubuntu20" {
         - enable
         - '--now'
         - qemu-guest-agent
+    EOF 
+  network_data = <<-EOF
+    network:
+      version: 2
+      ethernets:
+        enp1s0:
+          dhcp4: true
+          nameservers:
+            addresses: [8.8.8.8,8.8.4.4,1.1.1.1]
     EOF
-  network_data = ""
 }
 ```
 
