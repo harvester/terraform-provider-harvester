@@ -1,6 +1,6 @@
 module github.com/harvester/terraform-provider-harvester
 
-go 1.21
+go 1.22
 
 replace (
 	github.com/openshift/api => github.com/openshift/api v0.0.0-20191219222812-2987a591a72c
