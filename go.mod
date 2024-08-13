@@ -29,7 +29,9 @@ replace (
 )
 
 require (
+	github.com/google/uuid v1.6.0
 	github.com/harvester/harvester v1.3.2
+	github.com/harvester/harvester-load-balancer v0.3.0
 	github.com/harvester/harvester-network-controller v0.5.4
 	github.com/hashicorp/terraform-plugin-docs v0.4.0
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.6.1
@@ -101,7 +103,6 @@ require (
 	github.com/google/go-cmp v0.6.0 // indirect
 	github.com/google/gofuzz v1.2.0 // indirect
 	github.com/google/s2a-go v0.1.7 // indirect
-	github.com/google/uuid v1.6.0 // indirect
 	github.com/googleapis/enterprise-certificate-proxy v0.3.2 // indirect
 	github.com/googleapis/gax-go/v2 v2.12.0 // indirect
 	github.com/gorilla/handlers v1.5.2 // indirect
