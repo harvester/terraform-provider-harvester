@@ -77,7 +77,7 @@ func subresourceSchemaIPPoolSelector() map[string]*schema.Schema {
 			Optional:    true,
 			Description: "Namespace/name of the VM network",
 		},
-		constants.FieldSelectorScope: {
+		constants.SubresourceTypeIPPoolSelectorScope: {
 			Type:        schema.TypeList,
 			Optional:    true,
 			Description: "Scope of the IP pool",
