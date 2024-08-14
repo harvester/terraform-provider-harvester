@@ -85,9 +85,26 @@ func (c *Constructor) subresourceIPPoolSelectorParser(data interface{}) error {
 	priority := uint32(ippoolSelector[constants.FieldSelectorPriority].(int))
 	network := ippoolSelector[constants.FieldSelectorNetwork].(string)
 
+	scopesData := ippoolSelector[constants.SubresourceTypeIPPoolSelectorScope].([]interface{})
+
+	scopes := []loadbalancerv1.Tuple{}
+	for _, scopeData := range scopesData {
+		scope := scopeData.(map[string]interface{})
+		scopeProject := scope[constants.FieldScopeProject].(string)
+		scopeNamespace := scope[constants.FieldScopeNamespace].(string)
+		scopeGuestCluster := scope[constants.FieldScopeGuestCluster].(string)
+
+		scopes = append(scopes, loadbalancerv1.Tuple{
+			Project:      scopeProject,
+			Namespace:    scopeNamespace,
+			GuestCluster: scopeGuestCluster,
+		})
+	}
+
 	c.IPPool.Spec.Selector = loadbalancerv1.Selector{
 		Priority: priority,
 		Network:  network,
+		Scope:    scopes,
 	}
 	return nil
 }
