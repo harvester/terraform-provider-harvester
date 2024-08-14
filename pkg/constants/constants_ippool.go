@@ -20,7 +20,6 @@ const (
 
 	FieldSelectorPriority = "priority"
 	FieldSelectorNetwork  = "network"
-	FieldSelectorScope    = "scope"
 )
 
 const (
