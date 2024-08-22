@@ -5,6 +5,7 @@ import (
 	"time"
 
 	loadbalancerv1 "github.com/harvester/harvester-load-balancer/pkg/apis/loadbalancer.harvesterhci.io/v1beta1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -57,14 +58,67 @@ func resourceLoadBalancerCreate(ctx context.Context, data *schema.ResourceData, 
 }
 
 func resourceLoadBalancerRead(ctx context.Context, data *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	return diag.FromErr(nil)
+	c := meta.(*client.Client)
+	namespace, name, err := helper.IDParts(data.Id())
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	loadbalancer, err := c.HarvesterLoadbalancerClient.
+		LoadbalancerV1beta1().
+		LoadBalancers(namespace).
+		Get(ctx, name, metav1.GetOptions{})
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	return diag.FromErr(resourceLoadBalancerImport(data, loadbalancer))
 }
 
 func resourceLoadBalancerUpdate(ctx context.Context, data *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	return diag.FromErr(nil)
+	c := meta.(*client.Client)
+	namespace, name, err := helper.IDParts(data.Id())
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	obj, err := c.HarvesterLoadbalancerClient.
+		LoadbalancerV1beta1().
+		LoadBalancers(namespace).
+		Get(ctx, name, metav1.GetOptions{})
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	toUpdate, err := util.ResourceConstruct(data, Updater(obj))
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	loadbalancer, err := c.HarvesterLoadbalancerClient.
+		LoadbalancerV1beta1().
+		LoadBalancers(namespace).
+		Update(ctx, toUpdate.(*loadbalancerv1.LoadBalancer), metav1.UpdateOptions{})
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	return diag.FromErr(resourceLoadBalancerImport(data, loadbalancer))
 }
 
 func resourceLoadBalancerDelete(ctx context.Context, data *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	c := meta.(*client.Client)
+	namespace, name, err := helper.IDParts(data.Id())
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	err = c.HarvesterLoadbalancerClient.
+		LoadbalancerV1beta1().
+		LoadBalancers(namespace).
+		Delete(ctx, name, metav1.DeleteOptions{})
+	if err != nil && !apierrors.IsNotFound(err) {
+		return diag.FromErr(err)
+	}
 	return diag.FromErr(nil)
 }
 
