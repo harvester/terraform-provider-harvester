@@ -22,11 +22,11 @@ const (
 const (
 	SubresourceTypeLoadBalancerHealthCheck = "healthcheck"
 
-	FieldHealthcheckPort             = "port"
-	FieldHealthcheckSuccessThreshold = "success_threshold"
-	FieldHealthcheckFailureThreshold = "failure_threshold"
-	FieldHealthcheckPeriodSeconds    = "period_seconds"
-	FieldHealthcheckTimeoutSeconds   = "timeout_seconds"
+	FieldHealthCheckPort             = "port"
+	FieldHealthCheckSuccessThreshold = "success_threshold"
+	FieldHealthCheckFailureThreshold = "failure_threshold"
+	FieldHealthCheckPeriodSeconds    = "period_seconds"
+	FieldHealthCheckTimeoutSeconds   = "timeout_seconds"
 )
 
 const (

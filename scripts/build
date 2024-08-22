@@ -7,5 +7,5 @@ cd $(dirname $0)/..
 
 mkdir -p bin
 [ "$(uname)" != "Darwin" ] && LINKFLAGS="-extldflags -static -s"
-CGO_ENABLED=0 GOARCH=amd64 go build -cover -ldflags "-X main.VERSION=$VERSION $LINKFLAGS" -o bin/terraform-provider-harvester-amd64
-# CGO_ENABLED=0 GOARCH=arm64 go build -ldflags "-X main.VERSION=$VERSION $LINKFLAGS" -o bin/terraform-provider-harvester-arm64
+CGO_ENABLED=0 GOARCH=amd64 go build -ldflags "-X main.VERSION=$VERSION $LINKFLAGS" -o bin/terraform-provider-harvester-amd64
+CGO_ENABLED=0 GOARCH=arm64 go build -ldflags "-X main.VERSION=$VERSION $LINKFLAGS" -o bin/terraform-provider-harvester-arm64

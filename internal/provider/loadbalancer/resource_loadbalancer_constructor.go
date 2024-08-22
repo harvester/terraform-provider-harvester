@@ -72,6 +72,9 @@ func Creator(namespace, name string) util.Constructor {
 }
 
 func Updater(loadbalancer *loadbalancerv1.LoadBalancer) util.Constructor {
+	loadbalancer.Spec.Listeners = []loadbalancerv1.Listener{}
+	loadbalancer.Spec.HealthCheck = &loadbalancerv1.HealthCheck{}
+
 	return newLoadBalancerConstructor(loadbalancer)
 }
 
@@ -102,9 +105,9 @@ func (c *Constructor) subresourceLoadBalancerListenerParser(data interface{}) er
 	listener := data.(map[string]interface{})
 
 	name := listener[constants.FieldListenerName].(string)
-	port := int32(listener[constants.FieldListenerPort].(int))
+	port := listener[constants.FieldListenerPort].(int32)
 	protocol := corev1.Protocol(listener[constants.FieldListenerProtocol].(string))
-	backendPort := int32(listener[constants.FieldListenerBackendPort].(int))
+	backendPort := listener[constants.FieldListenerBackendPort].(int32)
 
 	c.LoadBalancer.Spec.Listeners = append(c.LoadBalancer.Spec.Listeners, loadbalancerv1.Listener{
 		Name:        name,
@@ -117,5 +120,21 @@ func (c *Constructor) subresourceLoadBalancerListenerParser(data interface{}) er
 }
 
 func (c *Constructor) subresourceLoadBalancerHealthCheckParser(data interface{}) error {
+	healthcheck := data.(map[string]interface{})
+
+	port := healthcheck[constants.FieldHealthCheckPort].(uint)
+	success := healthcheck[constants.FieldHealthCheckSuccessThreshold].(uint)
+	failure := healthcheck[constants.FieldHealthCheckFailureThreshold].(uint)
+	period := healthcheck[constants.FieldHealthCheckPeriodSeconds].(uint)
+	timeout := healthcheck[constants.FieldHealthCheckTimeoutSeconds].(uint)
+
+	c.LoadBalancer.Spec.HealthCheck = &loadbalancerv1.HealthCheck{
+		Port:             port,
+		SuccessThreshold: success,
+		FailureThreshold: failure,
+		PeriodSeconds:    period,
+		TimeoutSeconds:   timeout,
+	}
+
 	return nil
 }

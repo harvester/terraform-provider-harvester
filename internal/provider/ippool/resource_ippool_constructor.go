@@ -82,7 +82,7 @@ func (c *Constructor) subresourceIPPoolRangeParser(data interface{}) error {
 func (c *Constructor) subresourceIPPoolSelectorParser(data interface{}) error {
 	ippoolSelector := data.(map[string]interface{})
 
-	priority := uint32(ippoolSelector[constants.FieldSelectorPriority].(int))
+	priority := ippoolSelector[constants.FieldSelectorPriority].(uint32)
 	network := ippoolSelector[constants.FieldSelectorNetwork].(string)
 
 	scopesData := ippoolSelector[constants.SubresourceTypeIPPoolSelectorScope].([]interface{})
