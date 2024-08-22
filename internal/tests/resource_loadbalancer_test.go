@@ -7,9 +7,9 @@ import (
 	// loadbalancerv1 "github.com/harvester/harvester-load-balancer/pkg/apis/loadbalancer.harvesterhci.io/v1beta1"
 )
 
-func TestIPPoolBasic(t *testing.T) {
+func TestLoadBalancerBasic(t *testing.T) {
 	// var (
-	// 	ippool *loadbalancerv1.IPPool
+	// 	loadbalancer *loadbalancerv1.LoadBalancer
 	// 	ctx = context.Background()
 	// )
 
@@ -19,19 +19,18 @@ func TestIPPoolBasic(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config: `
-resource harvester_ippool \"test_ippool\" {
-	name = \"test_ippool\"
+resource harvester_loadbalancer \"test_loadbalancer\" {
+	name = \"test_loadbalancer\"
 
-	range {
-		range_start = \"192.168.0.1\"
-		range_end = \"192.168.0.254\"
-		range_subnet = \"192.168.0.1/24\"
-		range_gateway = \"192.168.0.1\"
+	listener {
+		port = 443
+		protocol = \"tcp\"
+		backend_port = 8080
 	}
 }
 `,
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("harvester_ippool.test_ippool", "name", "test_ippool"),
+					resource.TestCheckResourceAttr("harvester_loadbalancer.test_loadbalancer", "name", "test_loadbalancer"),
 				),
 			},
 		},

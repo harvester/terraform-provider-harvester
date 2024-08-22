@@ -65,7 +65,8 @@ func resourceIPPoolRead(ctx context.Context, data *schema.ResourceData, meta int
 
 	ippool, err := c.HarvesterLoadbalancerClient.
 		LoadbalancerV1beta1().
-		IPPools().Get(ctx, name, metav1.GetOptions{})
+		IPPools().
+		Get(ctx, name, metav1.GetOptions{})
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -82,7 +83,8 @@ func resourceIPPoolUpdate(ctx context.Context, data *schema.ResourceData, meta i
 
 	obj, err := c.HarvesterLoadbalancerClient.
 		LoadbalancerV1beta1().
-		IPPools().Get(ctx, name, metav1.GetOptions{})
+		IPPools().
+		Get(ctx, name, metav1.GetOptions{})
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -94,7 +96,8 @@ func resourceIPPoolUpdate(ctx context.Context, data *schema.ResourceData, meta i
 
 	ippool, err := c.HarvesterLoadbalancerClient.
 		LoadbalancerV1beta1().
-		IPPools().Update(ctx, toUpdate.(*loadbalancerv1.IPPool), metav1.UpdateOptions{})
+		IPPools().
+		Update(ctx, toUpdate.(*loadbalancerv1.IPPool), metav1.UpdateOptions{})
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -110,7 +113,8 @@ func resourceIPPoolDelete(ctx context.Context, data *schema.ResourceData, meta i
 
 	err = c.HarvesterLoadbalancerClient.
 		LoadbalancerV1beta1().
-		IPPools().Delete(ctx, name, metav1.DeleteOptions{})
+		IPPools().
+		Delete(ctx, name, metav1.DeleteOptions{})
 	if err != nil && !apierrors.IsNotFound(err) {
 		return diag.FromErr(err)
 	}
