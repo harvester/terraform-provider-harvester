@@ -1,18 +1,37 @@
 package tests
 
 import (
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	// loadbalancerv1 "github.com/harvester/harvester-load-balancer/pkg/apis/loadbalancer.harvesterhci.io/v1beta1"
 )
 
-func TestAccIPPool_basic(t *testing.T) {
-	// var (
-	// 	ippool *loadbalancerv1.IPPool
-	// 	ctx = context.Background()
-	// )
+func TestAccIPPool_invalid(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		PreCheck:  func() { testAccPreCheck(t) },
+		Providers: testAccProviders,
+		Steps: []resource.TestStep{
+			{
+				Config: `
+resource "harvester_ippool" "test_ippool" {
+}
+`,
+				ExpectError: regexp.MustCompile(`The argument "name" is required, but no definition was found.`),
+			},
+			{
+				Config: `
+resource "harvester_ippool" "test_ippool" {
+	name = "test-ippool"
+}
+`,
+				ExpectError: regexp.MustCompile(`The argument "range" is required, but no definition was found.`),
+			},
+		},
+	})
+}
 
+func TestAccIPPool_basic(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
