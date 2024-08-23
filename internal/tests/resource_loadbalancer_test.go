@@ -1,18 +1,37 @@
 package tests
 
 import (
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	// loadbalancerv1 "github.com/harvester/harvester-load-balancer/pkg/apis/loadbalancer.harvesterhci.io/v1beta1"
 )
 
-func TestLoadBalancerBasic(t *testing.T) {
-	// var (
-	// 	loadbalancer *loadbalancerv1.LoadBalancer
-	// 	ctx = context.Background()
-	// )
+func TestAccLoadBalancer_invalid(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		PreCheck:  func() { testAccPreCheck(t) },
+		Providers: testAccProviders,
+		Steps: []resource.TestStep{
+			{
+				Config: `
+resource "harvester_loadbalancer" "test_loadbalancer" {
+}
+`,
+				ExpectError: regexp.MustCompile(`The argument "name" is required, but no definition was found.`),
+			},
+			{
+				Config: `
+resource "harvester_loadbalancer" "test_loadbalancer" {
+	name = "test-loadbalancer"
+}
+`,
+				ExpectError: regexp.MustCompile(`The argument "listener" is required, but no definition was found.`),
+			},
+		},
+	})
+}
 
+func TestAccLoadBalancer_basic(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
