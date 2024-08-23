@@ -19,18 +19,22 @@ func TestLoadBalancerBasic(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config: `
-resource harvester_loadbalancer \"test_loadbalancer\" {
-	name = \"test_loadbalancer\"
+resource "harvester_loadbalancer" "test_loadbalancer" {
+	name = "test-loadbalancer"
 
 	listener {
 		port = 443
-		protocol = \"tcp\"
+		protocol = "tcp"
 		backend_port = 8080
 	}
 }
 `,
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("harvester_loadbalancer.test_loadbalancer", "name", "test_loadbalancer"),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("harvester_loadbalancer.test_loadbalancer", "name", "test-loadbalancer"),
+					resource.TestCheckResourceAttr("harvester_loadbalancer.test_loadbalancer", "listener.#", "1"),
+					resource.TestCheckResourceAttr("harvester_loadbalancer.test_loadbalancer", "listener.0.port", "443"),
+					resource.TestCheckResourceAttr("harvester_loadbalancer.test_loadbalancer", "listener.0.protocol", "tcp"),
+					resource.TestCheckResourceAttr("harvester_loadbalancer.test_loadbalancer", "listener.0.backend_port", "8080"),
 				),
 			},
 		},
