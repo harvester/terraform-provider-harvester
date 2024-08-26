@@ -21,10 +21,12 @@ const (
 	testAccNetworkResourceName = constants.ResourceTypeNetwork + "." + testAccNetworkName
 	testAccNetworkDescription  = "Terraform Harvester Network acceptance test"
 
-	testAccNetworkVlanID = "10"
+	testAccNetworkClusterNetworkName = "mgmt"
+	testAccNetworkVlanID             = "0"
 
 	testAccNetworkConfigTemplate = `
 resource %s "%s" {
+	%s = "%s"
 	%s = "%s"
 	%s = "%s"
 	%s = %s
@@ -32,10 +34,11 @@ resource %s "%s" {
 `
 )
 
-func buildNetworkConfig(name, description, vlanID string) string {
+func buildNetworkConfig(name, description, clusterNetworkName, vlanID string) string {
 	return fmt.Sprintf(testAccNetworkConfigTemplate, constants.ResourceTypeNetwork, name,
 		constants.FieldCommonName, name,
 		constants.FieldCommonDescription, description,
+		constants.FieldNetworkClusterNetworkName, clusterNetworkName,
 		constants.FieldNetworkVlanID, vlanID)
 }
 
@@ -50,11 +53,21 @@ func TestAccNetwork_basic(t *testing.T) {
 		CheckDestroy: testAccCheckNetworkDestroy(ctx),
 		Steps: []resource.TestStep{
 			{
-				Config:      buildNetworkConfig(testAccNetworkName, testAccNetworkDescription, "4045"),
+				Config: buildNetworkConfig(
+					testAccNetworkName,
+					testAccNetworkDescription,
+					testAccNetworkClusterNetworkName,
+					"4095",
+				),
 				ExpectError: regexp.MustCompile(fmt.Sprintf(`expected %s to be in the range \(0 - 4094\)`, constants.FieldNetworkVlanID)),
 			},
 			{
-				Config: buildNetworkConfig(testAccNetworkName, testAccNetworkDescription, testAccNetworkVlanID),
+				Config: buildNetworkConfig(
+					testAccNetworkName,
+					testAccNetworkDescription,
+					testAccNetworkClusterNetworkName,
+					testAccNetworkVlanID,
+				),
 				Check: resource.ComposeTestCheckFunc(
 					testAccNetworkExists(ctx, testAccNetworkResourceName, network),
 					resource.TestCheckResourceAttr(testAccNetworkResourceName, constants.FieldCommonName, testAccNetworkName),
