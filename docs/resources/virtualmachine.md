@@ -211,7 +211,7 @@ resource "harvester_virtualmachine" "opensuse154" {
 - **secure_boot** (Boolean) EFI must be enabled to use this feature
 - **ssh_keys** (List of String)
 - **start** (Boolean, Deprecated)
-- **tags** (Map of String)
+- **tags** (Map of String) (otherwise known as labels, see [below](#tags))
 - **tpm** (Block List, Max: 1) (see [below for nested schema](#nestedblock--tpm))
 
 ### Read-Only
@@ -298,6 +298,13 @@ Optional:
 Optional:
 
 - **name** (String) just add this field for doc generation
+
+<a id="tags"></a>
+### Tags / Labels
+
+Optional, map of strings. The keys of the tags will appear as labels
+`tags.harvesterhci.io/${KEY}`. The values of the map will be the
+corresponding values of the labels.
 
 ## Import
 

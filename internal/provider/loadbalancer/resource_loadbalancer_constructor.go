@@ -6,6 +6,8 @@ import (
 	loadbalancerv1 "github.com/harvester/harvester-load-balancer/pkg/apis/loadbalancer.harvesterhci.io/v1beta1"
 	corev1 "k8s.io/api/core/v1"
 
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+
 	"github.com/harvester/terraform-provider-harvester/internal/util"
 	"github.com/harvester/terraform-provider-harvester/pkg/constants"
 )
@@ -39,6 +41,11 @@ func (c *Constructor) Setup() util.Processors {
 			Field:    constants.SubresourceTypeLoadBalancerListener,
 			Parser:   c.subresourceLoadBalancerListenerParser,
 			Required: true,
+		},
+		{
+			Field:    constants.SubresourceTypeLoadBalancerBackendSelector,
+			Parser:   c.subresourceLoadBalancerBackendSelectorParser,
+			Required: false,
 		},
 		{
 			Field:    constants.SubresourceTypeLoadBalancerHealthCheck,
@@ -116,6 +123,31 @@ func (c *Constructor) subresourceLoadBalancerListenerParser(data interface{}) er
 		BackendPort: backendPort,
 	})
 
+	return nil
+}
+
+func (c *Constructor) subresourceLoadBalancerBackendSelectorParser(data interface{}) error {
+	backendServerSelector := make(map[string][]string)
+
+	selectorSet := data.(*schema.Set)
+
+	selectors := selectorSet.List()
+
+	for _, selectorData := range selectors {
+		selector := selectorData.(map[string]interface{})
+
+		key := selector[constants.FieldBackendSelectorKey].(string)
+		valuesData := selector[constants.FieldBackendSelectorValues].([]interface{})
+
+		values := make([]string, 0)
+
+		for _, valueData := range valuesData {
+			values = append(values, valueData.(string))
+		}
+
+		backendServerSelector[key] = values
+	}
+	c.LoadBalancer.Spec.BackendServerSelector = backendServerSelector
 	return nil
 }
 
