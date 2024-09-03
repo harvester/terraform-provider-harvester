@@ -3,11 +3,10 @@ package constants
 const (
 	ResourceTypeLoadBalancer = "harvester_loadbalancer"
 
-	FieldLoadBalancerDescription           = "description"
-	FieldLoadBalancerWorkloadType          = "workload_type"
-	FieldLoadBalancerIPAM                  = "ipam"
-	FieldLoadBalancerIPPool                = "ippool"
-	FieldLoadBalancerBackendServerSelector = "backend_server_selector"
+	FieldLoadBalancerDescription  = "description"
+	FieldLoadBalancerWorkloadType = "workload_type"
+	FieldLoadBalancerIPAM         = "ipam"
+	FieldLoadBalancerIPPool       = "ippool"
 )
 
 const (
@@ -27,6 +26,13 @@ const (
 	FieldHealthCheckFailureThreshold = "failure_threshold"
 	FieldHealthCheckPeriodSeconds    = "period_seconds"
 	FieldHealthCheckTimeoutSeconds   = "timeout_seconds"
+)
+
+const (
+	SubresourceTypeLoadBalancerBackendSelector = "backend_selector"
+
+	FieldBackendSelectorKey    = "key"
+	FieldBackendSelectorValues = "values"
 )
 
 const (
