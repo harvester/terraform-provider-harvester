@@ -196,6 +196,7 @@ func resourceVirtualMachineDelete(ctx context.Context, d *schema.ResourceData, m
 	if err != nil {
 		return diag.FromErr(err)
 	}
+
 	d.SetId("")
 	return nil
 }

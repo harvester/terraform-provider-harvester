@@ -1,5 +1,5 @@
 resource "harvester_ippool" "service_ips" {
-  name = "service_ips"
+  name = "service-ips"
 
   range {
     start = "10.11.0.1"

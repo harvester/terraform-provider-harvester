@@ -46,10 +46,13 @@ func Schema() map[string]*schema.Schema {
 				Schema: subresourceSchemaLoadBalancerListener(),
 			},
 		},
-		constants.FieldLoadBalancerBackendServerSelector: {
-			Type:        schema.TypeMap,
+		constants.SubresourceTypeLoadBalancerBackendSelector: {
+			Type:        schema.TypeSet,
 			Optional:    true,
 			Description: "",
+			Elem: &schema.Resource{
+				Schema: subresourceSchemaLoadBalancerBackendSelector(),
+			},
 		},
 		constants.SubresourceTypeLoadBalancerHealthCheck: {
 			Type:        schema.TypeList,
@@ -94,7 +97,45 @@ func subresourceSchemaLoadBalancerListener() map[string]*schema.Schema {
 	return s
 }
 
+func subresourceSchemaLoadBalancerBackendSelector() map[string]*schema.Schema {
+	s := map[string]*schema.Schema{
+		constants.FieldBackendSelectorKey: {
+			Type:     schema.TypeString,
+			Required: true,
+		},
+		constants.FieldBackendSelectorValues: {
+			Type:     schema.TypeList,
+			Required: true,
+			Elem: &schema.Schema{
+				Type: schema.TypeString,
+			},
+		},
+	}
+	return s
+}
+
 func subresourceSchemaLoadBalancerHealthCheck() map[string]*schema.Schema {
-	s := map[string]*schema.Schema{}
+	s := map[string]*schema.Schema{
+		constants.FieldHealthCheckPort: {
+			Type:     schema.TypeInt,
+			Required: true,
+		},
+		constants.FieldHealthCheckSuccessThreshold: {
+			Type:     schema.TypeInt,
+			Optional: true,
+		},
+		constants.FieldHealthCheckFailureThreshold: {
+			Type:     schema.TypeInt,
+			Optional: true,
+		},
+		constants.FieldHealthCheckPeriodSeconds: {
+			Type:     schema.TypeInt,
+			Optional: true,
+		},
+		constants.FieldHealthCheckTimeoutSeconds: {
+			Type:     schema.TypeInt,
+			Optional: true,
+		},
+	}
 	return s
 }
