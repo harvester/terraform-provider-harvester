@@ -2,7 +2,6 @@ package virtualmachine
 
 import (
 	"context"
-	"fmt"
 	"strings"
 	"time"
 
@@ -177,17 +176,27 @@ func resourceVirtualMachineDelete(ctx context.Context, d *schema.ResourceData, m
 		return diag.FromErr(err)
 	}
 
-	ctxDeadline, _ := ctx.Deadline()
-	events, err := c.HarvesterClient.
-		KubevirtV1().
-		VirtualMachines(namespace).
-		Watch(ctx, util.WatchOptions(name, time.Until(ctxDeadline)))
+	stateConf := &resource.StateChangeConf{
+		Pending: []string{
+			constants.StateCommonReady,
+			constants.StateCommonFailed,
+			constants.StateCommonUnknown,
+			constants.StateVirtualMachineRunning,
+			constants.StateVirtualMachineStarting,
+			constants.StateVirtualMachineStopping,
+			constants.StateVirtualMachineStopped,
+		},
+		Target:     []string{constants.StateCommonRemoved},
+		Refresh:    resourceVirtualMachineRefresh(ctx, d, meta, namespace, name, ""),
+		Timeout:    d.Timeout(schema.TimeoutDelete),
+		Delay:      10 * time.Second,
+		MinTimeout: 3 * time.Second,
+	}
+	_, err = stateConf.WaitForStateContext(ctx)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	if !util.HasDeleted(events) {
-		return diag.FromErr(fmt.Errorf("timeout waiting for virtualmachine %s to be deleted", d.Id()))
-	}
+
 	d.SetId("")
 	return nil
 }

@@ -9,15 +9,18 @@ import (
 	"k8s.io/client-go/kubernetes"
 	storageclient "k8s.io/client-go/kubernetes/typed/storage/v1"
 	"k8s.io/client-go/rest"
+
+	harvloadbalancerclient "github.com/harvester/harvester-load-balancer/pkg/generated/clientset/versioned"
 )
 
 type Client struct {
-	RestConfig                *rest.Config
-	KubeVirtSubresourceClient *rest.RESTClient
-	KubeClient                *kubernetes.Clientset
-	StorageClassClient        *storageclient.StorageV1Client
-	HarvesterClient           *harvclient.Clientset
-	HarvesterNetworkClient    *harvnetworkclient.Clientset
+	RestConfig                  *rest.Config
+	KubeVirtSubresourceClient   *rest.RESTClient
+	KubeClient                  *kubernetes.Clientset
+	StorageClassClient          *storageclient.StorageV1Client
+	HarvesterClient             *harvclient.Clientset
+	HarvesterNetworkClient      *harvnetworkclient.Clientset
+	HarvesterLoadbalancerClient *harvloadbalancerclient.Clientset
 }
 
 func NewClient(kubeConfig, kubeContext string) (*Client, error) {
@@ -50,12 +53,17 @@ func NewClient(kubeConfig, kubeContext string) (*Client, error) {
 	if err != nil {
 		return nil, err
 	}
+	harvLoadbalancerClient, err := harvloadbalancerclient.NewForConfig(restConfig)
+	if err != nil {
+		return nil, err
+	}
 	return &Client{
-		RestConfig:                restConfig,
-		KubeVirtSubresourceClient: restClient,
-		KubeClient:                kubeClient,
-		StorageClassClient:        storageClassClient,
-		HarvesterClient:           harvClient,
-		HarvesterNetworkClient:    harvNetworkClient,
+		RestConfig:                  restConfig,
+		KubeVirtSubresourceClient:   restClient,
+		KubeClient:                  kubeClient,
+		StorageClassClient:          storageClassClient,
+		HarvesterClient:             harvClient,
+		HarvesterNetworkClient:      harvNetworkClient,
+		HarvesterLoadbalancerClient: harvLoadbalancerClient,
 	}, nil
 }

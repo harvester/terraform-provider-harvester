@@ -27,6 +27,7 @@ replace (
 
 require (
 	github.com/harvester/harvester v1.3.0
+	github.com/harvester/harvester-load-balancer v0.3.0
 	github.com/harvester/harvester-network-controller v0.3.5
 	github.com/hashicorp/terraform-plugin-docs v0.4.0
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.6.1
@@ -69,7 +70,10 @@ require (
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
 	github.com/cisco-open/operator-tools v0.29.0 // indirect
 	github.com/containernetworking/cni v1.1.2 // indirect
+	github.com/containernetworking/plugins v1.1.1 // indirect
+	github.com/coreos/go-iptables v0.6.0 // indirect
 	github.com/coreos/prometheus-operator v0.38.3 // indirect
+	github.com/cpuguy83/go-md2man/v2 v2.0.2 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/deckarep/golang-set/v2 v2.1.0 // indirect
 	github.com/emicklei/go-restful/v3 v3.9.0 // indirect
@@ -181,12 +185,18 @@ require (
 	github.com/rancher/system-upgrade-controller/pkg/apis v0.0.0-20210727200656-10b094e30007 // indirect
 	github.com/robfig/cron v1.2.0 // indirect
 	github.com/russross/blackfriday v1.6.0 // indirect
+	github.com/russross/blackfriday/v2 v2.1.0 // indirect
+	github.com/safchain/ethtool v0.0.0-20210803160452-9aa261dae9b1 // indirect
 	github.com/shirou/gopsutil/v3 v3.23.7 // indirect
 	github.com/shopspring/decimal v1.3.1 // indirect
 	github.com/sirupsen/logrus v1.9.3 // indirect
 	github.com/spf13/cast v1.5.1 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
+	github.com/tevino/tcp-shaker v0.0.0-20191112104505-00eab0aefc80 // indirect
 	github.com/ulikunitz/xz v0.5.10 // indirect
+	github.com/urfave/cli v1.22.13 // indirect
+	github.com/vishvananda/netlink v1.2.1-beta.2 // indirect
+	github.com/vishvananda/netns v0.0.0-20211101163701-50045581ed74 // indirect
 	github.com/vmihailenco/msgpack v4.0.4+incompatible // indirect
 	github.com/yusufpapurcu/wmi v1.2.3 // indirect
 	github.com/zclconf/go-cty v1.8.2 // indirect

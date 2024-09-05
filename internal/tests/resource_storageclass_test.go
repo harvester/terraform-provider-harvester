@@ -24,6 +24,8 @@ const (
 resource %s "%s" {
 	%s = "%s"
 	%s = "%s"
+	parameters = {
+	}
 }
 `
 )

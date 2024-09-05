@@ -13,7 +13,9 @@ import (
 	"github.com/harvester/terraform-provider-harvester/internal/provider/cloudinitsecret"
 	"github.com/harvester/terraform-provider-harvester/internal/provider/clusternetwork"
 	"github.com/harvester/terraform-provider-harvester/internal/provider/image"
+	"github.com/harvester/terraform-provider-harvester/internal/provider/ippool"
 	"github.com/harvester/terraform-provider-harvester/internal/provider/keypair"
+	"github.com/harvester/terraform-provider-harvester/internal/provider/loadbalancer"
 	"github.com/harvester/terraform-provider-harvester/internal/provider/network"
 	"github.com/harvester/terraform-provider-harvester/internal/provider/storageclass"
 	"github.com/harvester/terraform-provider-harvester/internal/provider/virtualmachine"
@@ -40,26 +42,30 @@ func Provider() *schema.Provider {
 			},
 		},
 		DataSourcesMap: map[string]*schema.Resource{
-			constants.ResourceTypeImage:           image.DataSourceImage(),
-			constants.ResourceTypeKeyPair:         keypair.DataSourceKeypair(),
-			constants.ResourceTypeNetwork:         network.DataSourceNetwork(),
-			constants.ResourceTypeVirtualMachine:  virtualmachine.DataSourceVirtualMachine(),
-			constants.ResourceTypeVolume:          volume.DataSourceVolume(),
+			constants.ResourceTypeCloudInitSecret: cloudinitsecret.DataSourceCloudInitSecret(),
 			constants.ResourceTypeClusterNetwork:  clusternetwork.DataSourceClusterNetwork(),
+			constants.ResourceTypeImage:           image.DataSourceImage(),
+			constants.ResourceTypeIPPool:          ippool.DataSourceIPPool(),
+			constants.ResourceTypeKeyPair:         keypair.DataSourceKeypair(),
+			constants.ResourceTypeLoadBalancer:    loadbalancer.DataSourceLoadBalancer(),
+			constants.ResourceTypeNetwork:         network.DataSourceNetwork(),
 			constants.ResourceTypeStorageClass:    storageclass.DataSourceStorageClass(),
 			constants.ResourceTypeVLANConfig:      vlanconfig.DataSourceVLANConfig(),
-			constants.ResourceTypeCloudInitSecret: cloudinitsecret.DataSourceCloudInitSecret(),
+			constants.ResourceTypeVirtualMachine:  virtualmachine.DataSourceVirtualMachine(),
+			constants.ResourceTypeVolume:          volume.DataSourceVolume(),
 		},
 		ResourcesMap: map[string]*schema.Resource{
-			constants.ResourceTypeImage:           image.ResourceImage(),
-			constants.ResourceTypeKeyPair:         keypair.ResourceKeypair(),
-			constants.ResourceTypeNetwork:         network.ResourceNetwork(),
-			constants.ResourceTypeVirtualMachine:  virtualmachine.ResourceVirtualMachine(),
-			constants.ResourceTypeVolume:          volume.ResourceVolume(),
+			constants.ResourceTypeCloudInitSecret: cloudinitsecret.ResourceCloudInitSecret(),
 			constants.ResourceTypeClusterNetwork:  clusternetwork.ResourceClusterNetwork(),
+			constants.ResourceTypeImage:           image.ResourceImage(),
+			constants.ResourceTypeIPPool:          ippool.ResourceIPPool(),
+			constants.ResourceTypeKeyPair:         keypair.ResourceKeypair(),
+			constants.ResourceTypeLoadBalancer:    loadbalancer.ResourceLoadBalancer(),
+			constants.ResourceTypeNetwork:         network.ResourceNetwork(),
 			constants.ResourceTypeStorageClass:    storageclass.ResourceStorageClass(),
 			constants.ResourceTypeVLANConfig:      vlanconfig.ResourceVLANConfig(),
-			constants.ResourceTypeCloudInitSecret: cloudinitsecret.ResourceCloudInitSecret(),
+			constants.ResourceTypeVirtualMachine:  virtualmachine.ResourceVirtualMachine(),
+			constants.ResourceTypeVolume:          volume.ResourceVolume(),
 		},
 		ConfigureContextFunc: providerConfig,
 	}

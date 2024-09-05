@@ -35,8 +35,10 @@ func (c *Constructor) Setup() util.Processors {
 			Field: constants.FieldNetworkClusterNetworkName,
 			Parser: func(i interface{}) error {
 				c.ClusterNetworkName = i.(string)
+				c.Network.Labels[networkutils.KeyClusterNetworkLabel] = c.ClusterNetworkName
 				return nil
 			},
+			Required: true,
 		},
 		{
 			Field: constants.FieldNetworkVlanID,
@@ -116,22 +118,25 @@ func (c *Constructor) Result() (interface{}, error) {
 	return c.Network, nil
 }
 
-func newNetworkConstructor(c *client.Client, ctx context.Context, network *nadv1.NetworkAttachmentDefinition) util.Constructor {
+func newNetworkConstructor(c *client.Client, ctx context.Context, clusterNetworkName string, network *nadv1.NetworkAttachmentDefinition) util.Constructor {
 	return &Constructor{
-		Client:            c,
-		Context:           ctx,
-		Network:           network,
-		Layer3NetworkConf: &networkutils.Layer3NetworkConf{},
+		Client:             c,
+		Context:            ctx,
+		ClusterNetworkName: clusterNetworkName,
+		Network:            network,
+		Layer3NetworkConf:  &networkutils.Layer3NetworkConf{},
 	}
 }
 
-func Creator(c *client.Client, ctx context.Context, namespace, name string) util.Constructor {
-	Network := &nadv1.NetworkAttachmentDefinition{
+func Creator(c *client.Client, ctx context.Context, clusterNetworkName, namespace, name string) util.Constructor {
+	network := &nadv1.NetworkAttachmentDefinition{
 		ObjectMeta: util.NewObjectMeta(namespace, name),
 	}
-	return newNetworkConstructor(c, ctx, Network)
+	network.Labels[networkutils.KeyClusterNetworkLabel] = clusterNetworkName
+	return newNetworkConstructor(c, ctx, clusterNetworkName, network)
 }
 
 func Updater(c *client.Client, ctx context.Context, network *nadv1.NetworkAttachmentDefinition) util.Constructor {
-	return newNetworkConstructor(c, ctx, network)
+	clusterNetworkName := network.Labels[networkutils.KeyClusterNetworkLabel]
+	return newNetworkConstructor(c, ctx, clusterNetworkName, network)
 }

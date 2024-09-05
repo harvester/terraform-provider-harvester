@@ -2,10 +2,10 @@ package network
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	nadv1 "github.com/k8snetworkplumbingwg/network-attachment-definition-client/pkg/apis/k8s.cni.cncf.io/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -42,7 +42,8 @@ func resourceNetworkCreate(ctx context.Context, d *schema.ResourceData, meta int
 	c := meta.(*client.Client)
 	namespace := d.Get(constants.FieldCommonNamespace).(string)
 	name := d.Get(constants.FieldCommonName).(string)
-	toCreate, err := util.ResourceConstruct(d, Creator(c, ctx, namespace, name))
+	clusterNetworkName := d.Get(constants.FieldNetworkClusterNetworkName).(string)
+	toCreate, err := util.ResourceConstruct(d, Creator(c, ctx, clusterNetworkName, namespace, name))
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -106,16 +107,16 @@ func resourceNetworkDelete(ctx context.Context, d *schema.ResourceData, meta int
 		return diag.FromErr(err)
 	}
 
-	ctxDeadline, _ := ctx.Deadline()
-	events, err := c.HarvesterClient.
-		K8sCniCncfIoV1().
-		NetworkAttachmentDefinitions(namespace).
-		Watch(ctx, util.WatchOptions(name, time.Until(ctxDeadline)))
-	if err != nil {
-		return diag.FromErr(err)
+	stateConf := &resource.StateChangeConf{
+		Pending:    []string{constants.StateCommonActive},
+		Target:     []string{constants.StateCommonRemoved},
+		Refresh:    resourceNetworkRefresh(ctx, d, meta),
+		Timeout:    d.Timeout(schema.TimeoutDelete),
+		Delay:      1 * time.Second,
+		MinTimeout: 3 * time.Second,
 	}
-	if !util.HasDeleted(events) {
-		return diag.FromErr(fmt.Errorf("timeout waiting for network %s to be deleted", d.Id()))
+	if _, err = stateConf.WaitForStateContext(ctx); err != nil {
+		return diag.FromErr(err)
 	}
 
 	d.SetId("")
@@ -128,4 +129,26 @@ func resourceNetworkImport(d *schema.ResourceData, obj *nadv1.NetworkAttachmentD
 		return err
 	}
 	return util.ResourceStatesSet(d, stateGetter)
+}
+
+func resourceNetworkRefresh(ctx context.Context, d *schema.ResourceData, meta interface{}) resource.StateRefreshFunc {
+	return func() (interface{}, string, error) {
+		c := meta.(*client.Client)
+		namespace := d.Get(constants.FieldCommonNamespace).(string)
+		name := d.Get(constants.FieldCommonName).(string)
+		obj, err := c.HarvesterClient.
+			K8sCniCncfIoV1().
+			NetworkAttachmentDefinitions(namespace).
+			Get(ctx, name, metav1.GetOptions{})
+		if err != nil {
+			if apierrors.IsNotFound(err) {
+				return obj, constants.StateCommonRemoved, nil
+			}
+			return obj, constants.StateCommonError, err
+		}
+		if err = resourceNetworkImport(d, obj); err != nil {
+			return obj, constants.StateCommonError, err
+		}
+		return obj, constants.StateCommonActive, nil
+	}
 }

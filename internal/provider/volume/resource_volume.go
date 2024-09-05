@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -104,14 +105,18 @@ func resourceVolumeDelete(ctx context.Context, d *schema.ResourceData, meta inte
 		return diag.FromErr(err)
 	}
 
-	ctxDeadline, _ := ctx.Deadline()
-	events, err := c.KubeClient.CoreV1().PersistentVolumeClaims(namespace).Watch(ctx, util.WatchOptions(name, time.Until(ctxDeadline)))
-	if err != nil {
+	stateConf := &resource.StateChangeConf{
+		Pending:    []string{constants.StateCommonActive},
+		Target:     []string{constants.StateCommonRemoved},
+		Refresh:    resourceVolumeRefresh(ctx, d, meta),
+		Timeout:    d.Timeout(schema.TimeoutDelete),
+		Delay:      1 * time.Second,
+		MinTimeout: 3 * time.Second,
+	}
+	if _, err = stateConf.WaitForStateContext(ctx); err != nil {
 		return diag.FromErr(err)
 	}
-	if !util.HasDeleted(events) {
-		return diag.Errorf("timeout waiting for volume %s to be deleted", d.Id())
-	}
+
 	d.SetId("")
 	return nil
 }
@@ -122,4 +127,23 @@ func resourceVolumeImport(d *schema.ResourceData, obj *corev1.PersistentVolumeCl
 		return err
 	}
 	return util.ResourceStatesSet(d, stateGetter)
+}
+
+func resourceVolumeRefresh(ctx context.Context, d *schema.ResourceData, meta interface{}) resource.StateRefreshFunc {
+	return func() (interface{}, string, error) {
+		c := meta.(*client.Client)
+		namespace := d.Get(constants.FieldCommonNamespace).(string)
+		name := d.Get(constants.FieldCommonName).(string)
+		obj, err := c.KubeClient.CoreV1().PersistentVolumeClaims(namespace).Get(ctx, name, metav1.GetOptions{})
+		if err != nil {
+			if apierrors.IsNotFound(err) {
+				return obj, constants.StateCommonRemoved, nil
+			}
+			return obj, constants.StateCommonError, err
+		}
+		if err = resourceVolumeImport(d, obj); err != nil {
+			return obj, constants.StateCommonError, err
+		}
+		return obj, constants.StateCommonActive, nil
+	}
 }

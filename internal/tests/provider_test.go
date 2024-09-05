@@ -26,6 +26,7 @@ const (
 
 	testAccResourceStateRemoved = "removed"
 	testAccResourceStateExist   = "exist"
+	testAccResourceStateError   = "error"
 )
 
 func init() {
@@ -54,8 +55,8 @@ func getStateChangeConf(refresh resource.StateRefreshFunc) *resource.StateChange
 		Pending:    []string{testAccResourceStateExist},
 		Target:     []string{testAccResourceStateRemoved},
 		Refresh:    refresh,
-		Timeout:    1 * time.Minute,
-		Delay:      1 * time.Second,
+		Timeout:    2 * time.Minute,
+		Delay:      10 * time.Second,
 		MinTimeout: 3 * time.Second,
 	}
 }
@@ -67,7 +68,7 @@ func getResourceStateRefreshFunc(getResourceFunc func() (interface{}, error)) re
 			if apierrors.IsNotFound(err) {
 				return obj, testAccResourceStateRemoved, nil
 			}
-			return nil, "", err
+			return nil, testAccResourceStateError, err
 		}
 		return obj, testAccResourceStateExist, nil
 	}

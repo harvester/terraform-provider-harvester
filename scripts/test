@@ -3,5 +3,10 @@ set -e
 
 cd $(dirname $0)/..
 
-echo Running tests
-go test -cover -tags=test .
+if [ -f ./kubeconfig_test.yaml ] ; then
+  export KUBECONFIG="$(pwd)/kubeconfig_test.yaml"
+  export TF_ACC=1
+fi
+
+echo Running tests:
+go test -v -cover -tags=test . ./...
