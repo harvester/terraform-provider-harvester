@@ -4,7 +4,7 @@ ARG DAPPER_HOST_ARCH
 ENV ARCH $DAPPER_HOST_ARCH
 
 RUN zypper -n rm container-suseconnect && \
-    zypper -n install curl docker gzip tar wget awk zip
+    zypper -n install curl docker gzip tar wget awk zip unzip
 
 # install goimports
 RUN GO111MODULE=on go install golang.org/x/tools/cmd/goimports@v0.1.11
@@ -13,9 +13,12 @@ RUN GO111MODULE=on go install golang.org/x/tools/cmd/goimports@v0.1.11
 RUN curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s v1.57.1
 
 # The docker version in dapper is too old to have buildx. Install it manually.
-RUN wget https://github.com/docker/buildx/releases/download/v0.13.1/buildx-v0.13.1.linux-${ARCH} && \
+RUN wget --quiet https://github.com/docker/buildx/releases/download/v0.13.1/buildx-v0.13.1.linux-${ARCH} && \
+    wget --quiet https://releases.hashicorp.com/terraform/0.13.4/terraform_0.13.4_linux_${ARCH}.zip &&  \
     chmod +x buildx-v0.13.1.linux-${ARCH} && \
-    mv buildx-v0.13.1.linux-${ARCH} /usr/local/bin/buildx
+    unzip terraform_0.13.4_linux_${ARCH}.zip && \
+    mv buildx-v0.13.1.linux-${ARCH} /usr/local/bin/buildx && \
+    mv terraform /usr/local/bin/terraform
 
 ENV DAPPER_ENV REPO TAG DRONE_TAG
 ENV DAPPER_SOURCE /go/src/github.com/harvester/terraform-provider-harvester
@@ -23,6 +26,10 @@ ENV DAPPER_OUTPUT ./bin ./dist
 ENV DAPPER_DOCKER_SOCKET true
 ENV HOME ${DAPPER_SOURCE}
 
+COPY go.mod ${DAPPER_SOURCE}/go.mod
+COPY go.sum ${DAPPER_SOURCE}/go.sum
 WORKDIR ${DAPPER_SOURCE}
+RUN go mod download
+
 ENTRYPOINT ["./scripts/entry"]
 CMD ["ci"]
