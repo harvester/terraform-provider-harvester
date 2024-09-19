@@ -11,8 +11,8 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	"github.com/harvester/terraform-provider-harvester/internal/config"
 	"github.com/harvester/terraform-provider-harvester/internal/util"
-	"github.com/harvester/terraform-provider-harvester/pkg/client"
 	"github.com/harvester/terraform-provider-harvester/pkg/constants"
 	"github.com/harvester/terraform-provider-harvester/pkg/helper"
 	"github.com/harvester/terraform-provider-harvester/pkg/importer"
@@ -39,7 +39,10 @@ func ResourceVolume() *schema.Resource {
 }
 
 func resourceVolumeCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	c := meta.(*client.Client)
+	c, err := meta.(*config.Config).K8sClient()
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	namespace := d.Get(constants.FieldCommonNamespace).(string)
 	name := d.Get(constants.FieldCommonName).(string)
 	toCreate, err := util.ResourceConstruct(d, Creator(namespace, name))
@@ -54,7 +57,10 @@ func resourceVolumeCreate(ctx context.Context, d *schema.ResourceData, meta inte
 }
 
 func resourceVolumeUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	c := meta.(*client.Client)
+	c, err := meta.(*config.Config).K8sClient()
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	namespace, name, err := helper.IDParts(d.Id())
 	if err != nil {
 		return diag.FromErr(err)
@@ -79,7 +85,10 @@ func resourceVolumeUpdate(ctx context.Context, d *schema.ResourceData, meta inte
 }
 
 func resourceVolumeRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	c := meta.(*client.Client)
+	c, err := meta.(*config.Config).K8sClient()
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	namespace, name, err := helper.IDParts(d.Id())
 	if err != nil {
 		return diag.FromErr(err)
@@ -96,7 +105,10 @@ func resourceVolumeRead(ctx context.Context, d *schema.ResourceData, meta interf
 }
 
 func resourceVolumeDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	c := meta.(*client.Client)
+	c, err := meta.(*config.Config).K8sClient()
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	namespace, name, err := helper.IDParts(d.Id())
 	if err != nil {
 		return diag.FromErr(err)
