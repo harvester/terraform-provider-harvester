@@ -127,6 +127,18 @@ please use %s instead of this deprecated field:
 			Optional:    true,
 			Default:     false,
 		},
+		constants.FieldVirtualMachineCPUPinning: {
+			Type:        schema.TypeBool,
+			Description: "To enable VM CPU pinning, ensure that at least one node has the CPU manager enabled",
+			Optional:    true,
+			Default:     false,
+		},
+		constants.FieldVirtualMachineIsolateEmulatorThread: {
+			Type:        schema.TypeBool,
+			Description: "To enable isolate emulator thread, ensure that at least one node has the CPU manager enabled, also VM CPU pinning must be enabled. Note that enable option will allocate an additional dedicated CPU.",
+			Optional:    true,
+			Default:     false,
+		},
 	}
 	util.NamespacedSchemaWrap(s, false)
 	return s
