@@ -4,10 +4,11 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/harvester/harvester/pkg/builder"
-	harvesterutil "github.com/harvester/harvester/pkg/util"
 	corev1 "k8s.io/api/core/v1"
 	kubevirtv1 "kubevirt.io/api/core/v1"
+
+	"github.com/harvester/harvester/pkg/builder"
+	harvesterutil "github.com/harvester/harvester/pkg/util"
 
 	"github.com/harvester/terraform-provider-harvester/pkg/constants"
 	"github.com/harvester/terraform-provider-harvester/pkg/helper"
@@ -48,6 +49,10 @@ func (v *VMImporter) Memory() string {
 
 func (v *VMImporter) CPU() int {
 	return int(v.VirtualMachine.Spec.Template.Spec.Domain.CPU.Cores)
+}
+
+func (v *VMImporter) DedicatedCPUPlacement() bool {
+	return bool(v.VirtualMachine.Spec.Template.Spec.Domain.CPU.DedicatedCPUPlacement)
 }
 
 func (v *VMImporter) EFI() bool {
@@ -380,6 +385,7 @@ func ResourceVirtualMachineStateGetter(vm *kubevirtv1.VirtualMachine, vmi *kubev
 			constants.FieldVirtualMachineInstanceNodeName: vmImporter.NodeName(),
 			constants.FieldVirtualMachineEFI:              vmImporter.EFI(),
 			constants.FieldVirtualMachineSecureBoot:       vmImporter.SecureBoot(),
+			constants.FieldVirtualMachineCPUPinning:       vmImporter.DedicatedCPUPlacement(),
 		},
 	}, nil
 }

@@ -20,6 +20,7 @@ const (
 	FieldVirtualMachineInstanceNodeName   = "node_name"
 	FieldVirtualMachineEFI                = "efi"
 	FieldVirtualMachineSecureBoot         = "secure_boot"
+	FieldVirtualMachineCPUPinning         = "cpu_pinning"
 
 	StateVirtualMachineStarting = "Starting"
 	StateVirtualMachineRunning  = "Running"

@@ -127,6 +127,12 @@ please use %s instead of this deprecated field:
 			Optional:    true,
 			Default:     false,
 		},
+		constants.FieldVirtualMachineCPUPinning: {
+			Type:        schema.TypeBool,
+			Description: "To enable VM CPU pinning, ensure that at least one node has the CPU manager enabled",
+			Optional:    true,
+			Default:     false,
+		},
 	}
 	util.NamespacedSchemaWrap(s, false)
 	return s
