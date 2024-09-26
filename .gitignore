@@ -11,3 +11,4 @@ crash.log
 terraform.tfstate
 terraform.tfstate.backup
 terraform-provider-harvester
+kubeconfig_test.yaml
