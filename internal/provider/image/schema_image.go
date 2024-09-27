@@ -40,9 +40,9 @@ func Schema() map[string]*schema.Schema {
 			Type:     schema.TypeString,
 			Required: true,
 			ValidateFunc: validation.StringInSlice([]string{
-				harvsterv1.VirtualMachineImageSourceTypeDownload,
-				harvsterv1.VirtualMachineImageSourceTypeUpload,
-				harvsterv1.VirtualMachineImageSourceTypeExportVolume,
+				string(harvsterv1.VirtualMachineImageSourceTypeDownload),
+				string(harvsterv1.VirtualMachineImageSourceTypeUpload),
+				string(harvsterv1.VirtualMachineImageSourceTypeExportVolume),
 			}, false),
 		},
 		constants.FieldImageProgress: {
