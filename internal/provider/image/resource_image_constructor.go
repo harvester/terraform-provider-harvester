@@ -21,7 +21,7 @@ type Constructor struct {
 func (c *Constructor) Setup() util.Processors {
 	processors := util.NewProcessors().Tags(&c.Image.Labels).Description(&c.Image.Annotations).
 		String(constants.FieldImageDisplayName, &c.Image.Spec.DisplayName, true).
-		String(constants.FieldImageSourceType, &c.Image.Spec.SourceType, true)
+		String(constants.FieldImageSourceType, (*string)(&c.Image.Spec.SourceType), true)
 	customProcessors := []util.Processor{
 		{
 			Field: constants.FieldImageURL,
