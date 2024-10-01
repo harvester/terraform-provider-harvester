@@ -314,6 +314,13 @@ func (c *Constructor) Setup() util.Processors {
 				return nil
 			},
 		},
+		{
+			Field: constants.FieldVirtualMachineIsolateEmulatorThread,
+			Parser: func(i interface{}) error {
+				vmBuilder.VirtualMachine.Spec.Template.Spec.Domain.CPU.IsolateEmulatorThread = i.(bool)
+				return nil
+			},
+		},
 	}
 	return append(processors, customProcessors...)
 }

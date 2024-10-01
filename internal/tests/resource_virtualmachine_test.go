@@ -35,6 +35,7 @@ const (
 resource %s "%s" {
 	%s = "%s"
 	%s = "%s"
+	%s = "%s"
 
   cpu = 1
   %s = "%s"
@@ -59,12 +60,17 @@ resource %s "%s" {
 `
 )
 
-func buildVirtualMachineConfig(name, description, memory string, cpuPinning bool) string {
+func buildBasicVirtualMachineConfig(name, description, memory string) string {
+	return buildVirtualMachineConfig(name, description, memory, false, false)
+}
+
+func buildVirtualMachineConfig(name, description, memory string, cpuPinning bool, isolateEmulatorThread bool) string {
 	return fmt.Sprintf(testAccVirtualMachineConfigTemplate, constants.ResourceTypeVirtualMachine, name,
 		constants.FieldCommonName, name,
 		constants.FieldCommonDescription, description,
 		constants.FieldVirtualMachineMemory, memory,
-		constants.FieldVirtualMachineCPUPinning, strconv.FormatBool(cpuPinning))
+		constants.FieldVirtualMachineCPUPinning, strconv.FormatBool(cpuPinning),
+		constants.FieldVirtualMachineIsolateEmulatorThread, strconv.FormatBool(isolateEmulatorThread))
 }
 
 func TestAccVirtualMachine_basic(t *testing.T) {
@@ -78,23 +84,25 @@ func TestAccVirtualMachine_basic(t *testing.T) {
 		CheckDestroy: testAccCheckVirtualMachineDestroy(ctx),
 		Steps: []resource.TestStep{
 			{
-				Config: buildVirtualMachineConfig(testAccVirtualMachineName, testAccVirtualMachineDescription, testAccVirtualMachineMemory, false),
+				Config: buildBasicVirtualMachineConfig(testAccVirtualMachineName, testAccVirtualMachineDescription, testAccVirtualMachineMemory),
 				Check: resource.ComposeTestCheckFunc(
 					testAccVirtualMachineExists(ctx, testAccVirtualMachineResourceName, vm),
 					resource.TestCheckResourceAttr(testAccVirtualMachineResourceName, constants.FieldCommonName, testAccVirtualMachineName),
 					resource.TestCheckResourceAttr(testAccVirtualMachineResourceName, constants.FieldCommonDescription, testAccVirtualMachineDescription),
 					resource.TestCheckResourceAttr(testAccVirtualMachineResourceName, constants.FieldVirtualMachineMemory, testAccVirtualMachineMemory),
 					resource.TestCheckResourceAttr(testAccVirtualMachineResourceName, constants.FieldVirtualMachineCPUPinning, "false"),
+					resource.TestCheckResourceAttr(testAccVirtualMachineResourceName, constants.FieldVirtualMachineIsolateEmulatorThread, "false"),
 				),
 			},
 			{
-				Config: buildVirtualMachineConfig(testAccVirtualMachineName, testAccVirtualMachineDescription, testAccVirtualMachineMemoryUpdate, false),
+				Config: buildBasicVirtualMachineConfig(testAccVirtualMachineName, testAccVirtualMachineDescription, testAccVirtualMachineMemoryUpdate),
 				Check: resource.ComposeTestCheckFunc(
 					testAccVirtualMachineExists(ctx, testAccVirtualMachineResourceName, vm),
 					resource.TestCheckResourceAttr(testAccVirtualMachineResourceName, constants.FieldCommonName, testAccVirtualMachineName),
 					resource.TestCheckResourceAttr(testAccVirtualMachineResourceName, constants.FieldCommonDescription, testAccVirtualMachineDescription),
 					resource.TestCheckResourceAttr(testAccVirtualMachineResourceName, constants.FieldVirtualMachineMemory, testAccVirtualMachineMemoryUpdate),
 					resource.TestCheckResourceAttr(testAccVirtualMachineResourceName, constants.FieldVirtualMachineCPUPinning, "false"),
+					resource.TestCheckResourceAttr(testAccVirtualMachineResourceName, constants.FieldVirtualMachineIsolateEmulatorThread, "false"),
 				),
 			},
 		},
@@ -133,12 +141,15 @@ func TestAccVirtualMachine_cpu_pinning(t *testing.T) {
 		},
 		Steps: []resource.TestStep{
 			{
-				Config: buildVirtualMachineConfig(testAccVirtualMachineName, testAccVirtualMachineDescription, testAccVirtualMachineMemory, true),
+				Config: buildVirtualMachineConfig(testAccVirtualMachineName, testAccVirtualMachineDescription, testAccVirtualMachineMemory, true, false),
 				Check: resource.ComposeTestCheckFunc(
 					testAccVirtualMachineExists(ctx, testAccVirtualMachineResourceName, vm),
 					func(s *terraform.State) error {
 						if vm.Spec.Template == nil || vm.Spec.Template.Spec.Domain.CPU == nil || !vm.Spec.Template.Spec.Domain.CPU.DedicatedCPUPlacement {
 							return errors.New("DedicatedCPUPlacement should be true")
+						}
+						if vm.Spec.Template == nil || vm.Spec.Template.Spec.Domain.CPU == nil || vm.Spec.Template.Spec.Domain.CPU.IsolateEmulatorThread {
+							return errors.New("IsolateEmulatorThread should be false")
 						}
 						return nil
 					},
@@ -146,6 +157,27 @@ func TestAccVirtualMachine_cpu_pinning(t *testing.T) {
 					resource.TestCheckResourceAttr(testAccVirtualMachineResourceName, constants.FieldCommonDescription, testAccVirtualMachineDescription),
 					resource.TestCheckResourceAttr(testAccVirtualMachineResourceName, constants.FieldVirtualMachineMemory, testAccVirtualMachineMemory),
 					resource.TestCheckResourceAttr(testAccVirtualMachineResourceName, constants.FieldVirtualMachineCPUPinning, "true"),
+					resource.TestCheckResourceAttr(testAccVirtualMachineResourceName, constants.FieldVirtualMachineIsolateEmulatorThread, "false"),
+				),
+			},
+			{
+				Config: buildVirtualMachineConfig(testAccVirtualMachineName, testAccVirtualMachineDescription, testAccVirtualMachineMemory, true, true),
+				Check: resource.ComposeTestCheckFunc(
+					testAccVirtualMachineExists(ctx, testAccVirtualMachineResourceName, vm),
+					func(s *terraform.State) error {
+						if vm.Spec.Template == nil || vm.Spec.Template.Spec.Domain.CPU == nil || !vm.Spec.Template.Spec.Domain.CPU.DedicatedCPUPlacement {
+							return errors.New("DedicatedCPUPlacement should be true")
+						}
+						if vm.Spec.Template == nil || vm.Spec.Template.Spec.Domain.CPU == nil || !vm.Spec.Template.Spec.Domain.CPU.IsolateEmulatorThread {
+							return errors.New("IsolateEmulatorThread should be true")
+						}
+						return nil
+					},
+					resource.TestCheckResourceAttr(testAccVirtualMachineResourceName, constants.FieldCommonName, testAccVirtualMachineName),
+					resource.TestCheckResourceAttr(testAccVirtualMachineResourceName, constants.FieldCommonDescription, testAccVirtualMachineDescription),
+					resource.TestCheckResourceAttr(testAccVirtualMachineResourceName, constants.FieldVirtualMachineMemory, testAccVirtualMachineMemory),
+					resource.TestCheckResourceAttr(testAccVirtualMachineResourceName, constants.FieldVirtualMachineCPUPinning, "true"),
+					resource.TestCheckResourceAttr(testAccVirtualMachineResourceName, constants.FieldVirtualMachineIsolateEmulatorThread, "true"),
 				),
 			},
 		},
@@ -287,7 +319,7 @@ func waitForCPUMangerLabel(ctx context.Context, c *client.Client, nodeName strin
 	return waitUntil(func() (bool, error) {
 		node, err := c.KubeClient.CoreV1().Nodes().Get(ctx, nodeName, metav1.GetOptions{})
 		if err != nil {
-			return false, fmt.Errorf("failed to get node: %v", err)
+			return false, nil
 		}
 
 		expectedValue := strconv.FormatBool(enableCPUManager)
