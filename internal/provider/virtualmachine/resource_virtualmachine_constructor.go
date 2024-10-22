@@ -9,7 +9,7 @@ import (
 	harvesterutil "github.com/harvester/harvester/pkg/util"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/utils/pointer"
+	"k8s.io/utils/ptr"
 	kubevirtv1 "kubevirt.io/api/core/v1"
 
 	"github.com/harvester/terraform-provider-harvester/internal/util"
@@ -62,7 +62,7 @@ func (c *Constructor) Setup() util.Processors {
 					firmware = &kubevirtv1.Firmware{
 						Bootloader: &kubevirtv1.Bootloader{
 							EFI: &kubevirtv1.EFI{
-								SecureBoot: pointer.Bool(false),
+								SecureBoot: ptr.To(false),
 							},
 						},
 					}
@@ -79,7 +79,7 @@ func (c *Constructor) Setup() util.Processors {
 				if firmware == nil || firmware.Bootloader == nil || firmware.Bootloader.EFI == nil {
 					return errors.New("EFI must be enabled to use Secure Boot. ")
 				}
-				firmware.Bootloader.EFI.SecureBoot = pointer.Bool(true)
+				firmware.Bootloader.EFI.SecureBoot = ptr.To(true)
 				vmBuilder.VirtualMachine.Spec.Template.Spec.Domain.Firmware = firmware
 
 				features := vmBuilder.VirtualMachine.Spec.Template.Spec.Domain.Features
@@ -87,7 +87,7 @@ func (c *Constructor) Setup() util.Processors {
 					features = &kubevirtv1.Features{}
 				}
 				features.SMM = &kubevirtv1.FeatureState{
-					Enabled: pointer.Bool(true),
+					Enabled: ptr.To(true),
 				}
 				vmBuilder.VirtualMachine.Spec.Template.Spec.Domain.Features = features
 				return nil
@@ -243,7 +243,7 @@ func (c *Constructor) Setup() util.Processors {
 							}
 						}
 					}
-					pvcOption.StorageClassName = pointer.String(storageClassName)
+					pvcOption.StorageClassName = ptr.To(storageClassName)
 
 					if volumeMode := r[constants.FieldVolumeMode].(string); volumeMode != "" {
 						pvcOption.VolumeMode = corev1.PersistentVolumeMode(volumeMode)
