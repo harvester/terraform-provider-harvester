@@ -4,7 +4,7 @@ import (
 	harvnetworkclient "github.com/harvester/harvester-network-controller/pkg/generated/clientset/versioned"
 	harvclient "github.com/harvester/harvester/pkg/generated/clientset/versioned"
 	"github.com/harvester/harvester/pkg/generated/clientset/versioned/scheme"
-	"github.com/rancher/wrangler/pkg/kubeconfig"
+	"github.com/rancher/wrangler/v3/pkg/kubeconfig"
 	kubeschema "k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/kubernetes"
 	storageclient "k8s.io/client-go/kubernetes/typed/storage/v1"

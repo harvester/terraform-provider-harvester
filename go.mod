@@ -29,14 +29,13 @@ replace (
 )
 
 require (
-	github.com/harvester/harvester v1.3.1
-	github.com/harvester/harvester-network-controller v0.3.5
+	github.com/harvester/harvester v1.3.2
+	github.com/harvester/harvester-network-controller v0.5.4
 	github.com/hashicorp/terraform-plugin-docs v0.4.0
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.6.1
 	github.com/k8snetworkplumbingwg/network-attachment-definition-client v1.3.0
-	github.com/longhorn/longhorn-manager v1.6.2
 	github.com/mitchellh/go-homedir v1.1.0
-	github.com/rancher/wrangler v1.1.2
+	github.com/rancher/wrangler/v3 v3.0.0
 	gopkg.in/yaml.v2 v2.4.0
 	k8s.io/api v0.31.1
 	k8s.io/apimachinery v0.31.1
@@ -80,7 +79,7 @@ require (
 	github.com/evanphx/json-patch/v5 v5.6.0 // indirect
 	github.com/fatih/color v1.15.0 // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
-	github.com/fsnotify/fsnotify v1.6.0 // indirect
+	github.com/fsnotify/fsnotify v1.7.0 // indirect
 	github.com/ghodss/yaml v1.0.0 // indirect
 	github.com/go-kit/kit v0.10.0 // indirect
 	github.com/go-logfmt/logfmt v0.5.1 // indirect
@@ -109,7 +108,7 @@ require (
 	github.com/gorilla/mux v1.8.1 // indirect
 	github.com/gorilla/websocket v1.5.1 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.19.0 // indirect
-	github.com/harvester/go-common v0.0.0-20240521103542-378ddb186c5b // indirect
+	github.com/harvester/go-common v0.0.0-20240627083535-c1208a490f89 // indirect
 	github.com/harvester/node-manager v0.1.5-0.20230614075852-de2da3ef3aca // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-checkpoint v0.5.0 // indirect
@@ -141,9 +140,10 @@ require (
 	github.com/kubernetes-csi/external-snapshotter/client/v4 v4.2.0 // indirect
 	github.com/kubernetes/dashboard v1.10.1 // indirect
 	github.com/longhorn/go-common-libs v0.0.0-20240514074907-351459694cbf // indirect
+	github.com/longhorn/longhorn-manager v1.6.2 // indirect
 	github.com/mailru/easyjson v0.7.7 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
-	github.com/mattn/go-isatty v0.0.19 // indirect
+	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.4 // indirect
 	github.com/mitchellh/cli v1.1.2 // indirect
 	github.com/mitchellh/copystructure v1.2.0 // indirect
@@ -177,7 +177,7 @@ require (
 	github.com/rancher/fleet/pkg/apis v0.0.0-20230123175930-d296259590be // indirect
 	github.com/rancher/gke-operator v1.1.4 // indirect
 	github.com/rancher/kubernetes-provider-detector v0.1.5 // indirect
-	github.com/rancher/lasso v0.0.0-20240123150939-7055397d6dfa // indirect
+	github.com/rancher/lasso v0.0.0-20240705194423-b2a060d103c1 // indirect
 	github.com/rancher/norman v0.0.0-20221205184727-32ef2e185b99 // indirect
 	github.com/rancher/rancher v0.0.0-20230124173128-2207cfed1803 // indirect
 	github.com/rancher/rancher/pkg/apis v0.0.0 // indirect
@@ -185,6 +185,7 @@ require (
 	github.com/rancher/rke v1.3.18 // indirect
 	github.com/rancher/steve v0.0.0-20221209194631-acf9d31ce0dd // indirect
 	github.com/rancher/system-upgrade-controller/pkg/apis v0.0.0-20230803010539-04a0b9ef5858 // indirect
+	github.com/rancher/wrangler v1.1.2 // indirect
 	github.com/robfig/cron v1.2.0 // indirect
 	github.com/russross/blackfriday v1.6.0 // indirect
 	github.com/shirou/gopsutil/v3 v3.24.5 // indirect
@@ -201,7 +202,7 @@ require (
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.47.0 // indirect
 	go.opentelemetry.io/otel v1.25.0 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.25.0 // indirect
-	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.10.0 // indirect
+	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.19.0 // indirect
 	go.opentelemetry.io/otel/metric v1.25.0 // indirect
 	go.opentelemetry.io/otel/sdk v1.25.0 // indirect
 	go.opentelemetry.io/otel/trace v1.25.0 // indirect
@@ -225,19 +226,19 @@ require (
 	google.golang.org/protobuf v1.34.2 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	k8s.io/apiextensions-apiserver v0.26.10 // indirect
-	k8s.io/apiserver v0.28.5 // indirect
-	k8s.io/component-base v0.28.5 // indirect
+	k8s.io/apiextensions-apiserver v0.30.0 // indirect
+	k8s.io/apiserver v0.30.0 // indirect
+	k8s.io/component-base v0.30.0 // indirect
 	k8s.io/gengo v0.0.0-20240228010128-51d4e06bde70 // indirect
 	k8s.io/klog/v2 v2.130.1 // indirect
-	k8s.io/kube-aggregator v0.26.4 // indirect
+	k8s.io/kube-aggregator v0.30.0 // indirect
 	k8s.io/kube-openapi v0.0.0-20240228011516-70dd3763d340 // indirect
 	kubevirt.io/client-go v1.1.1 // indirect
 	kubevirt.io/containerized-data-importer-api v1.57.0-alpha1 // indirect
 	kubevirt.io/controller-lifecycle-operator-sdk/api v0.0.0-20220329064328-f3cc58c6ed90 // indirect
 	kubevirt.io/kubevirt v1.1.1 // indirect
-	sigs.k8s.io/apiserver-network-proxy/konnectivity-client v0.1.2 // indirect
-	sigs.k8s.io/cli-utils v0.27.0 // indirect
+	sigs.k8s.io/apiserver-network-proxy/konnectivity-client v0.29.0 // indirect
+	sigs.k8s.io/cli-utils v0.35.0 // indirect
 	sigs.k8s.io/cluster-api v1.4.8 // indirect
 	sigs.k8s.io/controller-runtime v0.14.7 // indirect
 	sigs.k8s.io/json v0.0.0-20221116044647-bc3834ca7abd // indirect

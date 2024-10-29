@@ -3,7 +3,6 @@ package storageclass
 import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
-	longhorntypes "github.com/longhorn/longhorn-manager/types"
 	corev1 "k8s.io/api/core/v1"
 	storagev1 "k8s.io/api/storage/v1"
 
@@ -11,12 +10,16 @@ import (
 	"github.com/harvester/terraform-provider-harvester/pkg/constants"
 )
 
+const (
+	LonghornDriverName = "driver.longhorn.io"
+)
+
 func Schema() map[string]*schema.Schema {
 	s := map[string]*schema.Schema{
 		constants.FieldStorageClassVolumeProvisioner: {
 			Type:     schema.TypeString,
 			Optional: true,
-			Default:  longhorntypes.LonghornDriverName,
+			Default:  LonghornDriverName,
 		},
 		constants.FieldStorageClassReclaimPolicy: {
 			Type:     schema.TypeString,
