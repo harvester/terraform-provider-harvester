@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/google/uuid"
+
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -16,9 +18,7 @@ import (
 )
 
 const (
-	testAccVirtualMachineName         = "test-acc-foo"
-	testAccVirtualMachineResourceName = constants.ResourceTypeVirtualMachine + "." + testAccVirtualMachineName
-	testAccVirtualMachineDescription  = "Terraform Harvester vm acceptance test"
+	testAccVirtualMachineDescription = "Terraform Harvester vm acceptance test"
 
 	testAccVirtualMachineMemory       = "1Gi"
 	testAccVirtualMachineMemoryUpdate = "2Gi"
@@ -48,10 +48,23 @@ resource %s "%s" {
   }
 }
 `
+	testAccInputBlockTemplate = `
+  input {
+		name = "%s"
+		type = "%s"
+		bus = "%s"
+	}
+`
 )
 
+func addInputBlockConfig(name, inputType, bus, vmConfig string) string {
+	inputBlock := fmt.Sprintf(testAccInputBlockTemplate, name, inputType, bus)
+	return vmConfig[:(len(vmConfig)-3)] + inputBlock + vmConfig[(len(vmConfig)-3):]
+}
+
 func buildVirtualMachineConfig(name, description, memory string) string {
-	return fmt.Sprintf(testAccVirtualMachineConfigTemplate, constants.ResourceTypeVirtualMachine, name,
+	return fmt.Sprintf(testAccVirtualMachineConfigTemplate,
+		constants.ResourceTypeVirtualMachine, name,
 		constants.FieldCommonName, name,
 		constants.FieldCommonDescription, description,
 		constants.FieldVirtualMachineMemory, memory)
@@ -59,8 +72,10 @@ func buildVirtualMachineConfig(name, description, memory string) string {
 
 func TestAccVirtualMachine_basic(t *testing.T) {
 	var (
-		vm  *kubevirtv1.VirtualMachine
-		ctx = context.Background()
+		testAccVirtualMachineName         = "test-acc-basic-" + uuid.New().String()[:6]
+		testAccVirtualMachineResourceName = constants.ResourceTypeVirtualMachine + "." + testAccVirtualMachineName
+		vm                                *kubevirtv1.VirtualMachine
+		ctx                               = context.Background()
 	)
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
@@ -83,6 +98,39 @@ func TestAccVirtualMachine_basic(t *testing.T) {
 					resource.TestCheckResourceAttr(testAccVirtualMachineResourceName, constants.FieldCommonName, testAccVirtualMachineName),
 					resource.TestCheckResourceAttr(testAccVirtualMachineResourceName, constants.FieldCommonDescription, testAccVirtualMachineDescription),
 					resource.TestCheckResourceAttr(testAccVirtualMachineResourceName, constants.FieldVirtualMachineMemory, testAccVirtualMachineMemoryUpdate),
+				),
+			},
+		},
+	})
+}
+
+func TestAccVirtualMachine_input(t *testing.T) {
+	var (
+		testAccVirtualMachineName         = "test-acc-input-" + uuid.New().String()[:6]
+		testAccVirtualMachineResourceName = constants.ResourceTypeVirtualMachine + "." + testAccVirtualMachineName
+		vm                                *kubevirtv1.VirtualMachine
+		ctx                               = context.Background()
+	)
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckVirtualMachineDestroy(ctx),
+		Steps: []resource.TestStep{
+			{
+				Config: addInputBlockConfig(
+					"tablet", "tablet", "usb",
+					buildVirtualMachineConfig(
+						testAccVirtualMachineName,
+						testAccVirtualMachineDescription,
+						testAccVirtualMachineMemoryUpdate,
+					),
+				),
+				Check: resource.ComposeTestCheckFunc(
+					testAccVirtualMachineExists(ctx, testAccVirtualMachineResourceName, vm),
+					resource.TestCheckResourceAttr(testAccVirtualMachineResourceName, constants.FieldVirtualMachineInput+".#", "1"),
+					resource.TestCheckResourceAttr(testAccVirtualMachineResourceName, constants.FieldVirtualMachineInput+".0.name", "tablet"),
+					resource.TestCheckResourceAttr(testAccVirtualMachineResourceName, constants.FieldVirtualMachineInput+".0.type", "tablet"),
+					resource.TestCheckResourceAttr(testAccVirtualMachineResourceName, constants.FieldVirtualMachineInput+".0.bus", "usb"),
 				),
 			},
 		},
