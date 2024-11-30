@@ -3,7 +3,7 @@ module github.com/harvester/terraform-provider-harvester
 go 1.22.5
 
 replace (
-	// From this commiet, it starts to support Darwin.
+	// From this commit, it starts to support Darwin.
 	github.com/longhorn/go-common-libs => github.com/longhorn/go-common-libs v0.0.0-20240926084818-3a320d860af4
 
 	github.com/openshift/api => github.com/openshift/api v0.0.0-20191219222812-2987a591a72c
