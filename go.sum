@@ -2083,6 +2083,8 @@ github.com/harvester/go-common v0.0.0-20240627083535-c1208a490f89 h1:wqQaZqxxOQr
 github.com/harvester/go-common v0.0.0-20240627083535-c1208a490f89/go.mod h1:70bhzIm0iXpR1J8hr5jg2jzAvNkM4f2ZsU1R4Sbx9X4=
 github.com/harvester/harvester v1.3.2 h1:kKC8tL+wygB6U8s5q3YUtkJyr3uJmbR8spyw9OEC34A=
 github.com/harvester/harvester v1.3.2/go.mod h1:dCT/UePTJTW3QFzwyRfkhGGyr5ts0ZvkX/MsOlP2GdA=
+github.com/harvester/harvester-load-balancer v0.3.0 h1:R4ymvCTFraic+zIMNYFPtIf8KAR3S9dnHdPRgHn85gk=
+github.com/harvester/harvester-load-balancer v0.3.0/go.mod h1:bbsdXuGkVeoMuzb2yLrrc8RXmm4hpIe9zdoreziUUaA=
 github.com/harvester/harvester-network-controller v0.5.4 h1:EmVOo1M4n+TXFKoh4lwdx+pzaXZg5lE4XYUACUD1kMU=
 github.com/harvester/harvester-network-controller v0.5.4/go.mod h1:IeAcGckQpEEXq6CpXgm9sUrOJmqEkdeU2+DFoxbL084=
 github.com/harvester/node-manager v0.1.5-0.20230614075852-de2da3ef3aca h1:ySmceYltYR2wmeAvifoXtHQOK/N6v7z7Rkaq/6IPJ5A=
