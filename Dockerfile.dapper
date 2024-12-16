@@ -22,6 +22,8 @@ RUN wget --quiet https://github.com/docker/buildx/releases/download/v0.13.1/buil
 
 ENV DAPPER_ENV REPO TAG DRONE_TAG
 ENV DAPPER_SOURCE /go/src/github.com/harvester/terraform-provider-harvester
+# Use host network for dapper run to allow access to harvester in ACC test
+ENV DAPPER_RUN_ARGS "--network host"
 ENV DAPPER_OUTPUT ./bin ./dist
 ENV DAPPER_DOCKER_SOCKET true
 ENV HOME ${DAPPER_SOURCE}
