@@ -8,6 +8,7 @@ import (
 	"github.com/harvester/harvester/pkg/builder"
 	harvesterutil "github.com/harvester/harvester/pkg/util"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/ptr"
 	kubevirtv1 "kubevirt.io/api/core/v1"
@@ -198,9 +199,7 @@ func (c *Constructor) Setup() util.Processors {
 						diskBus = builder.DiskBusVirtio
 					}
 				}
-				if diskSize == "" {
-					diskSize = util.If(existingVolumeName == "", "", builder.DefaultDiskSize).(string)
-				}
+
 				vmBuilder.Disk(diskName, diskBus, isCDRom, uint(bootOrder))
 				if existingVolumeName != "" {
 					vmBuilder.ExistingPVCVolume(diskName, existingVolumeName, hotPlug)
@@ -256,6 +255,14 @@ func (c *Constructor) Setup() util.Processors {
 							constants.AnnotationDiskAutoDelete: "true",
 						}
 					}
+
+					_, err := resource.ParseQuantity(diskSize)
+					if diskSize == "" {
+						diskSize = builder.DefaultDiskSize
+					} else if err != nil {
+						return fmt.Errorf("\"%v\" is not a parsable quantity: %v", diskSize, err)
+					}
+
 					vmBuilder.PVCVolume(diskName, diskSize, volumeName, hotPlug, pvcOption)
 				}
 				return nil
