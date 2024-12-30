@@ -10,8 +10,8 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	"github.com/harvester/terraform-provider-harvester/internal/config"
 	"github.com/harvester/terraform-provider-harvester/internal/util"
-	"github.com/harvester/terraform-provider-harvester/pkg/client"
 	"github.com/harvester/terraform-provider-harvester/pkg/constants"
 	"github.com/harvester/terraform-provider-harvester/pkg/helper"
 	"github.com/harvester/terraform-provider-harvester/pkg/importer"
@@ -38,7 +38,10 @@ func ResourceStorageClass() *schema.Resource {
 }
 
 func resourceStorageClassCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	c := meta.(*client.Client)
+	c, err := meta.(*config.Config).K8sClient()
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	name := d.Get(constants.FieldCommonName).(string)
 	toCreate, err := util.ResourceConstruct(d, Creator(name))
 	if err != nil {
@@ -53,7 +56,10 @@ func resourceStorageClassCreate(ctx context.Context, d *schema.ResourceData, met
 }
 
 func resourceStorageClassUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	c := meta.(*client.Client)
+	c, err := meta.(*config.Config).K8sClient()
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	_, name, err := helper.IDParts(d.Id())
 	if err != nil {
 		return diag.FromErr(err)
@@ -78,7 +84,10 @@ func resourceStorageClassUpdate(ctx context.Context, d *schema.ResourceData, met
 }
 
 func resourceStorageClassRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	c := meta.(*client.Client)
+	c, err := meta.(*config.Config).K8sClient()
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	_, name, err := helper.IDParts(d.Id())
 	if err != nil {
 		return diag.FromErr(err)
@@ -95,7 +104,10 @@ func resourceStorageClassRead(ctx context.Context, d *schema.ResourceData, meta 
 }
 
 func resourceStorageClassDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	c := meta.(*client.Client)
+	c, err := meta.(*config.Config).K8sClient()
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	_, name, err := helper.IDParts(d.Id())
 	if err != nil {
 		return diag.FromErr(err)
