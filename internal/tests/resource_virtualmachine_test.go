@@ -3,6 +3,7 @@ package tests
 import (
 	"context"
 	"fmt"
+	"regexp"
 	"testing"
 
 	"github.com/google/uuid"
@@ -132,6 +133,67 @@ func TestAccVirtualMachine_input(t *testing.T) {
 					resource.TestCheckResourceAttr(testAccVirtualMachineResourceName, constants.FieldVirtualMachineInput+".0.type", "tablet"),
 					resource.TestCheckResourceAttr(testAccVirtualMachineResourceName, constants.FieldVirtualMachineInput+".0.bus", "usb"),
 				),
+			},
+		},
+	})
+}
+
+func TestAccVirtualMachine_disk_size(t *testing.T) {
+	var (
+		testAccImageName         = "test-acc-image-leap-" + uuid.New().String()[:6]
+		testAccImageResourceName = constants.ResourceTypeImage + "." + testAccImageName
+		ctx                      = context.Background()
+	)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckVirtualMachineDestroy(ctx),
+		Steps: []resource.TestStep{
+			{
+				Config: fmt.Sprintf(`
+resource harvester_image "%s" {
+  name = "leap-15.6"
+	namespace = "default"
+	display_name = "openSUSE-Leap-15.6"
+	source_type = "download"
+	url = "https://download.opensuse.org/repositories/Cloud:/Images:/Leap_15.6/images/openSUSE-Leap-15.6.x86_64-NoCloud.qcow2"
+}
+`,
+					testAccImageName,
+				),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(testAccImageResourceName, constants.FieldCommonName, "leap-15.6"),
+					resource.TestCheckResourceAttr(testAccImageResourceName, constants.FieldCommonNamespace, "default"),
+				),
+			},
+			{
+				Config: `
+resource harvester_virtualmachine "disk_test" {
+	name = "disk-test"
+
+  cpu = 1
+  memory = "1Gi"
+
+  run_strategy = "RerunOnFailure"
+  machine_type = "q35"
+
+  network_interface {
+    name         = "default"
+  }
+
+  disk {
+    name       = "cdrom-disk"
+    type       = "cd-rom"
+    bus        = "sata"
+    boot_order = 1
+		size       = "foobar"
+    image      = "default/leap-15.6"
+  }
+}
+`,
+				ExpectError: regexp.MustCompile(".*is not a parsable quantity.*"),
+				Check:       resource.ComposeTestCheckFunc(),
 			},
 		},
 	})
