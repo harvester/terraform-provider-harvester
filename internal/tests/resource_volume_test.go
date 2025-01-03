@@ -9,6 +9,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/harvester/terraform-provider-harvester/pkg/client"
@@ -58,8 +59,46 @@ func TestAccVolume_basic(t *testing.T) {
 					resource.TestCheckResourceAttr(testAccVolumeResourceName, constants.FieldVolumeSize, testAccVolumeSize),
 				),
 			},
+			{
+				Config:  buildVolumeConfig(testAccVolumeName, testAccVolumeDescription, testAccVolumeSize),
+				Destroy: true,
+				Check: resource.ComposeTestCheckFunc(
+					testAccVolumeDoesNotExist(ctx, testAccVolumeResourceName),
+				),
+			},
 		},
 	})
+}
+
+func testAccVolumeDoesNotExist(ctx context.Context, rn string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		rs, ok := s.RootModule().Resources[rn]
+		if !ok {
+			return fmt.Errorf("Resource %s not found. ", rn)
+		}
+
+		if rs.Primary.ID == "" {
+			return fmt.Errorf("Resource %s ID not set. ", rn)
+		}
+
+		id := rs.Primary.ID
+		namespace, name, err := helper.IDParts(id)
+		if err != nil {
+			return err
+		}
+
+		c := testAccProvider.Meta().(*client.Client)
+		_, err = c.KubeClient.
+			CoreV1().
+			PersistentVolumeClaims(namespace).
+			Get(ctx, name, metav1.GetOptions{})
+		if err == nil {
+			return fmt.Errorf("Volume %v/%v unexpectedly found", namespace, name)
+		} else if !apierrors.IsNotFound(err) {
+			return err
+		}
+		return nil
+	}
 }
 
 func testAccVolumeExists(ctx context.Context, n string, volume *corev1.PersistentVolumeClaim) resource.TestCheckFunc {
