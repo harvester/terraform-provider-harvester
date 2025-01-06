@@ -30,7 +30,7 @@ func Provider() *schema.Provider {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Default:     "",
-				Description: "kubeconfig file path, users can use the KUBECONFIG environment variable instead",
+				Description: "kubeconfig file path or content of the kubeconfig file as base64 encoded string, users can use the KUBECONFIG environment variable instead.",
 			},
 			constants.FieldProviderKubeContext: {
 				Type:        schema.TypeString,
