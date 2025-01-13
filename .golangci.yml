@@ -5,7 +5,7 @@ issues:
     - go/pkg/mod
 linters:
   enable:
-    - vet
+    - govet
     - staticcheck
     - errcheck
     - gofmt
