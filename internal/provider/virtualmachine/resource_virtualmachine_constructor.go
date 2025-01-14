@@ -200,7 +200,7 @@ func (c *Constructor) Setup() util.Processors {
 					}
 				}
 
-				vmBuilder.Disk(diskName, diskBus, isCDRom, uint(bootOrder))
+				vmBuilder.Disk(diskName, diskBus, isCDRom, uint(bootOrder)) // nolint: gosec
 				if existingVolumeName != "" {
 					vmBuilder.ExistingPVCVolume(diskName, existingVolumeName, hotPlug)
 				} else if containerImageName != "" {
