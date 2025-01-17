@@ -3,6 +3,8 @@ package client
 import (
 	"encoding/base64"
 
+	"github.com/mitchellh/go-homedir"
+
 	harvnetworkclient "github.com/harvester/harvester-network-controller/pkg/generated/clientset/versioned"
 	harvclient "github.com/harvester/harvester/pkg/generated/clientset/versioned"
 	"github.com/harvester/harvester/pkg/generated/clientset/versioned/scheme"
@@ -70,7 +72,12 @@ func NewClient(kubeConfig, kubeContext string) (*Client, error) {
 }
 
 func restConfigFromFile(kubeConfig, kubeContext string) (*rest.Config, error) {
-	clientConfig := kubeconfig.GetNonInteractiveClientConfigWithContext(kubeConfig, kubeContext)
+	clientConfigPath, err := homedir.Expand(kubeConfig)
+	if err != nil {
+		return nil, err
+	}
+
+	clientConfig := kubeconfig.GetNonInteractiveClientConfigWithContext(clientConfigPath, kubeContext)
 	return clientConfig.ClientConfig()
 }
 

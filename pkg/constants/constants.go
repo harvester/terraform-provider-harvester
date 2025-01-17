@@ -4,9 +4,8 @@ const (
 	NamespaceDefault         = "default"
 	NamespaceHarvesterSystem = "harvester-system"
 
-	FieldProviderKubeConfig       = "kubeconfig"
-	FieldProviderKubeContext      = "kubecontext"
-	FieldProviderKubeConfigBase64 = "kubeconfig_base64"
+	FieldProviderKubeConfig  = "kubeconfig"
+	FieldProviderKubeContext = "kubecontext"
 
 	FieldCommonName        = "name"
 	FieldCommonNamespace   = "namespace"
