@@ -7,7 +7,6 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/mitchellh/go-homedir"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/harvester/terraform-provider-harvester/internal/provider/cloudinitsecret"
@@ -30,7 +29,7 @@ func Provider() *schema.Provider {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Default:     "",
-				Description: "kubeconfig file path, users can use the KUBECONFIG environment variable instead",
+				Description: "kubeconfig file path or content of the kubeconfig file as base64 encoded string, users can use the KUBECONFIG environment variable instead.",
 			},
 			constants.FieldProviderKubeContext: {
 				Type:        schema.TypeString,
@@ -68,10 +67,7 @@ func Provider() *schema.Provider {
 
 func providerConfig(ctx context.Context, d *schema.ResourceData) (interface{}, diag.Diagnostics) {
 	kubeContext := d.Get(constants.FieldProviderKubeContext).(string)
-	kubeConfig, err := homedir.Expand(d.Get(constants.FieldProviderKubeConfig).(string))
-	if err != nil {
-		return nil, diag.FromErr(err)
-	}
+	kubeConfig := d.Get(constants.FieldProviderKubeConfig).(string)
 
 	c, err := client.NewClient(kubeConfig, kubeContext)
 	if err != nil {

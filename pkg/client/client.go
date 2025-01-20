@@ -1,6 +1,10 @@
 package client
 
 import (
+	"encoding/base64"
+
+	"github.com/mitchellh/go-homedir"
+
 	harvnetworkclient "github.com/harvester/harvester-network-controller/pkg/generated/clientset/versioned"
 	harvclient "github.com/harvester/harvester/pkg/generated/clientset/versioned"
 	"github.com/harvester/harvester/pkg/generated/clientset/versioned/scheme"
@@ -9,6 +13,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 	storageclient "k8s.io/client-go/kubernetes/typed/storage/v1"
 	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/clientcmd"
 )
 
 type Client struct {
@@ -21,11 +26,17 @@ type Client struct {
 }
 
 func NewClient(kubeConfig, kubeContext string) (*Client, error) {
-	clientConfig := kubeconfig.GetNonInteractiveClientConfigWithContext(kubeConfig, kubeContext)
-	restConfig, err := clientConfig.ClientConfig()
-	if err != nil {
-		return nil, err
+	var (
+		restConfig *rest.Config
+		err        error
+	)
+
+	if restConfig, err = restConfigFromBase64(kubeConfig); err != nil {
+		if restConfig, err = restConfigFromFile(kubeConfig, kubeContext); err != nil {
+			return nil, err
+		}
 	}
+
 	copyConfig := rest.CopyConfig(restConfig)
 	copyConfig.GroupVersion = &kubeschema.GroupVersion{Group: "subresources.kubevirt.io", Version: "v1"}
 	copyConfig.APIPath = "/apis"
@@ -58,4 +69,22 @@ func NewClient(kubeConfig, kubeContext string) (*Client, error) {
 		HarvesterClient:           harvClient,
 		HarvesterNetworkClient:    harvNetworkClient,
 	}, nil
+}
+
+func restConfigFromFile(kubeConfig, kubeContext string) (*rest.Config, error) {
+	clientConfigPath, err := homedir.Expand(kubeConfig)
+	if err != nil {
+		return nil, err
+	}
+
+	clientConfig := kubeconfig.GetNonInteractiveClientConfigWithContext(clientConfigPath, kubeContext)
+	return clientConfig.ClientConfig()
+}
+
+func restConfigFromBase64(kubeConfigBase64 string) (*rest.Config, error) {
+	bytes, err := base64.StdEncoding.DecodeString(kubeConfigBase64)
+	if err != nil {
+		return nil, err
+	}
+	return clientcmd.RESTConfigFromKubeConfig(bytes)
 }
