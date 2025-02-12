@@ -236,7 +236,7 @@ Optional:
 - **container_image_name** (String)
 - **existing_volume_name** (String)
 - **hot_plug** (Boolean)
-- **image** (String)
+- **image** (String) `harvester_image.xxx.id` or `"${harvester_image.xxx.namespace}/${harvester_image.xxx.name}"`
 - **size** (String)
 - **storage_class_name** (String)
 - **type** (String)
