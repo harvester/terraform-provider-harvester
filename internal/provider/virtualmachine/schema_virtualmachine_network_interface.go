@@ -61,6 +61,11 @@ func resourceNetworkInterfaceSchema() map[string]*schema.Schema {
 			Optional:    true,
 			Description: "if the value is empty, management network is used",
 		},
+		constants.FieldNetworkInterfaceBootOrder: {
+			Type:        schema.TypeInt,
+			Optional:    true,
+			Description: "Boot order priority of this network interface",
+		},
 	}
 	return s
 }

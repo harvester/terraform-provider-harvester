@@ -162,6 +162,8 @@ func (c *Constructor) Setup() util.Processors {
 				interfaceMACAddress := r[constants.FieldNetworkInterfaceMACAddress].(string)
 				interfaceWaitForLease := r[constants.FieldNetworkInterfaceWaitForLease].(bool)
 				networkName := r[constants.FieldNetworkInterfaceNetworkName].(string)
+				bootOrder := r[constants.FieldNetworkInterfaceBootOrder].(int)
+
 				if interfaceType == "" {
 					if networkName == "" {
 						interfaceType = builder.NetworkInterfaceTypeMasquerade
@@ -173,6 +175,9 @@ func (c *Constructor) Setup() util.Processors {
 					vmBuilder.WaitForLease(interfaceName)
 				}
 				vmBuilder.NetworkInterface(interfaceName, interfaceModel, interfaceMACAddress, interfaceType, networkName)
+				if bootOrder != 0 {
+					vmBuilder.SetNetworkInterfaceBootOrder(interfaceName, uint(bootOrder))
+				}
 				return nil
 			},
 			Required: true,
