@@ -77,3 +77,7 @@ const (
 const (
 	FieldTPMName = "name"
 )
+
+const (
+	LabelSSHUsername = "ssh-user"
+)
