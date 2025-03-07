@@ -50,6 +50,7 @@ func resourceKeypairCreate(ctx context.Context, d *schema.ResourceData, meta int
 		return diag.FromErr(err)
 	}
 
+	d.SetId(helper.BuildID(namespace, name))
 	return diag.FromErr(resourceKeyPairImport(d, obj))
 }
 
