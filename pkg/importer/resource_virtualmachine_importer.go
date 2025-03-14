@@ -4,10 +4,11 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/harvester/harvester/pkg/builder"
-	harvesterutil "github.com/harvester/harvester/pkg/util"
 	corev1 "k8s.io/api/core/v1"
 	kubevirtv1 "kubevirt.io/api/core/v1"
+
+	"github.com/harvester/harvester/pkg/builder"
+	harvesterutil "github.com/harvester/harvester/pkg/util"
 
 	"github.com/harvester/terraform-provider-harvester/pkg/constants"
 	"github.com/harvester/terraform-provider-harvester/pkg/helper"
@@ -48,6 +49,14 @@ func (v *VMImporter) Memory() string {
 
 func (v *VMImporter) CPU() int {
 	return int(v.VirtualMachine.Spec.Template.Spec.Domain.CPU.Cores)
+}
+
+func (v *VMImporter) DedicatedCPUPlacement() bool {
+	return bool(v.VirtualMachine.Spec.Template.Spec.Domain.CPU.DedicatedCPUPlacement)
+}
+
+func (v *VMImporter) IsolateEmulatorThread() bool {
+	return bool(v.VirtualMachine.Spec.Template.Spec.Domain.CPU.IsolateEmulatorThread)
 }
 
 func (v *VMImporter) EFI() bool {
@@ -360,26 +369,28 @@ func ResourceVirtualMachineStateGetter(vm *kubevirtv1.VirtualMachine, vmi *kubev
 		Name:         vm.Name,
 		ResourceType: constants.ResourceTypeVirtualMachine,
 		States: map[string]interface{}{
-			constants.FieldCommonNamespace:                vm.Namespace,
-			constants.FieldCommonName:                     vm.Name,
-			constants.FieldCommonDescription:              GetDescriptions(vm.Annotations),
-			constants.FieldCommonTags:                     GetTags(vm.Labels),
-			constants.FieldCommonState:                    vmImporter.State(networkInterface, oldInstanceUID),
-			constants.FieldVirtualMachineCPU:              vmImporter.CPU(),
-			constants.FieldVirtualMachineMemory:           vmImporter.Memory(),
-			constants.FieldVirtualMachineHostname:         vmImporter.HostName(),
-			constants.FieldVirtualMachineReservedMemory:   vmImporter.ReservedMemory(),
-			constants.FieldVirtualMachineMachineType:      vmImporter.MachineType(),
-			constants.FieldVirtualMachineRunStrategy:      string(runStrategy),
-			constants.FieldVirtualMachineNetworkInterface: networkInterface,
-			constants.FieldVirtualMachineDisk:             disk,
-			constants.FieldVirtualMachineInput:            input,
-			constants.FieldVirtualMachineTPM:              vmImporter.TPM(),
-			constants.FieldVirtualMachineCloudInit:        cloudInit,
-			constants.FieldVirtualMachineSSHKeys:          sshKeys,
-			constants.FieldVirtualMachineInstanceNodeName: vmImporter.NodeName(),
-			constants.FieldVirtualMachineEFI:              vmImporter.EFI(),
-			constants.FieldVirtualMachineSecureBoot:       vmImporter.SecureBoot(),
+			constants.FieldCommonNamespace:                     vm.Namespace,
+			constants.FieldCommonName:                          vm.Name,
+			constants.FieldCommonDescription:                   GetDescriptions(vm.Annotations),
+			constants.FieldCommonTags:                          GetTags(vm.Labels),
+			constants.FieldCommonState:                         vmImporter.State(networkInterface, oldInstanceUID),
+			constants.FieldVirtualMachineCPU:                   vmImporter.CPU(),
+			constants.FieldVirtualMachineMemory:                vmImporter.Memory(),
+			constants.FieldVirtualMachineHostname:              vmImporter.HostName(),
+			constants.FieldVirtualMachineReservedMemory:        vmImporter.ReservedMemory(),
+			constants.FieldVirtualMachineMachineType:           vmImporter.MachineType(),
+			constants.FieldVirtualMachineRunStrategy:           string(runStrategy),
+			constants.FieldVirtualMachineNetworkInterface:      networkInterface,
+			constants.FieldVirtualMachineDisk:                  disk,
+			constants.FieldVirtualMachineInput:                 input,
+			constants.FieldVirtualMachineTPM:                   vmImporter.TPM(),
+			constants.FieldVirtualMachineCloudInit:             cloudInit,
+			constants.FieldVirtualMachineSSHKeys:               sshKeys,
+			constants.FieldVirtualMachineInstanceNodeName:      vmImporter.NodeName(),
+			constants.FieldVirtualMachineEFI:                   vmImporter.EFI(),
+			constants.FieldVirtualMachineSecureBoot:            vmImporter.SecureBoot(),
+			constants.FieldVirtualMachineCPUPinning:            vmImporter.DedicatedCPUPlacement(),
+			constants.FieldVirtualMachineIsolateEmulatorThread: vmImporter.IsolateEmulatorThread(),
 		},
 	}, nil
 }
