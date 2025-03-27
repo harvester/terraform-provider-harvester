@@ -5,13 +5,14 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/harvester/harvester/pkg/builder"
-	harvesterutil "github.com/harvester/harvester/pkg/util"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/ptr"
 	kubevirtv1 "kubevirt.io/api/core/v1"
+
+	"github.com/harvester/harvester/pkg/builder"
+	harvesterutil "github.com/harvester/harvester/pkg/util"
 
 	"github.com/harvester/terraform-provider-harvester/internal/util"
 	"github.com/harvester/terraform-provider-harvester/pkg/client"
@@ -310,6 +311,20 @@ func (c *Constructor) Setup() util.Processors {
 			Field: constants.FieldVirtualMachineTPM,
 			Parser: func(i interface{}) error {
 				vmBuilder.TPM()
+				return nil
+			},
+		},
+		{
+			Field: constants.FieldVirtualMachineCPUPinning,
+			Parser: func(i interface{}) error {
+				vmBuilder.VirtualMachine.Spec.Template.Spec.Domain.CPU.DedicatedCPUPlacement = i.(bool)
+				return nil
+			},
+		},
+		{
+			Field: constants.FieldVirtualMachineIsolateEmulatorThread,
+			Parser: func(i interface{}) error {
+				vmBuilder.VirtualMachine.Spec.Template.Spec.Domain.CPU.IsolateEmulatorThread = i.(bool)
 				return nil
 			},
 		},
