@@ -79,12 +79,12 @@ func resourceSettingUpdate(ctx context.Context, d *schema.ResourceData, meta int
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	_, err = c.HarvesterClient.HarvesterhciV1beta1().Settings().Update(ctx, toUpdate.(*harvsterv1.Setting), metav1.UpdateOptions{})
+	obj, err = c.HarvesterClient.HarvesterhciV1beta1().Settings().Update(ctx, toUpdate.(*harvsterv1.Setting), metav1.UpdateOptions{})
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	return resourceSettingRead(ctx, d, meta)
+	return diag.FromErr(resourceSettingImport(d, obj))
 }
 
 func resourceSettingRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -104,7 +104,7 @@ func resourceSettingRead(ctx context.Context, d *schema.ResourceData, meta inter
 	return diag.FromErr(resourceSettingImport(d, obj))
 }
 
-// The setting cannot be deleted. It can only be resetted to empty.
+// The setting cannot be deleted; it can only be reset to an empty string (""), which represents using the default value.
 func resourceSettingDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	c := meta.(*client.Client)
 	_, name, err := helper.IDParts(d.Id())
