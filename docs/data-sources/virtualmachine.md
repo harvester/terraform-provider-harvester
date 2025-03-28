@@ -29,49 +29,49 @@ data "harvester_virtualmachine" "opensuse154" {
 
 ### Required
 
-- **name** (String) A unique name
+- `name` (String) A unique name
 
 ### Optional
 
-- **id** (String) The ID of this resource.
-- **namespace** (String)
+- `namespace` (String)
 
 ### Read-Only
 
-- **cloudinit** (List of Object) (see [below for nested schema](#nestedatt--cloudinit))
-- **cpu** (Number)
-- **description** (String) Any text you want that better describes this resource
-- **disk** (List of Object) (see [below for nested schema](#nestedatt--disk))
-- **efi** (Boolean)
-- **hostname** (String)
-- **input** (List of Object) (see [below for nested schema](#nestedatt--input))
-- **machine_type** (String)
-- **memory** (String)
-- **message** (String)
-- **network_interface** (List of Object) (see [below for nested schema](#nestedatt--network_interface))
-- **node_name** (String)
-- **reserved_memory** (String)
-- **restart_after_update** (Boolean) restart vm after the vm is updated
-- **run_strategy** (String) more info: https://kubevirt.io/user-guide/virtual_machines/run_strategies/
-- **secure_boot** (Boolean) EFI must be enabled to use this feature
-- **ssh_keys** (List of String)
-- **start** (Boolean, Deprecated)
-- **state** (String)
-- **tags** (Map of String)
-- **tpm** (List of Object) (see [below for nested schema](#nestedatt--tpm))
+- `cloudinit` (List of Object) (see [below for nested schema](#nestedatt--cloudinit))
+- `cpu` (Number)
+- `description` (String) Any text you want that better describes this resource
+- `disk` (List of Object) (see [below for nested schema](#nestedatt--disk))
+- `efi` (Boolean)
+- `hostname` (String)
+- `id` (String) The ID of this resource.
+- `input` (List of Object) (see [below for nested schema](#nestedatt--input))
+- `machine_type` (String)
+- `memory` (String)
+- `message` (String)
+- `network_interface` (List of Object) (see [below for nested schema](#nestedatt--network_interface))
+- `node_name` (String)
+- `reserved_memory` (String)
+- `restart_after_update` (Boolean) restart vm after the vm is updated
+- `run_strategy` (String) more info: https://kubevirt.io/user-guide/virtual_machines/run_strategies/
+- `secure_boot` (Boolean) EFI must be enabled to use this feature
+- `ssh_keys` (List of String)
+- `start` (Boolean, Deprecated)
+- `state` (String)
+- `tags` (Map of String)
+- `tpm` (List of Object) (see [below for nested schema](#nestedatt--tpm))
 
 <a id="nestedatt--cloudinit"></a>
 ### Nested Schema for `cloudinit`
 
 Read-Only:
 
-- **network_data** (String)
-- **network_data_base64** (String)
-- **network_data_secret_name** (String)
-- **type** (String)
-- **user_data** (String)
-- **user_data_base64** (String)
-- **user_data_secret_name** (String)
+- `network_data` (String)
+- `network_data_base64` (String)
+- `network_data_secret_name` (String)
+- `type` (String)
+- `user_data` (String)
+- `user_data_base64` (String)
+- `user_data_secret_name` (String)
 
 
 <a id="nestedatt--disk"></a>
@@ -79,20 +79,20 @@ Read-Only:
 
 Read-Only:
 
-- **access_mode** (String)
-- **auto_delete** (Boolean)
-- **boot_order** (Number)
-- **bus** (String)
-- **container_image_name** (String)
-- **existing_volume_name** (String)
-- **hot_plug** (Boolean)
-- **image** (String)
-- **name** (String)
-- **size** (String)
-- **storage_class_name** (String)
-- **type** (String)
-- **volume_mode** (String)
-- **volume_name** (String)
+- `access_mode` (String)
+- `auto_delete` (Boolean)
+- `boot_order` (Number)
+- `bus` (String)
+- `container_image_name` (String)
+- `existing_volume_name` (String)
+- `hot_plug` (Boolean)
+- `image` (String)
+- `name` (String)
+- `size` (String)
+- `storage_class_name` (String)
+- `type` (String)
+- `volume_mode` (String)
+- `volume_name` (String)
 
 
 <a id="nestedatt--input"></a>
@@ -100,9 +100,9 @@ Read-Only:
 
 Read-Only:
 
-- **bus** (String)
-- **name** (String)
-- **type** (String)
+- `bus` (String)
+- `name` (String)
+- `type` (String)
 
 
 <a id="nestedatt--network_interface"></a>
@@ -110,14 +110,14 @@ Read-Only:
 
 Read-Only:
 
-- **interface_name** (String)
-- **ip_address** (String)
-- **mac_address** (String)
-- **model** (String)
-- **name** (String)
-- **network_name** (String)
-- **type** (String)
-- **wait_for_lease** (Boolean)
+- `interface_name` (String)
+- `ip_address` (String)
+- `mac_address` (String)
+- `model` (String)
+- `name` (String)
+- `network_name` (String)
+- `type` (String)
+- `wait_for_lease` (Boolean)
 
 
 <a id="nestedatt--tpm"></a>
@@ -125,6 +125,4 @@ Read-Only:
 
 Read-Only:
 
-- **name** (String)
-
-
+- `name` (String)

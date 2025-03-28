@@ -23,18 +23,30 @@ resource "harvester_clusternetwork" "cluster-vlan" {
 
 ### Required
 
-- **name** (String) A unique name
+- `name` (String) A unique name
 
 ### Optional
 
-- **description** (String) Any text you want that better describes this resource
-- **id** (String) The ID of this resource.
-- **tags** (Map of String)
+- `description` (String) Any text you want that better describes this resource
+- `tags` (Map of String)
+- `timeouts` (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))
 
 ### Read-Only
 
-- **message** (String)
-- **state** (String)
+- `id` (String) The ID of this resource.
+- `message` (String)
+- `state` (String)
+
+<a id="nestedblock--timeouts"></a>
+### Nested Schema for `timeouts`
+
+Optional:
+
+- `create` (String)
+- `default` (String)
+- `delete` (String)
+- `read` (String)
+- `update` (String)
 
 ## Import
 

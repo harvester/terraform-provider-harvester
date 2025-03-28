@@ -40,24 +40,36 @@ resource "harvester_storageclass" "ssd-replicas-3" {
 
 ### Required
 
-- **name** (String) A unique name
-- **parameters** (Map of String) refer to https://longhorn.io/docs/latest/volumes-and-nodes/storage-tags. "migratable": "true" is required for Harvester Virtual Machine LiveMigration
+- `name` (String) A unique name
+- `parameters` (Map of String) refer to https://longhorn.io/docs/latest/volumes-and-nodes/storage-tags. "migratable": "true" is required for Harvester Virtual Machine LiveMigration
 
 ### Optional
 
-- **allow_volume_expansion** (Boolean)
-- **description** (String) Any text you want that better describes this resource
-- **id** (String) The ID of this resource.
-- **is_default** (Boolean)
-- **reclaim_policy** (String)
-- **tags** (Map of String)
-- **volume_binding_mode** (String)
-- **volume_provisioner** (String)
+- `allow_volume_expansion` (Boolean)
+- `description` (String) Any text you want that better describes this resource
+- `is_default` (Boolean)
+- `reclaim_policy` (String)
+- `tags` (Map of String)
+- `timeouts` (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))
+- `volume_binding_mode` (String)
+- `volume_provisioner` (String)
 
 ### Read-Only
 
-- **message** (String)
-- **state** (String)
+- `id` (String) The ID of this resource.
+- `message` (String)
+- `state` (String)
+
+<a id="nestedblock--timeouts"></a>
+### Nested Schema for `timeouts`
+
+Optional:
+
+- `create` (String)
+- `default` (String)
+- `delete` (String)
+- `read` (String)
+- `update` (String)
 
 ## Import
 
