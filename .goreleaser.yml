@@ -40,4 +40,6 @@ signs:
       - "--output"
       - "${signature}"
       - "--detach-sign"
+      - "--passphrase"
+      - "{{ .Env.GPG_PASSPHRASE }}"
       - "${artifact}"
