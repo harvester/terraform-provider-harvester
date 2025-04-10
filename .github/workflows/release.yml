@@ -29,9 +29,9 @@ jobs:
       - name: Import GPG key
         id: import_gpg
         run: |
-          echo "${{ secrets.GPG_PRIVATE_KEY }}" | gpg --batch --import
-          KEY_ID=$(gpg --list-keys --with-colons | grep pub | cut -d: -f5)
-          echo "${{ secrets.PASSPHRASE }}" | gpg --batch --yes --passphrase-fd 0 --pinentry-mode loopback --edit-key $KEY_ID trust quit
+          echo "${{ secrets.GPG_PRIVATE_KEY }}" > private_key_file.asc
+          gpg --batch --passphrase "${{ secrets.PASSPHRASE }}" --import private_key_file.asc
+          rm private_key_file.asc
           echo "fingerprint=$(gpg --list-keys --with-colons | grep fpr | head -n 1 | cut -d: -f10)" >> "$GITHUB_OUTPUT"
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v6
