@@ -42,4 +42,6 @@ signs:
       - "--detach-sign"
       - "--passphrase"
       - "{{ .Env.GPG_PASSPHRASE }}"
+      - "--pinentry-mode"
+      - "loopback"
       - "${artifact}"
