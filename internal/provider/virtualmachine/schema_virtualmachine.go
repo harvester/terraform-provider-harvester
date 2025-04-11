@@ -144,7 +144,9 @@ please use %s instead of this deprecated field:
 		},
 	}
 	util.NamespacedSchemaWrap(s, false)
-	s[constants.FieldCommonTags].Description = "The `ssh-user` is added to `cloudinit.user_data` if:\n" +
+	s[constants.FieldCommonTags].Description = "The tag is reflected as label on the VM.\n" +
+		"For example: `sample-tag = sample` adds label `tag.harvesterhci.io/sample-tag: sample`.\n" +
+		"For `ssh-user` tag, the value is added to `cloudinit.user_data` if:\n" +
 		"1. Both `cloudinit.user_data_base64` and `cloudinit.user_data_secret_name` are empty.\n" +
 		"2. There is no `user` field in `cloudinit.user_data`.\n"
 	return s

@@ -214,7 +214,9 @@ resource "harvester_virtualmachine" "opensuse154" {
 1. Both `cloudinit.user_data_base64` and `cloudinit.user_data_secret_name` are empty.
 2. There is no `ssh_authorized_keys` field in `cloudinit.user_data`.
 - `start` (Boolean, Deprecated)
-- `tags` (Map of String) The `ssh-user` is added to `cloudinit.user_data` if:
+- `tags` (Map of String) The tag is reflected as label on the VM.
+For example: `sample-tag = sample` adds label `tag.harvesterhci.io/sample-tag: sample`.
+For `ssh-user` tag, the value is added to `cloudinit.user_data` if:
 1. Both `cloudinit.user_data_base64` and `cloudinit.user_data_secret_name` are empty.
 2. There is no `user` field in `cloudinit.user_data`.
 - `timeouts` (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))

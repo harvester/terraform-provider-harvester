@@ -335,7 +335,7 @@ func (c *Constructor) Setup() util.Processors {
 						if cloudInitSource.UserData == "" {
 							cloudInitSource.UserData = fmt.Sprintf("#cloud-config\nssh_authorized_keys:\n  - %s", strings.Join(publicKeys, "\n  - "))
 						} else {
-							cloudInitSource.UserData += fmt.Sprintf("ssh_authorized_keys:\n  - %s", strings.Join(publicKeys, "\n  - "))
+							cloudInitSource.UserData += fmt.Sprintf("\nssh_authorized_keys:\n  - %s", strings.Join(publicKeys, "\n  - "))
 						}
 					}
 				}
