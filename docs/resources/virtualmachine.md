@@ -197,10 +197,12 @@ resource "harvester_virtualmachine" "opensuse154" {
 
 - `cloudinit` (Block List, Max: 1) (see [below for nested schema](#nestedblock--cloudinit))
 - `cpu` (Number)
+- `cpu_pinning` (Boolean) To enable VM CPU pinning, ensure that at least one node has the CPU manager enabled
 - `description` (String) Any text you want that better describes this resource
 - `efi` (Boolean)
 - `hostname` (String)
 - `input` (Block List) (see [below for nested schema](#nestedblock--input))
+- `isolate_emulator_thread` (Boolean) To enable isolate emulator thread, ensure that at least one node has the CPU manager enabled, also VM CPU pinning must be enabled. Note that enable option will allocate an additional dedicated CPU.
 - `machine_type` (String)
 - `memory` (String)
 - `namespace` (String)
@@ -208,9 +210,15 @@ resource "harvester_virtualmachine" "opensuse154" {
 - `restart_after_update` (Boolean) restart vm after the vm is updated
 - `run_strategy` (String) more info: https://kubevirt.io/user-guide/virtual_machines/run_strategies/
 - `secure_boot` (Boolean) EFI must be enabled to use this feature
-- `ssh_keys` (List of String)
+- `ssh_keys` (List of String) The `ssh_keys` are added to `cloudinit.user_data` if:
+1. Both `cloudinit.user_data_base64` and `cloudinit.user_data_secret_name` are empty.
+2. There is no `ssh_authorized_keys` field in `cloudinit.user_data`.
 - `start` (Boolean, Deprecated)
-- `tags` (Map of String)
+- `tags` (Map of String) The tag is reflected as label on the VM.
+For example: `sample-tag = sample` adds label `tag.harvesterhci.io/sample-tag: sample`.
+For `ssh-user` tag, the value is added to `cloudinit.user_data` if:
+1. Both `cloudinit.user_data_base64` and `cloudinit.user_data_secret_name` are empty.
+2. There is no `user` field in `cloudinit.user_data`.
 - `timeouts` (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))
 - `tpm` (Block List, Max: 1) (see [below for nested schema](#nestedblock--tpm))
 
