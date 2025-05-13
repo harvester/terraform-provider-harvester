@@ -176,7 +176,7 @@ func (c *Constructor) Setup() util.Processors {
 				}
 				vmBuilder.NetworkInterface(interfaceName, interfaceModel, interfaceMACAddress, interfaceType, networkName)
 				if bootOrder != 0 {
-					vmBuilder.SetNetworkInterfaceBootOrder(interfaceName, uint(bootOrder))
+					vmBuilder.SetNetworkInterfaceBootOrder(interfaceName, uint(bootOrder)) // nolint: gosec
 				}
 				return nil
 			},
