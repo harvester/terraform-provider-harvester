@@ -26,5 +26,5 @@ func dataSourceVolumeRead(ctx context.Context, d *schema.ResourceData, meta inte
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	return diag.FromErr(resourceVolumeImport(d, obj))
+	return diag.FromErr(resourceVolumeImport(d, c, obj))
 }

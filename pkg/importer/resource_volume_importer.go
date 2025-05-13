@@ -1,18 +1,20 @@
 package importer
 
 import (
+	"context"
 	"strings"
 
 	"github.com/harvester/harvester/pkg/builder"
 	"github.com/harvester/harvester/pkg/ref"
 	corev1 "k8s.io/api/core/v1"
-	kubevirtv1 "kubevirt.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	"github.com/harvester/terraform-provider-harvester/pkg/client"
 	"github.com/harvester/terraform-provider-harvester/pkg/constants"
 	"github.com/harvester/terraform-provider-harvester/pkg/helper"
 )
 
-func ResourceVolumeStateGetter(obj *corev1.PersistentVolumeClaim) (*StateGetter, error) {
+func ResourceVolumeStateGetter(client *client.Client, obj *corev1.PersistentVolumeClaim) (*StateGetter, error) {
 	states := map[string]interface{}{
 		constants.FieldCommonNamespace:   obj.Namespace,
 		constants.FieldCommonName:        obj.Name,
@@ -37,11 +39,24 @@ func ResourceVolumeStateGetter(obj *corev1.PersistentVolumeClaim) (*StateGetter,
 		}
 		states[constants.FieldVolumeImage] = imageNamespacedName
 	}
-	owners, err := ref.GetSchemaOwnersFromAnnotation(obj)
+
+	vms, err := client.HarvesterClient.
+		KubevirtV1().
+		VirtualMachines(obj.Namespace).
+		List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		return nil, err
 	}
-	attachedList := owners.List(kubevirtv1.VirtualMachineGroupVersionKind.GroupKind())
+
+	attachedList := []string{}
+	for _, vm := range vms.Items {
+		for _, vol := range vm.Spec.Template.Spec.Volumes {
+			if vol.PersistentVolumeClaim != nil && vol.PersistentVolumeClaim.ClaimName != "" {
+				attachedList = append(attachedList, ref.Construct(obj.Namespace, obj.Name))
+			}
+		}
+	}
+
 	if len(attachedList) > 0 {
 		states[constants.FieldCommonState] = constants.StateVolumeInUse
 		states[constants.FieldVolumeAttachedVM] = strings.Join(attachedList, ",")

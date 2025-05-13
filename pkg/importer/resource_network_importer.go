@@ -3,6 +3,7 @@ package importer
 import (
 	"encoding/json"
 
+	networkapi "github.com/harvester/harvester-network-controller/pkg/apis/network.harvesterhci.io"
 	networkutils "github.com/harvester/harvester-network-controller/pkg/utils"
 	"github.com/harvester/harvester/pkg/builder"
 	nadv1 "github.com/k8snetworkplumbingwg/network-attachment-definition-client/pkg/apis/k8s.cni.cncf.io/v1"
@@ -30,7 +31,7 @@ func ResourceNetworkStateGetter(obj *nadv1.NetworkAttachmentDefinition) (*StateG
 		vlanID = netconf.Vlan
 	}
 	if obj.Annotations != nil {
-		networkConf = obj.Annotations[networkutils.KeyNetworkRoute]
+		networkConf = obj.Annotations[networkapi.GroupName+"/route"]
 	}
 	if networkConf != "" {
 		layer3NetworkConf, err = networkutils.NewLayer3NetworkConf(networkConf)
