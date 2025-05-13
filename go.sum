@@ -337,6 +337,8 @@ github.com/gorilla/websocket v1.5.3/go.mod h1:YR8l580nyteQvAITg2hZ9XVh4b55+EU/ad
 github.com/gregjones/httpcache v0.0.0-20180305231024-9cad4c3443a7/go.mod h1:FecbI9+v66THATjSRHfNgh1IVFe/9kFxbXtjV0ctIMA=
 github.com/harvester/go-common v0.0.0-20250109132713-e748ce72a7ba h1:U9Q4hwXeqniHkwPORVvVGGUUz8ZG0n7B/jr8uCiofeQ=
 github.com/harvester/go-common v0.0.0-20250109132713-e748ce72a7ba/go.mod h1:VPPSa9KzRB1XPPkOAz4M4263UPm5bl/Xd3jEnALh3uo=
+github.com/harvester/harvester v0.0.0-20250311070330-51fa44d402bd h1:svhEvxESk96CftQowaO+kTpZV4FKTWhl0sqInEMRBrQ=
+github.com/harvester/harvester v0.0.0-20250311070330-51fa44d402bd/go.mod h1:kM4J/Aj5O6mrQrrFu882+mnAmmu49X8W4W6pndOZ0hY=
 github.com/harvester/harvester v1.5.0 h1:rWqYuwMRjC4CkMpcVXL5O9sVFyXNVwUJUviY8stP1no=
 github.com/harvester/harvester v1.5.0/go.mod h1:JKMKr1rvYS6U2NKZQq/8IunuUhcQOkv+gmTeV+BhMdQ=
 github.com/harvester/harvester-network-controller v0.3.1 h1:WJ90eqq0HNNPE/kB1X+fsV1MZ8Lrt0s5UaOCzUotBwQ=

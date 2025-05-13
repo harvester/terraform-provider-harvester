@@ -3,6 +3,7 @@ module github.com/harvester/terraform-provider-harvester
 go 1.23.4
 
 replace (
+	github.com/harvester/harvester => github.com/harvester/harvester v0.0.0-20250311070330-51fa44d402bd
 	github.com/harvester/harvester-network-controller => github.com/harvester/harvester-network-controller v0.3.1
 
 	github.com/openshift/api => github.com/openshift/api v0.0.0-20191219222812-2987a591a72c
