@@ -64,6 +64,7 @@ func resourceNetworkInterfaceSchema() map[string]*schema.Schema {
 		constants.FieldNetworkInterfaceBootOrder: {
 			Type:        schema.TypeInt,
 			Optional:    true,
+			Default:     0,
 			Description: "Boot order priority of this network interface",
 		},
 	}
