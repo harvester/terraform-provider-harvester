@@ -115,20 +115,20 @@ func (b *VMResourceBuilder) SetInputDeviceConfig(name, inputType, bus string) *V
 	return b
 }
 
-func (b *VMResourceBuilder) SetNetworkConfig(name string, boot_order int) *VMResourceBuilder {
+func (b *VMResourceBuilder) SetNetworkConfig(name string, bootOrder int) *VMResourceBuilder {
 	b.networkConfig = &NetworkConfig{
 		Name:      name,
-		BootOrder: boot_order,
+		BootOrder: bootOrder,
 	}
 	return b
 }
 
-func (b *VMResourceBuilder) SetDiskConfig(name, bus, image string, boot_order int) *VMResourceBuilder {
+func (b *VMResourceBuilder) SetDiskConfig(name, bus, image string, bootOrder int) *VMResourceBuilder {
 	b.diskConfig = &DiskConfig{
 		Name:               name,
 		Type:               "disk",
 		Bus:                bus,
-		BootOrder:          boot_order,
+		BootOrder:          bootOrder,
 		ContainerImageName: image,
 	}
 	return b
