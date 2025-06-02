@@ -377,6 +377,7 @@ resource harvester_image "%s" {
 	display_name = "openSUSE-Leap-15.6"
 	source_type = "download"
 	url = "https://download.opensuse.org/repositories/Cloud:/Images:/Leap_15.6/images/openSUSE-Leap-15.6.x86_64-NoCloud.qcow2"
+	storage_class_name = "harvester-longhorn"
 }
 `,
 					testAccImageName,
@@ -476,7 +477,7 @@ func testAccVirtualMachineExists(ctx context.Context, n string, vm *kubevirtv1.V
 		if err != nil {
 			return err
 		}
-		*vm = *foundVM
+		vm = foundVM
 		return nil
 	}
 }
