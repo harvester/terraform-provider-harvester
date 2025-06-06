@@ -53,6 +53,7 @@ const (
 	FieldNetworkInterfaceInterfaceName = "interface_name"
 	FieldNetworkInterfaceWaitForLease  = "wait_for_lease"
 	FieldNetworkInterfaceNetworkName   = "network_name"
+	FieldNetworkInterfaceBootOrder     = "boot_order"
 )
 
 const (

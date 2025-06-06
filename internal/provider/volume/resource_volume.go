@@ -50,7 +50,7 @@ func resourceVolumeCreate(ctx context.Context, d *schema.ResourceData, meta inte
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	return diag.FromErr(resourceVolumeImport(d, obj))
+	return diag.FromErr(resourceVolumeImport(d, c, obj))
 }
 
 func resourceVolumeUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -92,7 +92,7 @@ func resourceVolumeRead(ctx context.Context, d *schema.ResourceData, meta interf
 		}
 		return diag.FromErr(err)
 	}
-	return diag.FromErr(resourceVolumeImport(d, obj))
+	return diag.FromErr(resourceVolumeImport(d, c, obj))
 }
 
 func resourceVolumeDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -121,8 +121,8 @@ func resourceVolumeDelete(ctx context.Context, d *schema.ResourceData, meta inte
 	return nil
 }
 
-func resourceVolumeImport(d *schema.ResourceData, obj *corev1.PersistentVolumeClaim) error {
-	stateGetter, err := importer.ResourceVolumeStateGetter(obj)
+func resourceVolumeImport(d *schema.ResourceData, client *client.Client, obj *corev1.PersistentVolumeClaim) error {
+	stateGetter, err := importer.ResourceVolumeStateGetter(client, obj)
 	if err != nil {
 		return err
 	}
@@ -147,7 +147,7 @@ func resourceVolumeRefresh(ctx context.Context, d *schema.ResourceData, meta int
 			}
 			return obj, constants.StateCommonError, err
 		}
-		if err = resourceVolumeImport(d, obj); err != nil {
+		if err = resourceVolumeImport(d, c, obj); err != nil {
 			return obj, constants.StateCommonError, err
 		}
 		return obj, constants.StateCommonActive, nil

@@ -108,7 +108,7 @@ func Creator(namespace, name string) util.Constructor {
 	volume := &corev1.PersistentVolumeClaim{
 		ObjectMeta: util.NewObjectMeta(namespace, name),
 		Spec: corev1.PersistentVolumeClaimSpec{
-			Resources: corev1.ResourceRequirements{
+			Resources: corev1.VolumeResourceRequirements{
 				Requests: corev1.ResourceList{},
 			},
 		},

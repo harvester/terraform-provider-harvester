@@ -156,12 +156,14 @@ func (v *VMImporter) NetworkInterface() ([]map[string]interface{}, error) {
 				break
 			}
 		}
+
 		networkInterfaceState := map[string]interface{}{
 			constants.FieldNetworkInterfaceName:        networkInterface.Name,
 			constants.FieldNetworkInterfaceType:        interfaceType,
 			constants.FieldNetworkInterfaceModel:       networkInterface.Model,
 			constants.FieldNetworkInterfaceMACAddress:  networkInterface.MacAddress,
 			constants.FieldNetworkInterfaceNetworkName: networkName,
+			constants.FieldNetworkInterfaceBootOrder:   networkInterface.BootOrder,
 		}
 		if interfaceStatus, ok := interfaceStatusMap[networkInterface.Name]; ok {
 			networkInterfaceState[constants.FieldNetworkInterfaceIPAddress] = interfaceStatus.IP

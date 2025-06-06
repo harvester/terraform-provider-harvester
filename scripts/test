@@ -6,7 +6,14 @@ cd $(dirname $0)/..
 if [ -f ./kubeconfig_test.yaml ] ; then
   export KUBECONFIG="$(pwd)/kubeconfig_test.yaml"
   export TF_ACC=1
+  # Avoid timeout after 10 minutes https://pkg.go.dev/cmd/go#hdr-Testing_flags
+  export EXTRA_OPTIONS=("-timeout" "0")
 fi
 
 echo Running tests:
-go test -v -cover -tags=test . ./...
+go test \
+  -v \
+  -cover \
+  -tags=test \
+  "${EXTRA_OPTIONS[@]}" \
+  . ./...

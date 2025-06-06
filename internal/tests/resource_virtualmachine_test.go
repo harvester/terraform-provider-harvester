@@ -29,8 +29,9 @@ import (
 )
 
 const (
-	defaultVMDesciption = "Terraform Harvester vm acceptance test"
-	defaultVMMemory     = "1Gi"
+	defaultVMDesciption  = "Terraform Harvester vm acceptance test"
+	defaultVMMemory      = "1Gi"
+	fedoraCloudContainer = "kubevirt/fedora-cloud-container-disk-demo:v0.35.0"
 )
 
 type VMResourceBuilder struct {
@@ -42,7 +43,7 @@ type VMResourceBuilder struct {
 	isolateEmulatorThread bool
 	runStrategy           string
 	machineType           string
-	networkName           string
+	networkConfig         *NetworkConfig
 	diskConfig            *DiskConfig
 	inputConfig           *InputDeviceConfig
 }
@@ -53,6 +54,11 @@ type DiskConfig struct {
 	Bus                string
 	BootOrder          int
 	ContainerImageName string
+}
+
+type NetworkConfig struct {
+	Name      string
+	BootOrder int
 }
 
 type InputDeviceConfig struct {
@@ -71,13 +77,16 @@ func NewVMResourceBuilder(resourceName string) *VMResourceBuilder {
 		memory:                defaultVMMemory,
 		runStrategy:           "RerunOnFailure",
 		machineType:           "q35",
-		networkName:           "default",
+		networkConfig: &NetworkConfig{
+			Name:      "default",
+			BootOrder: 0,
+		},
 		diskConfig: &DiskConfig{
 			Name:               "rootdisk",
 			Type:               "disk",
 			Bus:                "virtio",
 			BootOrder:          1,
-			ContainerImageName: "kubevirt/fedora-cloud-container-disk-demo:v0.35.0",
+			ContainerImageName: fedoraCloudContainer,
 		},
 	}
 }
@@ -106,6 +115,25 @@ func (b *VMResourceBuilder) SetInputDeviceConfig(name, inputType, bus string) *V
 	return b
 }
 
+func (b *VMResourceBuilder) SetNetworkConfig(name string, bootOrder int) *VMResourceBuilder {
+	b.networkConfig = &NetworkConfig{
+		Name:      name,
+		BootOrder: bootOrder,
+	}
+	return b
+}
+
+func (b *VMResourceBuilder) SetDiskConfig(name, bus, image string, bootOrder int) *VMResourceBuilder {
+	b.diskConfig = &DiskConfig{
+		Name:               name,
+		Type:               "disk",
+		Bus:                bus,
+		BootOrder:          bootOrder,
+		ContainerImageName: image,
+	}
+	return b
+}
+
 // Build generates the terraform resource string.
 func (b *VMResourceBuilder) Build() string {
 	var sb strings.Builder
@@ -121,9 +149,12 @@ func (b *VMResourceBuilder) Build() string {
 	sb.WriteString(fmt.Sprintf("\t%s = \"%s\"\n", constants.FieldVirtualMachineRunStrategy, b.runStrategy))
 	sb.WriteString(fmt.Sprintf("\t%s = \"%s\"\n", constants.FieldVirtualMachineMachineType, b.machineType))
 
-	sb.WriteString(fmt.Sprintf("\t%s {\n", constants.FieldVirtualMachineNetworkInterface))
-	sb.WriteString(fmt.Sprintf("\t\tname = \"%s\"\n", b.networkName))
-	sb.WriteString("\t}\n")
+	if b.networkConfig != nil {
+		sb.WriteString(fmt.Sprintf("\t%s {\n", constants.FieldVirtualMachineNetworkInterface))
+		sb.WriteString(fmt.Sprintf("\t\t%s = \"%s\"\n", constants.FieldNetworkInterfaceName, b.networkConfig.Name))
+		sb.WriteString(fmt.Sprintf("\t\t%s = %d\n", constants.FieldNetworkInterfaceBootOrder, b.networkConfig.BootOrder))
+		sb.WriteString("\t}\n")
+	}
 
 	if b.diskConfig != nil {
 		sb.WriteString(fmt.Sprintf("\t%s {\n", constants.FieldVirtualMachineDisk))
@@ -180,6 +211,39 @@ func TestAccVirtualMachine_basic(t *testing.T) {
 					resource.TestCheckResourceAttr(testAccVirtualMachineResourceName, constants.FieldVirtualMachineMemory, testAccVirtualMachineMemoryUpdate),
 					resource.TestCheckResourceAttr(testAccVirtualMachineResourceName, constants.FieldVirtualMachineCPUPinning, "false"),
 					resource.TestCheckResourceAttr(testAccVirtualMachineResourceName, constants.FieldVirtualMachineIsolateEmulatorThread, "false"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccVirtualMachine_network_boot(t *testing.T) {
+	var (
+		testAccVirtualMachineName         = "test-acc-netboot-" + uuid.New().String()[:6]
+		testAccVirtualMachineResourceName = constants.ResourceTypeVirtualMachine + "." + testAccVirtualMachineName
+		vm                                = &kubevirtv1.VirtualMachine{}
+		ctx                               = context.Background()
+	)
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckVirtualMachineDestroy(ctx),
+		Steps: []resource.TestStep{
+			{
+				Config: NewVMResourceBuilder(testAccVirtualMachineName).
+					SetNetworkConfig("default", 1).
+					SetDiskConfig("rootdisk", "virtio", fedoraCloudContainer, 2).
+					Build(),
+				Check: resource.ComposeTestCheckFunc(
+					testAccVirtualMachineExists(ctx, testAccVirtualMachineResourceName, vm),
+					resource.TestCheckResourceAttr(testAccVirtualMachineResourceName, constants.FieldCommonName, testAccVirtualMachineName),
+					resource.TestCheckResourceAttr(testAccVirtualMachineResourceName, constants.FieldCommonDescription, defaultVMDesciption),
+					resource.TestCheckResourceAttr(testAccVirtualMachineResourceName, constants.FieldVirtualMachineMemory, defaultVMMemory),
+					resource.TestCheckResourceAttr(testAccVirtualMachineResourceName, constants.FieldVirtualMachineCPUPinning, "false"),
+					resource.TestCheckResourceAttr(testAccVirtualMachineResourceName, constants.FieldVirtualMachineIsolateEmulatorThread, "false"),
+					resource.TestCheckResourceAttr(testAccVirtualMachineResourceName, constants.FieldVirtualMachineNetworkInterface+".#", "1"),
+					resource.TestCheckResourceAttr(testAccVirtualMachineResourceName, constants.FieldVirtualMachineNetworkInterface+".0.name", "default"),
+					resource.TestCheckResourceAttr(testAccVirtualMachineResourceName, constants.FieldVirtualMachineNetworkInterface+".0.boot_order", "1"),
 				),
 			},
 		},
