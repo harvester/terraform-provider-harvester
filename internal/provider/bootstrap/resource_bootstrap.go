@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -37,13 +38,19 @@ func resourceBootstrapCreate(ctx context.Context, d *schema.ResourceData, meta i
 		return diag.FromErr(fmt.Errorf("harvester_bootstrap just available on bootstrap mode"))
 	}
 
+	u, err := url.Parse(d.Get(constants.FieldBootstrapAPIURL).(string))
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	apiURL := u.String()
+
 	kubeConfig, err := homedir.Expand(d.Get(constants.FieldProviderKubeConfig).(string))
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
 	// login to get token
-	tokenID, token, err := bootstrapLogin(d, c)
+	tokenID, token, err := bootstrapLogin(apiURL, d, c)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -54,7 +61,7 @@ func resourceBootstrapCreate(ctx context.Context, d *schema.ResourceData, meta i
 	if d.Get(constants.FieldShouldUpdatePassword).(bool) {
 		initialPassword := d.Get(constants.FieldBootstrapInitialPassword).(string)
 		password := d.Get(constants.FieldBootstrapPassword).(string)
-		changePasswordURL := fmt.Sprintf("%s/%s", c.APIURL, "v3/users?action=changepassword")
+		changePasswordURL := fmt.Sprintf("%s/%s", apiURL, "v3/users?action=changepassword")
 		changePasswordData := `{"currentPassword":"` + initialPassword + `","newPassword":"` + password + `"}`
 		changePasswordResp, err := util.DoPost(changePasswordURL, changePasswordData, "", true, map[string]string{"Authorization": fmt.Sprintf("Bearer %s", token)})
 		if err != nil {
@@ -67,7 +74,7 @@ func resourceBootstrapCreate(ctx context.Context, d *schema.ResourceData, meta i
 
 	// get kubeconfig
 	log.Printf("Doing generate kubeconfig")
-	genKubeConfigURL := fmt.Sprintf("%s/%s", c.APIURL, "v1/management.cattle.io.clusters/local?action=generateKubeconfig")
+	genKubeConfigURL := fmt.Sprintf("%s/%s", apiURL, "v1/management.cattle.io.clusters/local?action=generateKubeconfig")
 	genKubeConfigResp, err := util.DoPost(genKubeConfigURL, "", "", true, map[string]string{"Authorization": fmt.Sprintf("Bearer %s", token)})
 	if err != nil {
 		return diag.FromErr(err)
@@ -99,13 +106,19 @@ func resourceBootstrapRead(ctx context.Context, d *schema.ResourceData, meta int
 		return diag.FromErr(fmt.Errorf("[ERROR] harvester_bootstrap just available on bootstrap mode"))
 	}
 
+	u, err := url.Parse(d.Get(constants.FieldBootstrapAPIURL).(string))
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	apiURL := u.String()
+
 	kubeConfig, err := homedir.Expand(d.Get(constants.FieldProviderKubeConfig).(string))
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
 	// login to get token
-	_, token, err := bootstrapLogin(d, c)
+	_, token, err := bootstrapLogin(apiURL, d, c)
 	if err != nil {
 		log.Printf("[INFO] Bootstrap is unable to login to Harvester")
 		d.SetId("")
@@ -113,7 +126,7 @@ func resourceBootstrapRead(ctx context.Context, d *schema.ResourceData, meta int
 	}
 
 	log.Printf("Doing generate kubeconfig")
-	genKubeConfigURL := fmt.Sprintf("%s/%s", c.APIURL, "v1/management.cattle.io.clusters/local?action=generateKubeconfig")
+	genKubeConfigURL := fmt.Sprintf("%s/%s", apiURL, "v1/management.cattle.io.clusters/local?action=generateKubeconfig")
 	genKubeConfigResp, err := util.DoPost(genKubeConfigURL, "", "", true, map[string]string{"Authorization": fmt.Sprintf("Bearer %s", token)})
 	if err != nil {
 		return diag.FromErr(err)
@@ -143,11 +156,11 @@ func resourceBootstrapDelete(ctx context.Context, d *schema.ResourceData, meta i
 	return nil
 }
 
-func bootstrapLogin(d *schema.ResourceData, c *config.Config) (string, string, error) {
+func bootstrapLogin(apiURL string, d *schema.ResourceData, c *config.Config) (string, string, error) {
 	initialPassword := d.Get(constants.FieldBootstrapInitialPassword).(string)
 
 	log.Printf("Doing login with initial password")
-	tokenID, token, err := doUserLogin(c.APIURL, bootstrapDefaultUser, initialPassword, bootstrapDefaultTTL, bootstrapDefaultSessionDesc, "", true)
+	tokenID, token, err := doUserLogin(apiURL, bootstrapDefaultUser, initialPassword, bootstrapDefaultTTL, bootstrapDefaultSessionDesc, "", true)
 	if err == nil {
 		err = d.Set(constants.FieldShouldUpdatePassword, true)
 		return tokenID, token, err
@@ -155,7 +168,7 @@ func bootstrapLogin(d *schema.ResourceData, c *config.Config) (string, string, e
 
 	log.Printf("Doing login with password")
 	password := d.Get(constants.FieldBootstrapPassword).(string)
-	tokenID, token, err = doUserLogin(c.APIURL, bootstrapDefaultUser, password, bootstrapDefaultTTL, bootstrapDefaultSessionDesc, "", true)
+	tokenID, token, err = doUserLogin(apiURL, bootstrapDefaultUser, password, bootstrapDefaultTTL, bootstrapDefaultSessionDesc, "", true)
 	if err == nil {
 		err = d.Set(constants.FieldShouldUpdatePassword, false)
 		return tokenID, token, err
