@@ -3,6 +3,7 @@ package constants
 const (
 	ResourceTypeBootstrap = "harvester_bootstrap"
 
+	FieldBootstrapAPIURL          = "api_url"
 	FieldBootstrapInitialPassword = "initial_password"
 	FieldBootstrapPassword        = "password"
 	FieldBootstrapKubeConfig      = "kubeconfig"

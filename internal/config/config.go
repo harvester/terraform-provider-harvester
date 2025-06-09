@@ -12,7 +12,6 @@ import (
 
 type Config struct {
 	Bootstrap   bool
-	APIURL      string
 	KubeConfig  string
 	KubeContext string
 	k8sClient   *client.Client

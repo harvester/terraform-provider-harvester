@@ -9,6 +9,13 @@ import (
 
 func Schema() map[string]*schema.Schema {
 	s := map[string]*schema.Schema{
+		constants.FieldBootstrapAPIURL: {
+			Type:         schema.TypeString,
+			Required:     true,
+			ForceNew:     true,
+			ValidateFunc: validation.NoZeroValues,
+			Description:  "API URL in the harvester",
+		},
 		constants.FieldBootstrapInitialPassword: {
 			Type:         schema.TypeString,
 			Optional:     true,

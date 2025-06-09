@@ -2,8 +2,6 @@ package provider
 
 import (
 	"context"
-	"fmt"
-	"net/url"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -34,12 +32,6 @@ func Provider() *schema.Provider {
 				Optional:    true,
 				Default:     false,
 				Description: "bootstrap harvester server, it will write content to kubeconfig file",
-			},
-			constants.FieldProviderAPIUrl: {
-				Type:        schema.TypeString,
-				Optional:    true,
-				Default:     "",
-				Description: "harvester server api url",
 			},
 			constants.FieldProviderKubeConfig: {
 				Type:        schema.TypeString,
@@ -91,19 +83,9 @@ func Provider() *schema.Provider {
 
 func providerConfig(ctx context.Context, d *schema.ResourceData) (interface{}, diag.Diagnostics) {
 	bootstrap := d.Get(constants.FieldProviderBootstrap).(bool)
-	apiURL := d.Get(constants.FieldProviderAPIUrl).(string)
 	kubeConfig := d.Get(constants.FieldProviderKubeConfig).(string)
 	kubeContext := d.Get(constants.FieldProviderKubeContext).(string)
 	if bootstrap {
-		if apiURL == "" {
-			return nil, diag.FromErr(fmt.Errorf("api url is required when bootstrap is true"))
-		}
-
-		u, err := url.Parse(apiURL)
-		if err != nil {
-			return nil, diag.FromErr(err)
-		}
-
 		if kubeConfig != "" {
 			return nil, diag.Errorf("kubeconfig is not allowed when bootstrap is true")
 		}
@@ -114,7 +96,6 @@ func providerConfig(ctx context.Context, d *schema.ResourceData) (interface{}, d
 
 		return &config.Config{
 			Bootstrap: bootstrap,
-			APIURL:    u.String(),
 		}, nil
 	}
 
