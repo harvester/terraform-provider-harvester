@@ -12,7 +12,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/harvester/terraform-provider-harvester/pkg/client"
+	"github.com/harvester/terraform-provider-harvester/internal/config"
 	"github.com/harvester/terraform-provider-harvester/pkg/constants"
 	"github.com/harvester/terraform-provider-harvester/pkg/helper"
 )
@@ -87,7 +87,10 @@ func testAccVolumeDoesNotExist(ctx context.Context, rn string) resource.TestChec
 			return err
 		}
 
-		c := testAccProvider.Meta().(*client.Client)
+		c, err := testAccProvider.Meta().(*config.Config).K8sClient()
+		if err != nil {
+			return err
+		}
 		_, err = c.KubeClient.
 			CoreV1().
 			PersistentVolumeClaims(namespace).
@@ -113,7 +116,10 @@ func testAccVolumeExists(ctx context.Context, n string, volume *corev1.Persisten
 		}
 
 		id := rs.Primary.ID
-		c := testAccProvider.Meta().(*client.Client)
+		c, err := testAccProvider.Meta().(*config.Config).K8sClient()
+		if err != nil {
+			return err
+		}
 
 		namespace, name, err := helper.IDParts(id)
 		if err != nil {
@@ -135,7 +141,10 @@ func testAccCheckVolumeDestroy(ctx context.Context) resource.TestCheckFunc {
 				continue
 			}
 
-			c := testAccProvider.Meta().(*client.Client)
+			c, err := testAccProvider.Meta().(*config.Config).K8sClient()
+			if err != nil {
+				return err
+			}
 			namespace, name, err := helper.IDParts(rs.Primary.ID)
 			if err != nil {
 				return err
