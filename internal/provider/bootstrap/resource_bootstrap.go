@@ -160,7 +160,7 @@ func bootstrapLogin(apiURL string, d *schema.ResourceData, c *config.Config) (st
 	initialPassword := d.Get(constants.FieldBootstrapInitialPassword).(string)
 
 	log.Printf("Doing login with initial password")
-	tokenID, token, err := doUserLogin(apiURL, bootstrapDefaultUser, initialPassword, bootstrapDefaultTTL, bootstrapDefaultSessionDesc, "", true)
+	tokenID, token, err := DoUserLogin(apiURL, bootstrapDefaultUser, initialPassword, bootstrapDefaultTTL, bootstrapDefaultSessionDesc, "", true)
 	if err == nil {
 		err = d.Set(constants.FieldShouldUpdatePassword, true)
 		return tokenID, token, err
@@ -168,7 +168,7 @@ func bootstrapLogin(apiURL string, d *schema.ResourceData, c *config.Config) (st
 
 	log.Printf("Doing login with password")
 	password := d.Get(constants.FieldBootstrapPassword).(string)
-	tokenID, token, err = doUserLogin(apiURL, bootstrapDefaultUser, password, bootstrapDefaultTTL, bootstrapDefaultSessionDesc, "", true)
+	tokenID, token, err = DoUserLogin(apiURL, bootstrapDefaultUser, password, bootstrapDefaultTTL, bootstrapDefaultSessionDesc, "", true)
 	if err == nil {
 		err = d.Set(constants.FieldShouldUpdatePassword, false)
 		return tokenID, token, err
@@ -176,7 +176,7 @@ func bootstrapLogin(apiURL string, d *schema.ResourceData, c *config.Config) (st
 	return "", "", err
 }
 
-func doUserLogin(url, user, pass, ttl, desc, cacert string, insecure bool) (string, string, error) {
+func DoUserLogin(url, user, pass, ttl, desc, cacert string, insecure bool) (string, string, error) {
 	loginURL := url + "/v3-public/localProviders/local?action=login"
 	loginData := `{"username": "` + user + `", "password": "` + pass + `", "ttl": ` + ttl + `, "description": "` + desc + `"}`
 	loginHead := map[string]string{
