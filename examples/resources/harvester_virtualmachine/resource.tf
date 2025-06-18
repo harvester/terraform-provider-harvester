@@ -67,6 +67,11 @@ resource "harvester_virtualmachine" "ubuntu20" {
   reserved_memory = "100Mi"
   machine_type    = "q35"
 
+  node_selector = {
+    "kubernetes.io/arch" = "amd64"
+    "node-role"          = "worker"
+  }
+
   network_interface {
     name           = "nic-1"
     wait_for_lease = true

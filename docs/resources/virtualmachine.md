@@ -82,6 +82,11 @@ resource "harvester_virtualmachine" "ubuntu20" {
   reserved_memory = "100Mi"
   machine_type    = "q35"
 
+  node_selector = {
+    "kubernetes.io/arch" = "amd64"
+    "node-role"          = "worker"
+  }
+
   network_interface {
     name           = "nic-1"
     wait_for_lease = true
@@ -206,6 +211,7 @@ resource "harvester_virtualmachine" "opensuse154" {
 - `machine_type` (String)
 - `memory` (String)
 - `namespace` (String)
+- `node_selector` (Map of String) Node selector to specify on which nodes the VM should be scheduled
 - `reserved_memory` (String)
 - `restart_after_update` (Boolean) restart vm after the vm is updated
 - `run_strategy` (String) more info: https://kubevirt.io/user-guide/virtual_machines/run_strategies/
