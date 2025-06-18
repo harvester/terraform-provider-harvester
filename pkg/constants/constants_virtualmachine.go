@@ -22,6 +22,7 @@ const (
 	FieldVirtualMachineSecureBoot            = "secure_boot"
 	FieldVirtualMachineCPUPinning            = "cpu_pinning"
 	FieldVirtualMachineIsolateEmulatorThread = "isolate_emulator_thread"
+	FieldVirtualMachineNodeSelector          = "node_selector"
 
 	StateVirtualMachineStarting = "Starting"
 	StateVirtualMachineRunning  = "Running"
