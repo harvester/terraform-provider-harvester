@@ -25,6 +25,12 @@ const (
 
 	testAccImageURL = "http://cloud-images.ubuntu.com/releases/focal/release/ubuntu-20.04-server-cloudimg-amd64.img"
 
+	// Crypto test constants
+	testAccImageCryptoName         = "test-acc-crypto-foo"
+	testAccImageCryptoResourceName = constants.ResourceTypeImage + "." + testAccImageCryptoName
+	testAccImageCryptoDisplayName  = "crypto-foo"
+	testAccImageCryptoSourceType   = "clone"
+
 	testAccImageConfigTemplate = `
 resource %s "%s" {
 	%s = "%s"
@@ -32,6 +38,20 @@ resource %s "%s" {
 	%s = "%s"
 	%s = "%s"
 	%s = "%s"
+}
+`
+
+	testAccImageCryptoConfigTemplate = `
+resource %s "%s" {
+	%s = "%s"
+	%s = "%s"
+	%s = "%s"
+	%s = "%s"
+	%s = {
+		%s = "%s"
+		%s = "%s"
+		%s = "%s"
+	}
 }
 `
 )
@@ -43,6 +63,18 @@ func buildImageConfig(name, description, displayName, sourceType, url string) st
 		constants.FieldImageDisplayName, displayName,
 		constants.FieldImageSourceType, sourceType,
 		constants.FieldImageURL, url)
+}
+
+func buildImageCryptoConfig(name, description, displayName, sourceType, cryptoOp, sourceImageName, sourceImageNamespace string) string {
+	return fmt.Sprintf(testAccImageCryptoConfigTemplate, constants.ResourceTypeImage, name,
+		constants.FieldCommonName, name,
+		constants.FieldCommonDescription, description,
+		constants.FieldImageDisplayName, displayName,
+		constants.FieldImageSourceType, sourceType,
+		constants.FieldImageSecurityParameters,
+		constants.FieldImageCryptoOperation, cryptoOp,
+		constants.FieldImageSourceImageName, sourceImageName,
+		constants.FieldImageSourceImageNamespace, sourceImageNamespace)
 }
 
 func TestAccImage_basic(t *testing.T) {
@@ -128,4 +160,34 @@ func testAccCheckImageDestroy(ctx context.Context) resource.TestCheckFunc {
 		}
 		return nil
 	}
+}
+
+func TestAccImage_crypto(t *testing.T) {
+	var (
+		image *harvsterv1.VirtualMachineImage
+		ctx   = context.Background()
+	)
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckImageDestroy(ctx),
+		Steps: []resource.TestStep{
+			{
+				Config:      buildImageCryptoConfig(testAccImageCryptoName, testAccImageDescription, testAccImageCryptoDisplayName, "download", "encrypt", "source-image", "default"),
+				ExpectError: regexp.MustCompile(`source_type must be 'clone' when using security_parameters`),
+			},
+			{
+				Config: buildImageCryptoConfig(testAccImageCryptoName, testAccImageDescription, testAccImageCryptoDisplayName, testAccImageCryptoSourceType, "encrypt", "source-image", "default"),
+				Check: resource.ComposeTestCheckFunc(
+					testAccImageExists(ctx, testAccImageCryptoResourceName, image),
+					resource.TestCheckResourceAttr(testAccImageCryptoResourceName, constants.FieldCommonName, testAccImageCryptoName),
+					resource.TestCheckResourceAttr(testAccImageCryptoResourceName, constants.FieldCommonDescription, testAccImageDescription),
+					resource.TestCheckResourceAttr(testAccImageCryptoResourceName, constants.FieldImageSourceType, testAccImageCryptoSourceType),
+					resource.TestCheckResourceAttr(testAccImageCryptoResourceName, fmt.Sprintf("%s.%s", constants.FieldImageSecurityParameters, constants.FieldImageCryptoOperation), "encrypt"),
+					resource.TestCheckResourceAttr(testAccImageCryptoResourceName, fmt.Sprintf("%s.%s", constants.FieldImageSecurityParameters, constants.FieldImageSourceImageName), "source-image"),
+					resource.TestCheckResourceAttr(testAccImageCryptoResourceName, fmt.Sprintf("%s.%s", constants.FieldImageSecurityParameters, constants.FieldImageSourceImageNamespace), "default"),
+				),
+			},
+		},
+	})
 }

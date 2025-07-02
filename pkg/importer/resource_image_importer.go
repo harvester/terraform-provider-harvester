@@ -27,6 +27,18 @@ func ResourceImageStateGetter(obj *harvsterv1.VirtualMachineImage) (*StateGetter
 		constants.FieldImageStorageClassName:       obj.Annotations[harvsterutil.AnnotationStorageClassName],
 	}
 
+	// Handle security parameters
+	if obj.Spec.SecurityParameters != nil {
+		securityParams := map[string]interface{}{
+			constants.FieldImageCryptoOperation:      string(obj.Spec.SecurityParameters.CryptoOperation),
+			constants.FieldImageSourceImageName:      obj.Spec.SecurityParameters.SourceImageName,
+			constants.FieldImageSourceImageNamespace: obj.Spec.SecurityParameters.SourceImageNamespace,
+		}
+		states[constants.FieldImageSecurityParameters] = securityParams
+	} else {
+		states[constants.FieldImageSecurityParameters] = map[string]interface{}{}
+	}
+
 	var (
 		state       string
 		InitMessage string

@@ -66,6 +66,32 @@ func (c *Constructor) Setup() util.Processors {
 				c.Image.Annotations[harvsterutil.AnnotationStorageClassName] = storageClassName
 				return nil
 			},
+		}, {
+			Field: constants.FieldImageSecurityParameters,
+			Parser: func(i interface{}) error {
+				if c.Image.Spec.SourceType != harvsterv1.VirtualMachineImageSourceTypeClone {
+					return errors.New("security parameters can only be set when source type is 'clone'")
+				}
+
+				securityParamsMap := i.(map[string]interface{})
+
+				// Extract values from map
+				cryptoOp := securityParamsMap[constants.FieldImageCryptoOperation]
+				sourceImageName := securityParamsMap[constants.FieldImageSourceImageName]
+				sourceImageNamespace := securityParamsMap[constants.FieldImageSourceImageNamespace]
+
+				cryptoOpStr := cryptoOp.(string)
+				sourceImageNameStr := sourceImageName.(string)
+				sourceImageNamespaceStr := sourceImageNamespace.(string)
+
+				c.Image.Spec.SecurityParameters = &harvsterv1.VirtualMachineImageSecurityParameters{
+					CryptoOperation:      harvsterv1.VirtualMachineImageCryptoOperationType(cryptoOpStr),
+					SourceImageName:      sourceImageNameStr,
+					SourceImageNamespace: sourceImageNamespaceStr,
+				}
+
+				return nil
+			},
 		},
 	}
 	return append(processors, customProcessors...)
