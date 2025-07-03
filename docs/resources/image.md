@@ -71,12 +71,12 @@ resource "kubernetes_secret_v1" "crypto_default" {
   type = "Opaque"
 
   data = {
-    CRYPTO_KEY_VALUE = "your-encryption-passphrase-here"
-    CRYPTO_KEY_CIPHER = "aes-xts-plain64"
-    CRYPTO_KEY_HASH = "sha256"
+    CRYPTO_KEY_VALUE    = "your-encryption-passphrase-here"
+    CRYPTO_KEY_CIPHER   = "aes-xts-plain64"
+    CRYPTO_KEY_HASH     = "sha256"
     CRYPTO_KEY_PROVIDER = "secret"
-    CRYPTO_KEY_SIZE = 256
-    CRYPTO_PBKDF = "argon2i"
+    CRYPTO_KEY_SIZE     = 256
+    CRYPTO_PBKDF        = "argon2i"
   }
 }
 
