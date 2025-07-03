@@ -1,7 +1,7 @@
 FROM registry.suse.com/bci/golang:1.23
 
 ARG DAPPER_HOST_ARCH
-ENV ARCH $DAPPER_HOST_ARCH
+ENV ARCH=$DAPPER_HOST_ARCH
 
 RUN zypper -n rm container-suseconnect && \
     zypper -n install curl docker gzip tar wget awk zip unzip
@@ -21,11 +21,11 @@ RUN wget --quiet https://github.com/docker/buildx/releases/download/v0.13.1/buil
     mv terraform /usr/local/bin/terraform
 
 ENV DAPPER_RUN_ARGS="--network host -v /run/containerd/containerd.sock:/run/containerd/containerd.sock"
-ENV DAPPER_ENV REPO TAG DRONE_TAG
-ENV DAPPER_SOURCE /go/src/github.com/harvester/terraform-provider-harvester
-ENV DAPPER_OUTPUT ./bin ./dist
-ENV DAPPER_DOCKER_SOCKET true
-ENV HOME ${DAPPER_SOURCE}
+ENV DAPPER_ENV="REPO TAG DRONE_TAG"
+ENV DAPPER_SOURCE="/go/src/github.com/harvester/terraform-provider-harvester"
+ENV DAPPER_OUTPUT="./bin ./dist ./deploy ./dist ./package ./pkg ./docs ./examples"
+ENV DAPPER_DOCKER_SOCKET=true
+ENV HOME=${DAPPER_SOURCE}
 
 COPY go.mod ${DAPPER_SOURCE}/go.mod
 COPY go.sum ${DAPPER_SOURCE}/go.sum

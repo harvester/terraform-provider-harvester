@@ -19,3 +19,16 @@ golangci-lint run --timeout 5m
 
 echo Running: go fmt
 test -z "$(go fmt ${PACKAGES} | tee /dev/stderr)"
+
+echo "Running dirty check"
+
+go generate
+
+source ./scripts/version
+
+if [ -n "$DIRTY" ]; then
+    echo Git is dirty
+    git status
+    git diff
+    exit 1
+fi
