@@ -62,19 +62,21 @@ resource "harvester_image" "opensuse154-ssd-3" {
   url          = "https://downloadcontent-us1.opensuse.org/repositories/Cloud:/Images:/Leap_15.4/images/openSUSE-Leap-15.4.x86_64-NoCloud.qcow2"
 }
 
-resource "harvester_secret" "crypto_default" {
-  name      = "crypto"
-  namespace = "default"
+resource "kubernetes_secret_v1" "crypto_default" {
+  metadata {
+    name      = "crypto"
+    namespace = "default"
+  }
 
   type = "Opaque"
 
   data = {
-    CRYPTO_KEY_VALUE    = "your-encryption-passphrase-here"
-    CRYPTO_KEY_CIPHER   = "aes-xts-plain64"
-    CRYPTO_KEY_HASH     = "sha256"
+    CRYPTO_KEY_VALUE = "your-encryption-passphrase-here"
+    CRYPTO_KEY_CIPHER = "aes-xts-plain64"
+    CRYPTO_KEY_HASH = "sha256"
     CRYPTO_KEY_PROVIDER = "secret"
-    CRYPTO_KEY_SIZE     = 256
-    CRYPTO_PBKDF        = "argon2i"
+    CRYPTO_KEY_SIZE = 256
+    CRYPTO_PBKDF = "argon2i"
   }
 }
 
