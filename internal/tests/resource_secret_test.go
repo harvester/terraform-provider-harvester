@@ -53,12 +53,12 @@ var (
 	// Test data variables to avoid hardcoding in templates
 	testSecretKey1       = "test_key"
 	testSecretValue1     = "test_value"
-	testSecretKey2       = "config_data"
-	testSecretValue2     = "sample_config_content"
+	testSecretKey2       = "config_data"           // #nosec G101 - test template, not real credentials
+	testSecretValue2     = "sample_config_content" // #nosec G101 - test template, not real credentials
 	testSecretDataKey1   = "test_binary"
-	testSecretDataValue1 = "dGVzdF9kYXRh" // base64 encoded "test_data"
+	testSecretDataValue1 = "dGVzdF9kYXRh" // #nosec G101 - test template, not real credentials, base64 encoded "test_data"
 	testSecretDataKey2   = "config_file"
-	testSecretDataValue2 = "Y29uZmlnX2NvbnRlbnQ=" // base64 encoded "config_content"
+	testSecretDataValue2 = "Y29uZmlnX2NvbnRlbnQ=" // #nosec G101 - test template, not real credentials, base64 encoded "config_content"
 )
 
 func TestAccResourceSecret(t *testing.T) {
