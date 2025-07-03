@@ -14,7 +14,7 @@ description: |-
 
 ```terraform
 resource "harvester_setting" "backup-target" {
-  name  = "backup-target"
+  name = "backup-target"
   value = jsonencode(
     {
       endpoint = "nfs://longhorn-test-nfs-svc.default:/opt/backupstore"
@@ -34,31 +34,31 @@ resource "harvester_setting" "default-vm-termination-grace-period-seconds" {
 
 ### Required
 
-- `name` (String) A unique name
+- **name** (String) A unique name
 
 ### Optional
 
-- `description` (String) Any text you want that better describes this resource
-- `tags` (Map of String)
-- `timeouts` (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))
-- `value` (String)
+- **description** (String) Any text you want that better describes this resource
+- **id** (String) The ID of this resource.
+- **tags** (Map of String)
+- **timeouts** (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))
+- **value** (String)
 
 ### Read-Only
 
-- `id` (String) The ID of this resource.
-- `message` (String)
-- `state` (String)
+- **message** (String)
+- **state** (String)
 
 <a id="nestedblock--timeouts"></a>
 ### Nested Schema for `timeouts`
 
 Optional:
 
-- `create` (String)
-- `default` (String)
-- `delete` (String)
-- `read` (String)
-- `update` (String)
+- **create** (String)
+- **default** (String)
+- **delete** (String)
+- **read** (String)
+- **update** (String)
 
 ## Import
 

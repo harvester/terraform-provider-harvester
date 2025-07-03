@@ -39,36 +39,36 @@ resource "harvester_vlanconfig" "cluster-vlan-node1" {
 
 ### Required
 
-- `cluster_network_name` (String) mgmt is a built-in cluster network and does not support creating/updating network configs.
-- `name` (String) A unique name
-- `uplink` (Block List, Min: 1, Max: 1) (see [below for nested schema](#nestedblock--uplink))
+- **cluster_network_name** (String) mgmt is a built-in cluster network and does not support creating/updating network configs.
+- **name** (String) A unique name
+- **uplink** (Block List, Min: 1, Max: 1) (see [below for nested schema](#nestedblock--uplink))
 
 ### Optional
 
-- `description` (String) Any text you want that better describes this resource
-- `node_selector` (Map of String) refer to https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#nodeselector
-- `tags` (Map of String)
-- `timeouts` (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))
+- **description** (String) Any text you want that better describes this resource
+- **id** (String) The ID of this resource.
+- **node_selector** (Map of String) refer to https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#nodeselector
+- **tags** (Map of String)
+- **timeouts** (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))
 
 ### Read-Only
 
-- `id` (String) The ID of this resource.
-- `matched_nodes` (List of String)
-- `message` (String)
-- `state` (String)
+- **matched_nodes** (List of String)
+- **message** (String)
+- **state** (String)
 
 <a id="nestedblock--uplink"></a>
 ### Nested Schema for `uplink`
 
 Required:
 
-- `nics` (List of String)
+- **nics** (List of String)
 
 Optional:
 
-- `bond_miimon` (Number) refer to https://www.kernel.org/doc/Documentation/networking/bonding.txt
-- `bond_mode` (String)
-- `mtu` (Number)
+- **bond_miimon** (Number) refer to https://www.kernel.org/doc/Documentation/networking/bonding.txt
+- **bond_mode** (String)
+- **mtu** (Number)
 
 
 <a id="nestedblock--timeouts"></a>
@@ -76,11 +76,11 @@ Optional:
 
 Optional:
 
-- `create` (String)
-- `default` (String)
-- `delete` (String)
-- `read` (String)
-- `update` (String)
+- **create** (String)
+- **default** (String)
+- **delete** (String)
+- **read** (String)
+- **update** (String)
 
 ## Import
 

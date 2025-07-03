@@ -29,57 +29,57 @@ data "harvester_virtualmachine" "opensuse154" {
 
 ### Required
 
-- `name` (String) A unique name
+- **name** (String) A unique name
 
 ### Optional
 
-- `namespace` (String)
+- **id** (String) The ID of this resource.
+- **namespace** (String)
 
 ### Read-Only
 
-- `cloudinit` (List of Object) (see [below for nested schema](#nestedatt--cloudinit))
-- `cpu` (Number)
-- `cpu_pinning` (Boolean) To enable VM CPU pinning, ensure that at least one node has the CPU manager enabled
-- `description` (String) Any text you want that better describes this resource
-- `disk` (List of Object) (see [below for nested schema](#nestedatt--disk))
-- `efi` (Boolean)
-- `hostname` (String)
-- `id` (String) The ID of this resource.
-- `input` (List of Object) (see [below for nested schema](#nestedatt--input))
-- `isolate_emulator_thread` (Boolean) To enable isolate emulator thread, ensure that at least one node has the CPU manager enabled, also VM CPU pinning must be enabled. Note that enable option will allocate an additional dedicated CPU.
-- `machine_type` (String)
-- `memory` (String)
-- `message` (String)
-- `network_interface` (List of Object) (see [below for nested schema](#nestedatt--network_interface))
-- `node_name` (String)
-- `reserved_memory` (String)
-- `restart_after_update` (Boolean) restart vm after the vm is updated
-- `run_strategy` (String) more info: https://kubevirt.io/user-guide/virtual_machines/run_strategies/
-- `secure_boot` (Boolean) EFI must be enabled to use this feature
-- `ssh_keys` (List of String) The `ssh_keys` are added to `cloudinit.user_data` if:
+- **cloudinit** (List of Object) (see [below for nested schema](#nestedatt--cloudinit))
+- **cpu** (Number)
+- **cpu_pinning** (Boolean) To enable VM CPU pinning, ensure that at least one node has the CPU manager enabled
+- **description** (String) Any text you want that better describes this resource
+- **disk** (List of Object) (see [below for nested schema](#nestedatt--disk))
+- **efi** (Boolean)
+- **hostname** (String)
+- **input** (List of Object) (see [below for nested schema](#nestedatt--input))
+- **isolate_emulator_thread** (Boolean) To enable isolate emulator thread, ensure that at least one node has the CPU manager enabled, also VM CPU pinning must be enabled. Note that enable option will allocate an additional dedicated CPU.
+- **machine_type** (String)
+- **memory** (String)
+- **message** (String)
+- **network_interface** (List of Object) (see [below for nested schema](#nestedatt--network_interface))
+- **node_name** (String)
+- **reserved_memory** (String)
+- **restart_after_update** (Boolean) restart vm after the vm is updated
+- **run_strategy** (String) more info: https://kubevirt.io/user-guide/virtual_machines/run_strategies/
+- **secure_boot** (Boolean) EFI must be enabled to use this feature
+- **ssh_keys** (List of String) The `ssh_keys` are added to `cloudinit.user_data` if:
 1. Both `cloudinit.user_data_base64` and `cloudinit.user_data_secret_name` are empty.
 2. There is no `ssh_authorized_keys` field in `cloudinit.user_data`.
-- `start` (Boolean, Deprecated)
-- `state` (String)
-- `tags` (Map of String) The tag is reflected as label on the VM.
+- **start** (Boolean, Deprecated)
+- **state** (String)
+- **tags** (Map of String) The tag is reflected as label on the VM.
 For example: `sample-tag = sample` adds label `tag.harvesterhci.io/sample-tag: sample`.
 For `ssh-user` tag, the value is added to `cloudinit.user_data` if:
 1. Both `cloudinit.user_data_base64` and `cloudinit.user_data_secret_name` are empty.
 2. There is no `user` field in `cloudinit.user_data`.
-- `tpm` (List of Object) (see [below for nested schema](#nestedatt--tpm))
+- **tpm** (List of Object) (see [below for nested schema](#nestedatt--tpm))
 
 <a id="nestedatt--cloudinit"></a>
 ### Nested Schema for `cloudinit`
 
 Read-Only:
 
-- `network_data` (String)
-- `network_data_base64` (String)
-- `network_data_secret_name` (String)
-- `type` (String)
-- `user_data` (String)
-- `user_data_base64` (String)
-- `user_data_secret_name` (String)
+- **network_data** (String)
+- **network_data_base64** (String)
+- **network_data_secret_name** (String)
+- **type** (String)
+- **user_data** (String)
+- **user_data_base64** (String)
+- **user_data_secret_name** (String)
 
 
 <a id="nestedatt--disk"></a>
@@ -87,20 +87,20 @@ Read-Only:
 
 Read-Only:
 
-- `access_mode` (String)
-- `auto_delete` (Boolean)
-- `boot_order` (Number)
-- `bus` (String)
-- `container_image_name` (String)
-- `existing_volume_name` (String)
-- `hot_plug` (Boolean)
-- `image` (String)
-- `name` (String)
-- `size` (String)
-- `storage_class_name` (String)
-- `type` (String)
-- `volume_mode` (String)
-- `volume_name` (String)
+- **access_mode** (String)
+- **auto_delete** (Boolean)
+- **boot_order** (Number)
+- **bus** (String)
+- **container_image_name** (String)
+- **existing_volume_name** (String)
+- **hot_plug** (Boolean)
+- **image** (String)
+- **name** (String)
+- **size** (String)
+- **storage_class_name** (String)
+- **type** (String)
+- **volume_mode** (String)
+- **volume_name** (String)
 
 
 <a id="nestedatt--input"></a>
@@ -108,9 +108,9 @@ Read-Only:
 
 Read-Only:
 
-- `bus` (String)
-- `name` (String)
-- `type` (String)
+- **bus** (String)
+- **name** (String)
+- **type** (String)
 
 
 <a id="nestedatt--network_interface"></a>
@@ -118,14 +118,15 @@ Read-Only:
 
 Read-Only:
 
-- `interface_name` (String)
-- `ip_address` (String)
-- `mac_address` (String)
-- `model` (String)
-- `name` (String)
-- `network_name` (String)
-- `type` (String)
-- `wait_for_lease` (Boolean)
+- **boot_order** (Number)
+- **interface_name** (String)
+- **ip_address** (String)
+- **mac_address** (String)
+- **model** (String)
+- **name** (String)
+- **network_name** (String)
+- **type** (String)
+- **wait_for_lease** (Boolean)
 
 
 <a id="nestedatt--tpm"></a>
@@ -133,4 +134,6 @@ Read-Only:
 
 Read-Only:
 
-- `name` (String)
+- **name** (String)
+
+

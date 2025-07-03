@@ -1,5 +1,5 @@
 resource "harvester_setting" "backup-target" {
-  name  = "backup-target"
+  name = "backup-target"
   value = jsonencode(
     {
       endpoint = "nfs://longhorn-test-nfs-svc.default:/opt/backupstore"

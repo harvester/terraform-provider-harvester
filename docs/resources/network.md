@@ -63,39 +63,39 @@ resource "harvester_network" "cluster-vlan" {
 
 ### Required
 
-- `cluster_network_name` (String)
-- `name` (String) A unique name
-- `vlan_id` (Number) e.g. 0-4094
+- **cluster_network_name** (String)
+- **name** (String) A unique name
+- **vlan_id** (Number) e.g. 0-4094
 
 ### Optional
 
-- `config` (String)
-- `description` (String) Any text you want that better describes this resource
-- `namespace` (String)
-- `route_cidr` (String) e.g. 172.16.0.1/24
-- `route_dhcp_server_ip` (String)
-- `route_gateway` (String) e.g. 172.16.0.1
-- `route_mode` (String)
-- `tags` (Map of String)
-- `timeouts` (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))
+- **config** (String)
+- **description** (String) Any text you want that better describes this resource
+- **id** (String) The ID of this resource.
+- **namespace** (String)
+- **route_cidr** (String) e.g. 172.16.0.1/24
+- **route_dhcp_server_ip** (String)
+- **route_gateway** (String) e.g. 172.16.0.1
+- **route_mode** (String)
+- **tags** (Map of String)
+- **timeouts** (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))
 
 ### Read-Only
 
-- `id` (String) The ID of this resource.
-- `message` (String)
-- `route_connectivity` (String)
-- `state` (String)
+- **message** (String)
+- **route_connectivity** (String)
+- **state** (String)
 
 <a id="nestedblock--timeouts"></a>
 ### Nested Schema for `timeouts`
 
 Optional:
 
-- `create` (String)
-- `default` (String)
-- `delete` (String)
-- `read` (String)
-- `update` (String)
+- **create** (String)
+- **default** (String)
+- **delete** (String)
+- **read** (String)
+- **update** (String)
 
 ## Import
 

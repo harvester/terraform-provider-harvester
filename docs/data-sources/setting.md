@@ -23,13 +23,18 @@ data "harvester_setting" "backup-target" {
 
 ### Required
 
-- `name` (String) A unique name
+- **name** (String) A unique name
+
+### Optional
+
+- **id** (String) The ID of this resource.
 
 ### Read-Only
 
-- `description` (String) Any text you want that better describes this resource
-- `id` (String) The ID of this resource.
-- `message` (String)
-- `state` (String)
-- `tags` (Map of String)
-- `value` (String)
+- **description** (String) Any text you want that better describes this resource
+- **message** (String)
+- **state** (String)
+- **tags** (Map of String)
+- **value** (String)
+
+
