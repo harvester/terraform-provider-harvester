@@ -321,13 +321,6 @@ Optional:
 
 - **name** (String) just add this field for doc generation
 
-<a id="tags"></a>
-### Tags / Labels
-
-Optional, map of strings. The keys of the tags will appear as labels
-`tags.harvesterhci.io/${KEY}`. The values of the map will be the
-corresponding values of the labels.
-
 ## Import
 
 Import is supported using the following syntax:

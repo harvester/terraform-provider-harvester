@@ -38,7 +38,7 @@ resource "harvester_loadbalancer" "service_loadbalancer" {
   }
 
   healthcheck {
-    port = 443
+    port              = 443
     success_threshold = 1
     failure_threshold = 3
     period_seconds    = 10
