@@ -5,9 +5,7 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/base64"
-	"encoding/json"
 	"fmt"
-	"io"
 	"log"
 	"net/http"
 	"time"
@@ -56,16 +54,6 @@ func DoPost(url, data, cacert string, insecure bool, headers map[string]string) 
 	client.Transport = transport
 
 	return client.Do(req)
-}
-
-func GetJSONBody(resp *http.Response) (map[string]interface{}, error) {
-	response := make(map[string]interface{})
-	body, _ := io.ReadAll(resp.Body)
-	err := json.Unmarshal(body, &response)
-	if err != nil {
-		return response, err
-	}
-	return response, nil
 }
 
 func DoGet(url, username, password, token, cacert string, insecure bool) (*http.Response, error) {

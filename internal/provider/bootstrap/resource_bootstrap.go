@@ -2,6 +2,7 @@ package bootstrap
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -19,9 +20,33 @@ import (
 
 const (
 	bootstrapDefaultUser        = "admin"
-	bootstrapDefaultTTL         = "60000"
+	bootstrapDefaultTTL         = 60000
 	bootstrapDefaultSessionDesc = "Terraform bootstrap admin session"
 )
+
+type loginRequestPayload struct {
+	Username     string `json:"username"`
+	Password     string `json:"password"`
+	ResponseType string `json:"responseType"`
+	TTL          int    `json:"ttl"`
+	Description  string `json:"description"`
+}
+
+type loginResponsePayload struct {
+	ID    string `json:"id"`
+	Type  string `json:"type"`
+	Token string `json:"token"`
+	Code  string `json:"code"`
+}
+
+type changePasswordPayload struct {
+	CurrentPassword string `json:"currentPassword"`
+	NewPassword     string `json:"newPassword"`
+}
+
+type generateKubeConfigResponsePayload struct {
+	Config string `json:"config"`
+}
 
 func ResourceBootstrap() *schema.Resource {
 	return &schema.Resource{
@@ -62,8 +87,14 @@ func resourceBootstrapCreate(ctx context.Context, d *schema.ResourceData, meta i
 		initialPassword := d.Get(constants.FieldBootstrapInitialPassword).(string)
 		password := d.Get(constants.FieldBootstrapPassword).(string)
 		changePasswordURL := fmt.Sprintf("%s/%s", apiURL, "v3/users?action=changepassword")
-		changePasswordData := `{"currentPassword":"` + initialPassword + `","newPassword":"` + password + `"}`
-		changePasswordResp, err := util.DoPost(changePasswordURL, changePasswordData, "", true, map[string]string{"Authorization": fmt.Sprintf("Bearer %s", token)})
+		changePasswordData, err := json.Marshal(changePasswordPayload{
+			CurrentPassword: initialPassword,
+			NewPassword:     password,
+		})
+		if err != nil {
+			return diag.FromErr(fmt.Errorf("failed to marshal change password data: %v", err))
+		}
+		changePasswordResp, err := util.DoPost(changePasswordURL, string(changePasswordData), "", true, map[string]string{"Authorization": fmt.Sprintf("Bearer %s", token)})
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -83,17 +114,16 @@ func resourceBootstrapCreate(ctx context.Context, d *schema.ResourceData, meta i
 		return diag.Errorf("failed to generate kubeconfig, status code %d", genKubeConfigResp.StatusCode)
 	}
 
-	genKubeConfigBody, err := util.GetJSONBody(genKubeConfigResp)
-	if err != nil {
-		return diag.FromErr(err)
+	var generateKubeConfigResponseData generateKubeConfigResponsePayload
+	if err := json.NewDecoder(genKubeConfigResp.Body).Decode(&generateKubeConfigResponseData); err != nil {
+		return diag.FromErr(fmt.Errorf("failed to decode generate kubeconfig response: %v", err))
 	}
-	if genKubeConfigBody["config"] == nil {
+	if generateKubeConfigResponseData.Config == "" {
 		return diag.FromErr(fmt.Errorf("failed to generate kubeconfig"))
 	}
-	kubeConfigContent := genKubeConfigBody["config"].(string)
 
 	// write kubeconfig
-	if err = os.WriteFile(kubeConfig, []byte(kubeConfigContent), 0600); err != nil {
+	if err = os.WriteFile(kubeConfig, []byte(generateKubeConfigResponseData.Config), 0600); err != nil {
 		return diag.FromErr(err)
 	}
 
@@ -135,17 +165,16 @@ func resourceBootstrapRead(ctx context.Context, d *schema.ResourceData, meta int
 		return diag.Errorf("failed to generate kubeconfig, status code %d", genKubeConfigResp.StatusCode)
 	}
 
-	genKubeConfigBody, err := util.GetJSONBody(genKubeConfigResp)
-	if err != nil {
-		return diag.FromErr(err)
+	var generateKubeConfigResponseData generateKubeConfigResponsePayload
+	if err := json.NewDecoder(genKubeConfigResp.Body).Decode(&generateKubeConfigResponseData); err != nil {
+		return diag.FromErr(fmt.Errorf("failed to decode generate kubeconfig response: %v", err))
 	}
-	if genKubeConfigBody["config"] == nil {
+	if generateKubeConfigResponseData.Config == "" {
 		return diag.FromErr(fmt.Errorf("failed to generate kubeconfig"))
 	}
-	kubeConfigContent := genKubeConfigBody["config"].(string)
 
 	// write kubeconfig
-	if err = os.WriteFile(kubeConfig, []byte(kubeConfigContent), 0600); err != nil {
+	if err = os.WriteFile(kubeConfig, []byte(generateKubeConfigResponseData.Config), 0600); err != nil {
 		return diag.FromErr(err)
 	}
 	return nil
@@ -176,16 +205,26 @@ func bootstrapLogin(apiURL string, d *schema.ResourceData, c *config.Config) (st
 	return "", "", err
 }
 
-func DoUserLogin(url, user, pass, ttl, desc, cacert string, insecure bool) (string, string, error) {
+func DoUserLogin(url, user, pass string, ttl int, desc, cacert string, insecure bool) (string, string, error) {
 	loginURL := url + "/v3-public/localProviders/local?action=login"
-	loginData := `{"username": "` + user + `", "password": "` + pass + `", "ttl": ` + ttl + `, "description": "` + desc + `"}`
+	loginData, err := json.Marshal(loginRequestPayload{
+		Username:     user,
+		Password:     pass,
+		ResponseType: "token",
+		TTL:          ttl,
+		Description:  desc,
+	})
+	if err != nil {
+		return "", "", fmt.Errorf("failed to marshal login data: %v", err)
+	}
+
 	loginHead := map[string]string{
 		"Accept":       "application/json",
 		"Content-Type": "application/json",
 	}
 
 	// Login with user and pass
-	loginResp, err := util.DoPost(loginURL, loginData, cacert, insecure, loginHead)
+	loginResp, err := util.DoPost(loginURL, string(loginData), cacert, insecure, loginHead)
 	if err != nil {
 		return "", "", err
 	}
@@ -193,14 +232,14 @@ func DoUserLogin(url, user, pass, ttl, desc, cacert string, insecure bool) (stri
 		return "", "", fmt.Errorf("can't login successfully, status code %d", loginResp.StatusCode)
 	}
 
-	loginBody, err := util.GetJSONBody(loginResp)
-	if err != nil {
-		return "", "", err
+	var loginResponseData loginResponsePayload
+	if err = json.NewDecoder(loginResp.Body).Decode(&loginResponseData); err != nil {
+		return "", "", fmt.Errorf("failed to decode login response: %v", err)
 	}
 
-	if loginBody["type"].(string) != "token" || loginBody["token"] == nil {
-		return "", "", fmt.Errorf("doing  user logging: %s %s", loginBody["type"].(string), loginBody["code"].(string))
+	if loginResponseData.Type != "token" || loginResponseData.Token == "" {
+		return "", "", fmt.Errorf("doing user login: %s %s", loginResponseData.Type, loginResponseData.Code)
 	}
 
-	return loginBody["id"].(string), loginBody["token"].(string), nil
+	return loginResponseData.ID, loginResponseData.Token, nil
 }
