@@ -112,9 +112,9 @@ func (c *Constructor) subresourceLoadBalancerListenerParser(data interface{}) er
 	listener := data.(map[string]interface{})
 
 	name := listener[constants.FieldListenerName].(string)
-	port := int32(listener[constants.FieldListenerPort].(int))
+	port := listener[constants.FieldListenerPort].(int32)
 	protocol := corev1.Protocol(listener[constants.FieldListenerProtocol].(string))
-	backendPort := int32(listener[constants.FieldListenerBackendPort].(int))
+	backendPort := listener[constants.FieldListenerBackendPort].(int32)
 
 	c.LoadBalancer.Spec.Listeners = append(c.LoadBalancer.Spec.Listeners, loadbalancerv1.Listener{
 		Name:        name,
