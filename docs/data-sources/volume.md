@@ -24,23 +24,25 @@ data "harvester_volume" "mount-disk" {
 
 ### Required
 
-- `name` (String) A unique name
+- **name** (String) A unique name
 
 ### Optional
 
-- `namespace` (String)
+- **id** (String) The ID of this resource.
+- **namespace** (String)
 
 ### Read-Only
 
-- `access_mode` (String)
-- `attached_vm` (String)
-- `description` (String) Any text you want that better describes this resource
-- `id` (String) The ID of this resource.
-- `image` (String)
-- `message` (String)
-- `phase` (String)
-- `size` (String)
-- `state` (String)
-- `storage_class_name` (String)
-- `tags` (Map of String)
-- `volume_mode` (String)
+- **access_mode** (String)
+- **attached_vm** (String)
+- **description** (String) Any text you want that better describes this resource
+- **image** (String)
+- **message** (String)
+- **phase** (String)
+- **size** (String)
+- **state** (String)
+- **storage_class_name** (String)
+- **tags** (Map of String)
+- **volume_mode** (String)
+
+

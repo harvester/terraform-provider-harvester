@@ -43,5 +43,5 @@ provider "harvester" {
 
 ### Optional
 
-- `kubeconfig` (String) kubeconfig file path or content of the kubeconfig file as base64 encoded string, users can use the KUBECONFIG environment variable instead.
-- `kubecontext` (String) name of the kubernetes context to use
+- **kubeconfig** (String) kubeconfig file path or content of the kubeconfig file as base64 encoded string, users can use the KUBECONFIG environment variable instead.
+- **kubecontext** (String) name of the kubernetes context to use

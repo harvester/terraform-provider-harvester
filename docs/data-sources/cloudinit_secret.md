@@ -29,20 +29,22 @@ data "harvester_cloudinit_secret" "cloud-config-ubuntu20" {
 
 ### Required
 
-- `name` (String) A unique name
+- **name** (String) A unique name
 
 ### Optional
 
-- `namespace` (String)
+- **id** (String) The ID of this resource.
+- **namespace** (String)
 
 ### Read-Only
 
-- `description` (String) Any text you want that better describes this resource
-- `id` (String) The ID of this resource.
-- `message` (String)
-- `network_data` (String)
-- `network_data_base64` (String)
-- `state` (String)
-- `tags` (Map of String)
-- `user_data` (String)
-- `user_data_base64` (String)
+- **description** (String) Any text you want that better describes this resource
+- **message** (String)
+- **network_data** (String)
+- **network_data_base64** (String)
+- **state** (String)
+- **tags** (Map of String)
+- **user_data** (String)
+- **user_data_base64** (String)
+
+

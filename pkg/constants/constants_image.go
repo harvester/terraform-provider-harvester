@@ -13,6 +13,10 @@ const (
 	FieldImageStorageClassName       = "storage_class_name"
 	FieldImageStorageClassParameters = "storage_class_parameters"
 	FieldImageVolumeStorageClassName = "volume_storage_class_name"
+	FieldImageSecurityParameters     = "security_parameters"
+	FieldImageCryptoOperation        = "crypto_operation"
+	FieldImageSourceImageName        = "source_image_name"
+	FieldImageSourceImageNamespace   = "source_image_namespace"
 
 	StateImageUploading    = "Uploading"
 	StateImageDownloading  = "Downloading"

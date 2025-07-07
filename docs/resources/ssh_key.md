@@ -26,33 +26,33 @@ resource "harvester_ssh_key" "mysshkey" {
 
 ### Required
 
-- `name` (String) A unique name
-- `public_key` (String)
+- **name** (String) A unique name
+- **public_key** (String)
 
 ### Optional
 
-- `description` (String) Any text you want that better describes this resource
-- `namespace` (String)
-- `tags` (Map of String)
-- `timeouts` (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))
+- **description** (String) Any text you want that better describes this resource
+- **id** (String) The ID of this resource.
+- **namespace** (String)
+- **tags** (Map of String)
+- **timeouts** (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))
 
 ### Read-Only
 
-- `fingerprint` (String)
-- `id` (String) The ID of this resource.
-- `message` (String)
-- `state` (String)
+- **fingerprint** (String)
+- **message** (String)
+- **state** (String)
 
 <a id="nestedblock--timeouts"></a>
 ### Nested Schema for `timeouts`
 
 Optional:
 
-- `create` (String)
-- `default` (String)
-- `delete` (String)
-- `read` (String)
-- `update` (String)
+- **create** (String)
+- **default** (String)
+- **delete** (String)
+- **read** (String)
+- **update** (String)
 
 ## Import
 

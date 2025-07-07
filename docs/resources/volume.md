@@ -60,38 +60,38 @@ resource "harvester_volume" "opensuse154-image-disk" {
 
 ### Required
 
-- `name` (String) A unique name
+- **name** (String) A unique name
 
 ### Optional
 
-- `access_mode` (String)
-- `description` (String) Any text you want that better describes this resource
-- `image` (String)
-- `namespace` (String)
-- `size` (String)
-- `storage_class_name` (String)
-- `tags` (Map of String)
-- `timeouts` (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))
-- `volume_mode` (String)
+- **access_mode** (String)
+- **description** (String) Any text you want that better describes this resource
+- **id** (String) The ID of this resource.
+- **image** (String)
+- **namespace** (String)
+- **size** (String)
+- **storage_class_name** (String)
+- **tags** (Map of String)
+- **timeouts** (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))
+- **volume_mode** (String)
 
 ### Read-Only
 
-- `attached_vm` (String)
-- `id` (String) The ID of this resource.
-- `message` (String)
-- `phase` (String)
-- `state` (String)
+- **attached_vm** (String)
+- **message** (String)
+- **phase** (String)
+- **state** (String)
 
 <a id="nestedblock--timeouts"></a>
 ### Nested Schema for `timeouts`
 
 Optional:
 
-- `create` (String)
-- `default` (String)
-- `delete` (String)
-- `read` (String)
-- `update` (String)
+- **create** (String)
+- **default** (String)
+- **delete** (String)
+- **read** (String)
+- **update** (String)
 
 ## Import
 

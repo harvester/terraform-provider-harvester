@@ -43,6 +43,7 @@ func Schema() map[string]*schema.Schema {
 				string(harvsterv1.VirtualMachineImageSourceTypeDownload),
 				string(harvsterv1.VirtualMachineImageSourceTypeUpload),
 				string(harvsterv1.VirtualMachineImageSourceTypeExportVolume),
+				string(harvsterv1.VirtualMachineImageSourceTypeClone),
 			}, false),
 		},
 		constants.FieldImageProgress: {
@@ -65,6 +66,13 @@ func Schema() map[string]*schema.Schema {
 		constants.FieldImageVolumeStorageClassName: {
 			Type:     schema.TypeString,
 			Computed: true,
+		},
+		constants.FieldImageSecurityParameters: {
+			Type:         schema.TypeMap,
+			Optional:     true,
+			Elem:         &schema.Schema{Type: schema.TypeString},
+			Description:  "Security parameters for encryption/decryption operations. When specified, source_type must be 'clone'. Required keys: crypto_operation, source_image_name, source_image_namespace",
+			ValidateFunc: validateSecurityParameters,
 		},
 	}
 	util.NamespacedSchemaWrap(s, false)

@@ -339,8 +339,6 @@ github.com/harvester/go-common v0.0.0-20250109132713-e748ce72a7ba h1:U9Q4hwXeqni
 github.com/harvester/go-common v0.0.0-20250109132713-e748ce72a7ba/go.mod h1:VPPSa9KzRB1XPPkOAz4M4263UPm5bl/Xd3jEnALh3uo=
 github.com/harvester/harvester v0.0.0-20250311070330-51fa44d402bd h1:svhEvxESk96CftQowaO+kTpZV4FKTWhl0sqInEMRBrQ=
 github.com/harvester/harvester v0.0.0-20250311070330-51fa44d402bd/go.mod h1:kM4J/Aj5O6mrQrrFu882+mnAmmu49X8W4W6pndOZ0hY=
-github.com/harvester/harvester v1.5.0 h1:rWqYuwMRjC4CkMpcVXL5O9sVFyXNVwUJUviY8stP1no=
-github.com/harvester/harvester v1.5.0/go.mod h1:JKMKr1rvYS6U2NKZQq/8IunuUhcQOkv+gmTeV+BhMdQ=
 github.com/harvester/harvester-network-controller v0.3.1 h1:WJ90eqq0HNNPE/kB1X+fsV1MZ8Lrt0s5UaOCzUotBwQ=
 github.com/harvester/harvester-network-controller v0.3.1/go.mod h1:XL6+c9WvqcEVV/Gki+wU5tZBqZGrOm1719pZdaiuG7g=
 github.com/hashicorp/errwrap v1.0.0/go.mod h1:YH+1FKiLXxHSkmPseP+kNlulaMuP3n2brvKWEqk/Jc4=

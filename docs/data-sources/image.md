@@ -29,23 +29,26 @@ data "harvester_image" "opensuse154" {
 
 ### Optional
 
-- `display_name` (String)
-- `name` (String) A unique name
-- `namespace` (String)
+- **display_name** (String)
+- **id** (String) The ID of this resource.
+- **name** (String) A unique name
+- **namespace** (String)
 
 ### Read-Only
 
-- `description` (String) Any text you want that better describes this resource
-- `id` (String) The ID of this resource.
-- `message` (String)
-- `progress` (Number)
-- `pvc_name` (String)
-- `pvc_namespace` (String)
-- `size` (Number)
-- `source_type` (String)
-- `state` (String)
-- `storage_class_name` (String)
-- `storage_class_parameters` (Map of String)
-- `tags` (Map of String)
-- `url` (String) supports the `raw` and `qcow2` image formats which are supported by [qemu](https://www.qemu.org/docs/master/system/images.html#disk-image-file-formats). Bootable ISO images can also be used and are treated like `raw` images.
-- `volume_storage_class_name` (String)
+- **description** (String) Any text you want that better describes this resource
+- **message** (String)
+- **progress** (Number)
+- **pvc_name** (String)
+- **pvc_namespace** (String)
+- **security_parameters** (Map of String) Security parameters for encryption/decryption operations. When specified, source_type must be 'clone'. Required keys: crypto_operation, source_image_name, source_image_namespace
+- **size** (Number)
+- **source_type** (String)
+- **state** (String)
+- **storage_class_name** (String)
+- **storage_class_parameters** (Map of String)
+- **tags** (Map of String)
+- **url** (String) supports the `raw` and `qcow2` image formats which are supported by [qemu](https://www.qemu.org/docs/master/system/images.html#disk-image-file-formats). Bootable ISO images can also be used and are treated like `raw` images.
+- **volume_storage_class_name** (String)
+
+
