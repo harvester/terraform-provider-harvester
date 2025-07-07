@@ -11,37 +11,37 @@ resource "harvester_loadbalancer" "service_loadbalancer" {
   ]
 
   listener {
-    port = 443
-    protocol = "tcp"
+    port         = 443
+    protocol     = "tcp"
     backend_port = 8080
   }
 
   listener {
-    port = 80
-    protocol = "tcp"
+    port         = 80
+    protocol     = "tcp"
     backend_port = 8080
   }
 
-  ipam = "ippool"
+  ipam   = "ippool"
   ippool = "service-ips"
 
   workload_type = "vm"
 
   backend_selector {
-    key = "app"
-    values = [ "test" ]
+    key    = "app"
+    values = ["test"]
   }
 
   backend_selector {
-    key = "component"
-    values = [ "frontend", "ui" ]
+    key    = "component"
+    values = ["frontend", "ui"]
   }
 
   healthcheck {
     port = 443
     success_threshold = 1
     failure_threshold = 3
-    period_seconds = 10
-    timeout_seconds = 5
+    period_seconds    = 10
+    timeout_seconds   = 5
   }
 }
