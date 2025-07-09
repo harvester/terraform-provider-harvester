@@ -5,6 +5,7 @@ import (
 
 	"github.com/mitchellh/go-homedir"
 
+	harvloadbalancerclient "github.com/harvester/harvester-load-balancer/pkg/generated/clientset/versioned"
 	harvnetworkclient "github.com/harvester/harvester-network-controller/pkg/generated/clientset/versioned"
 	harvclient "github.com/harvester/harvester/pkg/generated/clientset/versioned"
 	"github.com/harvester/harvester/pkg/generated/clientset/versioned/scheme"
@@ -17,12 +18,13 @@ import (
 )
 
 type Client struct {
-	RestConfig                *rest.Config
-	KubeVirtSubresourceClient *rest.RESTClient
-	KubeClient                *kubernetes.Clientset
-	StorageClassClient        *storageclient.StorageV1Client
-	HarvesterClient           *harvclient.Clientset
-	HarvesterNetworkClient    *harvnetworkclient.Clientset
+	RestConfig                  *rest.Config
+	KubeVirtSubresourceClient   *rest.RESTClient
+	KubeClient                  *kubernetes.Clientset
+	StorageClassClient          *storageclient.StorageV1Client
+	HarvesterClient             *harvclient.Clientset
+	HarvesterNetworkClient      *harvnetworkclient.Clientset
+	HarvesterLoadbalancerClient *harvloadbalancerclient.Clientset
 }
 
 func NewClient(kubeConfig, kubeContext string) (*Client, error) {
@@ -61,13 +63,18 @@ func NewClient(kubeConfig, kubeContext string) (*Client, error) {
 	if err != nil {
 		return nil, err
 	}
+	harvLoadbalancerClient, err := harvloadbalancerclient.NewForConfig(restConfig)
+	if err != nil {
+		return nil, err
+	}
 	return &Client{
-		RestConfig:                restConfig,
-		KubeVirtSubresourceClient: restClient,
-		KubeClient:                kubeClient,
-		StorageClassClient:        storageClassClient,
-		HarvesterClient:           harvClient,
-		HarvesterNetworkClient:    harvNetworkClient,
+		RestConfig:                  restConfig,
+		KubeVirtSubresourceClient:   restClient,
+		KubeClient:                  kubeClient,
+		StorageClassClient:          storageClassClient,
+		HarvesterClient:             harvClient,
+		HarvesterNetworkClient:      harvNetworkClient,
+		HarvesterLoadbalancerClient: harvLoadbalancerClient,
 	}, nil
 }
 

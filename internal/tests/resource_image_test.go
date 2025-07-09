@@ -38,6 +38,7 @@ resource %s "%s" {
 	%s = "%s"
 	%s = "%s"
 	%s = "%s"
+	storage_class_name = "harvester-longhorn"
 }
 `
 

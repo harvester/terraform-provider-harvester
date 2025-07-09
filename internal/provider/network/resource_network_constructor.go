@@ -119,11 +119,11 @@ func (c *Constructor) Result() (interface{}, error) {
 	return c.Network, nil
 }
 
-func newNetworkConstructor(c *client.Client, ctx context.Context, network *nadv1.NetworkAttachmentDefinition) util.Constructor {
+func newNetworkConstructor(c *client.Client, ctx context.Context, clusterNetworkName string, network *nadv1.NetworkAttachmentDefinition) util.Constructor {
 	return &Constructor{
 		Client:             c,
 		Context:            ctx,
-		ClusterNetworkName: network.Labels[networkutils.KeyClusterNetworkLabel],
+		ClusterNetworkName: clusterNetworkName,
 		Network:            network,
 		Layer3NetworkConf:  &networkutils.Layer3NetworkConf{},
 	}
@@ -134,9 +134,10 @@ func Creator(c *client.Client, ctx context.Context, namespace, name, clusterNetw
 		ObjectMeta: util.NewObjectMeta(namespace, name),
 	}
 	network.Labels[networkutils.KeyClusterNetworkLabel] = clusterNetworkName
-	return newNetworkConstructor(c, ctx, network)
+	return newNetworkConstructor(c, ctx, clusterNetworkName, network)
 }
 
 func Updater(c *client.Client, ctx context.Context, network *nadv1.NetworkAttachmentDefinition) util.Constructor {
-	return newNetworkConstructor(c, ctx, network)
+	clusterNetworkName := network.Labels[networkutils.KeyClusterNetworkLabel]
+	return newNetworkConstructor(c, ctx, clusterNetworkName, network)
 }
