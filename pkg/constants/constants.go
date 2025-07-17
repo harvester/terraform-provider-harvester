@@ -4,6 +4,7 @@ const (
 	NamespaceDefault         = "default"
 	NamespaceHarvesterSystem = "harvester-system"
 
+	FieldProviderBootstrap   = "bootstrap"
 	FieldProviderKubeConfig  = "kubeconfig"
 	FieldProviderKubeContext = "kubecontext"
 

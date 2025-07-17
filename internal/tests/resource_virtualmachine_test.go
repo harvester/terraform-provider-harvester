@@ -23,6 +23,7 @@ import (
 	"k8s.io/client-go/rest"
 	kubevirtv1 "kubevirt.io/api/core/v1"
 
+	"github.com/harvester/terraform-provider-harvester/internal/config"
 	"github.com/harvester/terraform-provider-harvester/pkg/client"
 	"github.com/harvester/terraform-provider-harvester/pkg/constants"
 	"github.com/harvester/terraform-provider-harvester/pkg/helper"
@@ -265,7 +266,11 @@ func TestAccVirtualMachine_cpu_pinning(t *testing.T) {
 	// enableCPUManager and disableCPUManager are placed outside acc test because acc tests lack beforeAll/afterAll support.
 	// To minimize delays, CPUManager is enable/disable only once rather than before/after each test step.
 	testAccPreCheck(t)
-	nodes, err := testAccProvider.Meta().(*client.Client).KubeClient.CoreV1().Nodes().List(ctx, metav1.ListOptions{})
+	c, err := testAccProvider.Meta().(*config.Config).K8sClient()
+	if err != nil {
+		t.Fatal("failed to find any node")
+	}
+	nodes, err := c.KubeClient.CoreV1().Nodes().List(ctx, metav1.ListOptions{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -533,7 +538,10 @@ func testAccCheckVirtualMachineDestroy(ctx context.Context) resource.TestCheckFu
 				continue
 			}
 
-			c := testAccProvider.Meta().(*client.Client)
+			c, err := testAccProvider.Meta().(*config.Config).K8sClient()
+			if err != nil {
+				return err
+			}
 			namespace, name, err := helper.IDParts(rs.Primary.ID)
 			if err != nil {
 				return err
@@ -565,7 +573,10 @@ func disableCPUManager(t *testing.T, ctx context.Context, nodeName string) {
 }
 
 func updateCPUManagerPolicy(ctx context.Context, nodeName string, enableCPUManager bool) error {
-	c := testAccProvider.Meta().(*client.Client)
+	c, err := testAccProvider.Meta().(*config.Config).K8sClient()
+	if err != nil {
+		return err
+	}
 	action := "disableCPUManager"
 	if enableCPUManager {
 		action = "enableCPUManager"

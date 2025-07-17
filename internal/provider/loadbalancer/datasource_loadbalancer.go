@@ -8,7 +8,7 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/harvester/terraform-provider-harvester/pkg/client"
+	"github.com/harvester/terraform-provider-harvester/internal/config"
 	"github.com/harvester/terraform-provider-harvester/pkg/constants"
 )
 
@@ -20,7 +20,10 @@ func DataSourceLoadBalancer() *schema.Resource {
 }
 
 func dataSourceLoadBalancerRead(ctx context.Context, data *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	c := meta.(*client.Client)
+	c, err := meta.(*config.Config).K8sClient()
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	namespace := data.Get(constants.FieldCommonNamespace).(string)
 	name := data.Get(constants.FieldCommonName).(string)
 

@@ -11,8 +11,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
+	"github.com/harvester/terraform-provider-harvester/internal/config"
 	"github.com/harvester/terraform-provider-harvester/internal/util"
-	"github.com/harvester/terraform-provider-harvester/pkg/client"
 	"github.com/harvester/terraform-provider-harvester/pkg/constants"
 	"github.com/harvester/terraform-provider-harvester/pkg/helper"
 	"github.com/harvester/terraform-provider-harvester/pkg/importer"
@@ -39,7 +39,10 @@ func ResourceLoadBalancer() *schema.Resource {
 }
 
 func resourceLoadBalancerCreate(ctx context.Context, data *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	c := meta.(*client.Client)
+	c, err := meta.(*config.Config).K8sClient()
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	namespace := data.Get(constants.FieldCommonNamespace).(string)
 	name := data.Get(constants.FieldCommonName).(string)
 	toCreate, err := util.ResourceConstruct(data, Creator(namespace, name))
@@ -58,7 +61,10 @@ func resourceLoadBalancerCreate(ctx context.Context, data *schema.ResourceData, 
 }
 
 func resourceLoadBalancerRead(ctx context.Context, data *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	c := meta.(*client.Client)
+	c, err := meta.(*config.Config).K8sClient()
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	namespace, name, err := helper.IDParts(data.Id())
 	if err != nil {
 		return diag.FromErr(err)
@@ -76,7 +82,10 @@ func resourceLoadBalancerRead(ctx context.Context, data *schema.ResourceData, me
 }
 
 func resourceLoadBalancerUpdate(ctx context.Context, data *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	c := meta.(*client.Client)
+	c, err := meta.(*config.Config).K8sClient()
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	namespace, name, err := helper.IDParts(data.Id())
 	if err != nil {
 		return diag.FromErr(err)
@@ -106,7 +115,10 @@ func resourceLoadBalancerUpdate(ctx context.Context, data *schema.ResourceData, 
 }
 
 func resourceLoadBalancerDelete(ctx context.Context, data *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	c := meta.(*client.Client)
+	c, err := meta.(*config.Config).K8sClient()
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	namespace, name, err := helper.IDParts(data.Id())
 	if err != nil {
 		return diag.FromErr(err)
