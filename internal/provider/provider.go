@@ -72,8 +72,6 @@ func Provider() *schema.Provider {
 			constants.ResourceTypeVLANConfig:      vlanconfig.ResourceVLANConfig(),
 			constants.ResourceTypeVirtualMachine:  virtualmachine.ResourceVirtualMachine(),
 			constants.ResourceTypeVolume:          volume.ResourceVolume(),
-			constants.ResourceTypeCloudInitSecret: cloudinitsecret.ResourceCloudInitSecret(),
-			constants.ResourceTypeSetting:         setting.ResourceSetting(),
 			constants.ResourceTypeBootstrap:       bootstrap.ResourceBootstrap(),
 		},
 		ConfigureContextFunc: providerConfig,

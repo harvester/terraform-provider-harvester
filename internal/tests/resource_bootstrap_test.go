@@ -64,7 +64,7 @@ func testAccBootstrapLogin(ctx context.Context, n string) resource.TestCheckFunc
 			return fmt.Errorf("Resource %s not found. ", n)
 		}
 
-		_, _, err := bootstrap.DoUserLogin(testAccBootstrapAPIURL, "admin", testAccBootstrapPassword, "600", "This is test", "", true)
+		_, _, err := bootstrap.DoUserLogin(testAccBootstrapAPIURL, "admin", testAccBootstrapPassword, 600, "This is test", "", true)
 		return err
 	}
 }
