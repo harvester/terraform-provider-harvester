@@ -1,6 +1,6 @@
 module github.com/harvester/terraform-provider-harvester
 
-go 1.23.4
+go 1.24.5
 
 replace (
 	github.com/harvester/harvester => github.com/harvester/harvester v0.0.0-20250311070330-51fa44d402bd
