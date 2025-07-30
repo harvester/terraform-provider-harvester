@@ -10,21 +10,21 @@ const (
 
 func IntToUint32(v int) uint32 {
 	if v >= MinUint32 && v <= MaxUint32 {
-		return uint32(v)
+		return uint32(v) //nolint:gosec
 	}
 	panic("Overflow during typecast from int to uint32")
 }
 
 func IntToUint(v int) uint {
 	if v >= MinUint {
-		return uint(v)
+		return uint(v) //nolint:gosec
 	}
 	panic("Overflow during typecast from int to uint")
 }
 
 func IntToInt32(v int) int32 {
 	if v >= MinInt32 && v <= MaxInt32 {
-		return int32(v)
+		return int32(v) //nolint:gosec
 	}
 	panic("Overflow during typecast from int to uint")
 }
