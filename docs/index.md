@@ -43,5 +43,6 @@ provider "harvester" {
 
 ### Optional
 
+- **bootstrap** (Boolean) bootstrap harvester server, it will write content to kubeconfig file
 - **kubeconfig** (String) kubeconfig file path or content of the kubeconfig file as base64 encoded string, users can use the KUBECONFIG environment variable instead.
 - **kubecontext** (String) name of the kubernetes context to use

@@ -10,7 +10,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/harvester/terraform-provider-harvester/pkg/client"
+	"github.com/harvester/terraform-provider-harvester/internal/config"
 	"github.com/harvester/terraform-provider-harvester/pkg/constants"
 	"github.com/harvester/terraform-provider-harvester/pkg/helper"
 )
@@ -80,7 +80,10 @@ func testAccSettingExists(ctx context.Context, n string, setting *harvsterv1.Set
 		}
 
 		id := rs.Primary.ID
-		c := testAccProvider.Meta().(*client.Client)
+		c, err := testAccProvider.Meta().(*config.Config).K8sClient()
+		if err != nil {
+			return err
+		}
 
 		_, name, err := helper.IDParts(id)
 		if err != nil {
@@ -107,7 +110,10 @@ func testAccCheckSettingDestroy(ctx context.Context) resource.TestCheckFunc {
 				continue
 			}
 
-			c := testAccProvider.Meta().(*client.Client)
+			c, err := testAccProvider.Meta().(*config.Config).K8sClient()
+			if err != nil {
+				return err
+			}
 			_, name, err := helper.IDParts(rs.Primary.ID)
 			if err != nil {
 				return err

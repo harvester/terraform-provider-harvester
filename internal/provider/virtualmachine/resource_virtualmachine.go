@@ -13,8 +13,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	kubevirtv1 "kubevirt.io/api/core/v1"
 
+	"github.com/harvester/terraform-provider-harvester/internal/config"
 	"github.com/harvester/terraform-provider-harvester/internal/util"
-	"github.com/harvester/terraform-provider-harvester/pkg/client"
 	"github.com/harvester/terraform-provider-harvester/pkg/constants"
 	"github.com/harvester/terraform-provider-harvester/pkg/helper"
 	"github.com/harvester/terraform-provider-harvester/pkg/importer"
@@ -41,7 +41,10 @@ func ResourceVirtualMachine() *schema.Resource {
 }
 
 func resourceVirtualMachineCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	c := meta.(*client.Client)
+	c, err := meta.(*config.Config).K8sClient()
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	namespace := d.Get(constants.FieldCommonNamespace).(string)
 	name := d.Get(constants.FieldCommonName).(string)
 	toCreate, err := util.ResourceConstruct(d, Creator(c, ctx, namespace, name))
@@ -64,7 +67,10 @@ func resourceVirtualMachineCreate(ctx context.Context, d *schema.ResourceData, m
 }
 
 func resourceVirtualMachineUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	c := meta.(*client.Client)
+	c, err := meta.(*config.Config).K8sClient()
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	namespace, name, err := helper.IDParts(d.Id())
 	if err != nil {
 		return diag.FromErr(err)
@@ -109,7 +115,10 @@ func resourceVirtualMachineUpdate(ctx context.Context, d *schema.ResourceData, m
 }
 
 func resourceVirtualMachineRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	c := meta.(*client.Client)
+	c, err := meta.(*config.Config).K8sClient()
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	namespace, name, err := helper.IDParts(d.Id())
 	if err != nil {
 		return diag.FromErr(err)
@@ -133,7 +142,10 @@ func resourceVirtualMachineRead(ctx context.Context, d *schema.ResourceData, met
 }
 
 func resourceVirtualMachineDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	c := meta.(*client.Client)
+	c, err := meta.(*config.Config).K8sClient()
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	namespace, name, err := helper.IDParts(d.Id())
 	if err != nil {
 		return diag.FromErr(err)
@@ -146,24 +158,8 @@ func resourceVirtualMachineDelete(ctx context.Context, d *schema.ResourceData, m
 		}
 		return diag.FromErr(err)
 	}
-	deleteConfigs := make(map[string]bool)
-	if diskList, ok := d.GetOk(constants.FieldVirtualMachineDisk); ok {
-		for _, disk := range diskList.([]interface{}) {
-			r := disk.(map[string]interface{})
-			diskName := r[constants.FieldDiskName].(string)
-			deleteConfigs[diskName] = r[constants.FieldDiskAutoDelete].(bool)
-		}
-	}
-	removedPVCs := make([]string, 0, len(vm.Spec.Template.Spec.Volumes))
-	for _, volume := range vm.Spec.Template.Spec.Volumes {
-		if volume.PersistentVolumeClaim == nil {
-			continue
-		}
-		if autoDelete, ok := deleteConfigs[volume.Name]; ok && !autoDelete {
-			continue
-		}
-		removedPVCs = append(removedPVCs, volume.PersistentVolumeClaim.ClaimName)
-	}
+
+	removedPVCs := getRemovedPVCs(d, vm)
 	vmCopy := vm.DeepCopy()
 	vmCopy.Annotations[harvesterutil.RemovedPVCsAnnotationKey] = strings.Join(removedPVCs, ",")
 	_, err = c.HarvesterClient.KubevirtV1().VirtualMachines(namespace).Update(ctx, vmCopy, metav1.UpdateOptions{})
@@ -238,7 +234,10 @@ func resourceVirtualMachineWaitForState(ctx context.Context, d *schema.ResourceD
 
 func resourceVirtualMachineRefresh(ctx context.Context, d *schema.ResourceData, meta interface{}, namespace, name, oldInstanceUID string) resource.StateRefreshFunc {
 	return func() (interface{}, string, error) {
-		c := meta.(*client.Client)
+		c, err := meta.(*config.Config).K8sClient()
+		if err != nil {
+			return nil, "", err
+		}
 		vm, err := c.HarvesterClient.KubevirtV1().VirtualMachines(namespace).Get(ctx, name, metav1.GetOptions{})
 		if err != nil {
 			if apierrors.IsNotFound(err) {
@@ -276,4 +275,26 @@ func IsNeedRestart(d *schema.ResourceData, runStrategy kubevirtv1.VirtualMachine
 		return d.Get(constants.FieldVirtualMachineRestartAfterUpdate).(bool)
 	}
 	return false
+}
+
+func getRemovedPVCs(d *schema.ResourceData, vm *kubevirtv1.VirtualMachine) []string {
+	deleteConfigs := make(map[string]bool)
+	if diskList, ok := d.GetOk(constants.FieldVirtualMachineDisk); ok {
+		for _, disk := range diskList.([]interface{}) {
+			r := disk.(map[string]interface{})
+			diskName := r[constants.FieldDiskName].(string)
+			deleteConfigs[diskName] = r[constants.FieldDiskAutoDelete].(bool)
+		}
+	}
+	removedPVCs := make([]string, 0, len(vm.Spec.Template.Spec.Volumes))
+	for _, volume := range vm.Spec.Template.Spec.Volumes {
+		if volume.PersistentVolumeClaim == nil {
+			continue
+		}
+		if autoDelete, ok := deleteConfigs[volume.Name]; ok && !autoDelete {
+			continue
+		}
+		removedPVCs = append(removedPVCs, volume.PersistentVolumeClaim.ClaimName)
+	}
+	return removedPVCs
 }

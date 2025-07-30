@@ -11,7 +11,7 @@ import (
 	nadv1 "github.com/k8snetworkplumbingwg/network-attachment-definition-client/pkg/apis/k8s.cni.cncf.io/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/harvester/terraform-provider-harvester/pkg/client"
+	"github.com/harvester/terraform-provider-harvester/internal/config"
 	"github.com/harvester/terraform-provider-harvester/pkg/constants"
 	"github.com/harvester/terraform-provider-harvester/pkg/helper"
 )
@@ -91,7 +91,10 @@ func testAccNetworkExists(ctx context.Context, n string, network *nadv1.NetworkA
 		}
 
 		id := rs.Primary.ID
-		c := testAccProvider.Meta().(*client.Client)
+		c, err := testAccProvider.Meta().(*config.Config).K8sClient()
+		if err != nil {
+			return err
+		}
 
 		namespace, name, err := helper.IDParts(id)
 		if err != nil {
@@ -113,7 +116,10 @@ func testAccCheckNetworkDestroy(ctx context.Context) resource.TestCheckFunc {
 				continue
 			}
 
-			c := testAccProvider.Meta().(*client.Client)
+			c, err := testAccProvider.Meta().(*config.Config).K8sClient()
+			if err != nil {
+				return err
+			}
 			namespace, name, err := helper.IDParts(rs.Primary.ID)
 			if err != nil {
 				return err

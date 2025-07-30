@@ -10,7 +10,7 @@ import (
 	storagev1 "k8s.io/api/storage/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/harvester/terraform-provider-harvester/pkg/client"
+	"github.com/harvester/terraform-provider-harvester/internal/config"
 	"github.com/harvester/terraform-provider-harvester/pkg/constants"
 	"github.com/harvester/terraform-provider-harvester/pkg/helper"
 )
@@ -71,7 +71,10 @@ func testAccStorageClassExists(ctx context.Context, n string, storageClass *stor
 		}
 
 		id := rs.Primary.ID
-		c := testAccProvider.Meta().(*client.Client)
+		c, err := testAccProvider.Meta().(*config.Config).K8sClient()
+		if err != nil {
+			return err
+		}
 
 		_, name, err := helper.IDParts(id)
 		if err != nil {
@@ -93,7 +96,10 @@ func testAccCheckStorageClassDestroy(ctx context.Context) resource.TestCheckFunc
 				continue
 			}
 
-			c := testAccProvider.Meta().(*client.Client)
+			c, err := testAccProvider.Meta().(*config.Config).K8sClient()
+			if err != nil {
+				return err
+			}
 			_, name, err := helper.IDParts(rs.Primary.ID)
 			if err != nil {
 				return err
