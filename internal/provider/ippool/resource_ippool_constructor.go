@@ -5,6 +5,7 @@ import (
 
 	"github.com/harvester/terraform-provider-harvester/internal/util"
 	"github.com/harvester/terraform-provider-harvester/pkg/constants"
+	"github.com/harvester/terraform-provider-harvester/pkg/conversion"
 )
 
 var (
@@ -82,7 +83,7 @@ func (c *Constructor) subresourceIPPoolRangeParser(data interface{}) error {
 func (c *Constructor) subresourceIPPoolSelectorParser(data interface{}) error {
 	ippoolSelector := data.(map[string]interface{})
 
-	priority := uint32(ippoolSelector[constants.FieldSelectorPriority].(int))
+	priority := conversion.IntToUint32(ippoolSelector[constants.FieldSelectorPriority].(int))
 	network := ippoolSelector[constants.FieldSelectorNetwork].(string)
 
 	scopesData := ippoolSelector[constants.SubresourceTypeIPPoolSelectorScope].([]interface{})
