@@ -11,6 +11,7 @@ import (
 
 	"github.com/harvester/terraform-provider-harvester/internal/util"
 	"github.com/harvester/terraform-provider-harvester/pkg/constants"
+	"github.com/harvester/terraform-provider-harvester/pkg/conversion"
 )
 
 var (
@@ -113,9 +114,9 @@ func (c *Constructor) subresourceLoadBalancerListenerParser(data interface{}) er
 	listener := data.(map[string]interface{})
 
 	name := listener[constants.FieldListenerName].(string)
-	port := int32(listener[constants.FieldListenerPort].(int))
+	port := conversion.IntToInt32(listener[constants.FieldListenerPort].(int))
 	protocol := corev1.Protocol(strings.ToUpper(listener[constants.FieldListenerProtocol].(string)))
-	backendPort := int32(listener[constants.FieldListenerBackendPort].(int))
+	backendPort := conversion.IntToInt32(listener[constants.FieldListenerBackendPort].(int))
 
 	c.LoadBalancer.Spec.Listeners = append(c.LoadBalancer.Spec.Listeners, loadbalancerv1.Listener{
 		Name:        name,
@@ -155,11 +156,11 @@ func (c *Constructor) subresourceLoadBalancerBackendSelectorParser(data interfac
 func (c *Constructor) subresourceLoadBalancerHealthCheckParser(data interface{}) error {
 	healthcheck := data.(map[string]interface{})
 
-	port := uint(healthcheck[constants.FieldHealthCheckPort].(int))
-	success := uint(healthcheck[constants.FieldHealthCheckSuccessThreshold].(int))
-	failure := uint(healthcheck[constants.FieldHealthCheckFailureThreshold].(int))
-	period := uint(healthcheck[constants.FieldHealthCheckPeriodSeconds].(int))
-	timeout := uint(healthcheck[constants.FieldHealthCheckTimeoutSeconds].(int))
+	port := conversion.IntToUint(healthcheck[constants.FieldHealthCheckPort].(int))
+	success := conversion.IntToUint(healthcheck[constants.FieldHealthCheckSuccessThreshold].(int))
+	failure := conversion.IntToUint(healthcheck[constants.FieldHealthCheckFailureThreshold].(int))
+	period := conversion.IntToUint(healthcheck[constants.FieldHealthCheckPeriodSeconds].(int))
+	timeout := conversion.IntToUint(healthcheck[constants.FieldHealthCheckTimeoutSeconds].(int))
 
 	c.LoadBalancer.Spec.HealthCheck = &loadbalancerv1.HealthCheck{
 		Port:             port,
