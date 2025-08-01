@@ -13,7 +13,7 @@ func IntToUint32(v int) (uint32, error) {
 }
 
 func IntToUint(v int) (uint, error) {
-	if v >= 0 && v <= math.MaxUint {
+	if v >= 0 {
 		return uint(v), nil //nolint:gosec
 	}
 	return 0, fmt.Errorf("overflow during typecast from int to uint")
