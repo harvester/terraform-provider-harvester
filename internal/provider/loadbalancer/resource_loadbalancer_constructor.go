@@ -2,6 +2,7 @@ package loadbalancer
 
 import (
 	"fmt"
+	"strings"
 
 	loadbalancerv1 "github.com/harvester/harvester-load-balancer/pkg/apis/loadbalancer.harvesterhci.io/v1beta1"
 	corev1 "k8s.io/api/core/v1"
@@ -10,6 +11,7 @@ import (
 
 	"github.com/harvester/terraform-provider-harvester/internal/util"
 	"github.com/harvester/terraform-provider-harvester/pkg/constants"
+	"github.com/harvester/terraform-provider-harvester/pkg/conversion"
 )
 
 var (
@@ -112,9 +114,15 @@ func (c *Constructor) subresourceLoadBalancerListenerParser(data interface{}) er
 	listener := data.(map[string]interface{})
 
 	name := listener[constants.FieldListenerName].(string)
-	port := listener[constants.FieldListenerPort].(int32)
-	protocol := corev1.Protocol(listener[constants.FieldListenerProtocol].(string))
-	backendPort := listener[constants.FieldListenerBackendPort].(int32)
+	port, err := conversion.IntToInt32(listener[constants.FieldListenerPort].(int))
+	if err != nil {
+		return err
+	}
+	protocol := corev1.Protocol(strings.ToUpper(listener[constants.FieldListenerProtocol].(string)))
+	backendPort, err := conversion.IntToInt32(listener[constants.FieldListenerBackendPort].(int))
+	if err != nil {
+		return err
+	}
 
 	c.LoadBalancer.Spec.Listeners = append(c.LoadBalancer.Spec.Listeners, loadbalancerv1.Listener{
 		Name:        name,
@@ -154,11 +162,26 @@ func (c *Constructor) subresourceLoadBalancerBackendSelectorParser(data interfac
 func (c *Constructor) subresourceLoadBalancerHealthCheckParser(data interface{}) error {
 	healthcheck := data.(map[string]interface{})
 
-	port := healthcheck[constants.FieldHealthCheckPort].(uint)
-	success := healthcheck[constants.FieldHealthCheckSuccessThreshold].(uint)
-	failure := healthcheck[constants.FieldHealthCheckFailureThreshold].(uint)
-	period := healthcheck[constants.FieldHealthCheckPeriodSeconds].(uint)
-	timeout := healthcheck[constants.FieldHealthCheckTimeoutSeconds].(uint)
+	port, err := conversion.IntToUint(healthcheck[constants.FieldHealthCheckPort].(int))
+	if err != nil {
+		return err
+	}
+	success, err := conversion.IntToUint(healthcheck[constants.FieldHealthCheckSuccessThreshold].(int))
+	if err != nil {
+		return err
+	}
+	failure, err := conversion.IntToUint(healthcheck[constants.FieldHealthCheckFailureThreshold].(int))
+	if err != nil {
+		return err
+	}
+	period, err := conversion.IntToUint(healthcheck[constants.FieldHealthCheckPeriodSeconds].(int))
+	if err != nil {
+		return err
+	}
+	timeout, err := conversion.IntToUint(healthcheck[constants.FieldHealthCheckTimeoutSeconds].(int))
+	if err != nil {
+		return err
+	}
 
 	c.LoadBalancer.Spec.HealthCheck = &loadbalancerv1.HealthCheck{
 		Port:             port,
