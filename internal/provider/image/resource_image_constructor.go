@@ -24,6 +24,14 @@ func (c *Constructor) Setup() util.Processors {
 		String(constants.FieldImageSourceType, (*string)(&c.Image.Spec.SourceType), true)
 	customProcessors := []util.Processor{
 		{
+			Field: constants.FieldImageBackend,
+			Parser: func(i interface{}) error {
+				c.Image.Spec.Backend = harvsterv1.VMIBackend(i.(string))
+				return nil
+			},
+			Required: true,
+		},
+		{
 			Field: constants.FieldImageURL,
 			Parser: func(i interface{}) error {
 				imageURL := i.(string)
@@ -63,6 +71,9 @@ func (c *Constructor) Setup() util.Processors {
 			Field: constants.FieldImageStorageClassName,
 			Parser: func(i interface{}) error {
 				storageClassName := i.(string)
+				if storageClassName == "" && c.Image.Spec.Backend == harvsterv1.VMIBackendCDI {
+					return errors.New("must specify image storage_class_name if image backend is cdi")
+				}
 				c.Image.Annotations[harvsterutil.AnnotationStorageClassName] = storageClassName
 				return nil
 			},
