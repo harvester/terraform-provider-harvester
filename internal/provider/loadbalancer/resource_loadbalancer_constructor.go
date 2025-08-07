@@ -40,6 +40,11 @@ func (c *Constructor) Setup() util.Processors {
 			Required: false,
 		},
 		{
+			Field:    constants.FieldLoadBalancerIPPool,
+			Parser:   c.subresourceLoadBalancerIPPoolParser,
+			Required: false,
+		},
+		{
 			Field:    constants.SubresourceTypeLoadBalancerListener,
 			Parser:   c.subresourceLoadBalancerListenerParser,
 			Required: true,
@@ -90,7 +95,7 @@ func Updater(loadbalancer *loadbalancerv1.LoadBalancer) util.Constructor {
 func (c *Constructor) subresourceLoadBalancerWorkloadTypeParser(data interface{}) error {
 	workloadType := data.(string)
 
-	if workloadType != "vm" && workloadType != "cluster" {
+	if workloadType != constants.LoadBalancerWorkloadTypeVM && workloadType != constants.LoadBalancerWorkloadTypeCluster {
 		return fmt.Errorf("invalid value for workload type: %v", workloadType)
 	}
 
@@ -102,11 +107,18 @@ func (c *Constructor) subresourceLoadBalancerWorkloadTypeParser(data interface{}
 func (c *Constructor) subresourceLoadBalancerIPAMParser(data interface{}) error {
 	ipam := data.(string)
 
-	if ipam != "dhcp" && ipam != "cluster" {
+	if ipam != constants.LoadBalancerIPAMPool && ipam != constants.LoadBalancerIPAMDHCP {
 		return fmt.Errorf("invalid value for IPAM: %v", ipam)
 	}
 
 	c.LoadBalancer.Spec.IPAM = loadbalancerv1.IPAM(ipam)
+	return nil
+}
+
+func (c *Constructor) subresourceLoadBalancerIPPoolParser(data interface{}) error {
+	pool := data.(string)
+
+	c.LoadBalancer.Spec.IPPool = pool
 	return nil
 }
 
