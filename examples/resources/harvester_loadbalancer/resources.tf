@@ -11,34 +11,39 @@ resource "harvester_loadbalancer" "service_loadbalancer" {
   ]
 
   listener {
+    # Each listener must have a unique name
+    name         = "https"
     port         = 443
     protocol     = "tcp"
-    backend_port = 8080
+    backend_port = 8443
   }
 
   listener {
+    name         = "http"
     port         = 80
     protocol     = "tcp"
     backend_port = 8080
   }
 
-  ipam   = "ippool"
+  # Can be "pool" or "dhcp"
+  ipam   = "pool"
+
+  # Only applicable if ipam="pool"
   ippool = "service-ips"
 
+  # Can be "vm" or "cluster"
   workload_type = "vm"
 
+  # This must be a label on the VirtualMachineInstance
   backend_selector {
-    key    = "app"
-    values = ["test"]
-  }
-
-  backend_selector {
-    key    = "component"
-    values = ["frontend", "ui"]
+    key    = "harvesterhci.io/vmName"
+    values = ["testVM"]
   }
 
   healthcheck {
-    port              = 443
+    # Must be the same as one of the listener backend ports
+    port              = 8080
+
     success_threshold = 1
     failure_threshold = 3
     period_seconds    = 10
