@@ -26,7 +26,7 @@ resource "harvester_loadbalancer" "service_loadbalancer" {
   }
 
   # Can be "pool" or "dhcp"
-  ipam   = "pool"
+  ipam = "pool"
 
   # Only applicable if ipam="pool"
   ippool = "service-ips"
@@ -42,7 +42,7 @@ resource "harvester_loadbalancer" "service_loadbalancer" {
 
   healthcheck {
     # Must be the same as one of the listener backend ports
-    port              = 8080
+    port = 8080
 
     success_threshold = 1
     failure_threshold = 3
