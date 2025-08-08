@@ -15,6 +15,16 @@ const (
 
 func Schema() map[string]*schema.Schema {
 	s := map[string]*schema.Schema{
+		constants.FieldImageBackend: {
+			Type:     schema.TypeString,
+			Optional: true,
+			Default:  string(harvsterv1.VMIBackendBackingImage),
+			ValidateFunc: validation.StringInSlice([]string{
+				string(harvsterv1.VMIBackendBackingImage),
+				string(harvsterv1.VMIBackendCDI),
+			}, false),
+			Description: "The backend type of the image, either 'backing-image' or 'cdi'.",
+		},
 		constants.FieldImageDisplayName: {
 			Type:         schema.TypeString,
 			Required:     true,
