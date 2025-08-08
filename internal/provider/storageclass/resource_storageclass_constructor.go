@@ -1,6 +1,7 @@
 package storageclass
 
 import (
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	corev1 "k8s.io/api/core/v1"
 	storagev1 "k8s.io/api/storage/v1"
 
@@ -60,6 +61,33 @@ func (c *Constructor) Setup() util.Processors {
 			Field: constants.FieldStorageClassParameters,
 			Parser: func(i interface{}) error {
 				c.StorageClass.Parameters = util.MapMerge(nil, "", i.(map[string]interface{}))
+				return nil
+			},
+		},
+		{
+			Field: constants.FieldStorageClassAllowedTopologies,
+			Parser: func(i interface{}) error {
+				if c.StorageClass.AllowedTopologies == nil {
+					c.StorageClass.AllowedTopologies = []corev1.TopologySelectorTerm{}
+				}
+				allowedTopologiesRequirements := []corev1.TopologySelectorLabelRequirement{}
+				if itemMap, ok := i.(map[string]interface{}); ok {
+					for _, requirement := range itemMap["match_label_expressions"].([]interface{}) {
+						if requirementMap, ok := requirement.(map[string]interface{}); ok {
+							values := []string{}
+							for _, value := range requirementMap["values"].(*schema.Set).List() {
+								values = append(values, value.(string))
+							}
+							allowedTopologiesRequirements = append(allowedTopologiesRequirements, corev1.TopologySelectorLabelRequirement{
+								Key:    requirementMap["key"].(string),
+								Values: values,
+							})
+						}
+					}
+				}
+				c.StorageClass.AllowedTopologies = append(c.StorageClass.AllowedTopologies, corev1.TopologySelectorTerm{
+					MatchLabelExpressions: allowedTopologiesRequirements,
+				})
 				return nil
 			},
 		},
