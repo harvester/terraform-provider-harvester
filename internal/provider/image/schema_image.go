@@ -18,11 +18,13 @@ func Schema() map[string]*schema.Schema {
 		constants.FieldImageDisplayName: {
 			Type:         schema.TypeString,
 			Required:     true,
+			ForceNew:     true,
 			ValidateFunc: validation.NoZeroValues,
 		},
 		constants.FieldImageURL: {
 			Type:         schema.TypeString,
 			Optional:     true,
+			ForceNew:     true,
 			ValidateFunc: validation.IsURLWithHTTPorHTTPS,
 			Description:  URLDescription,
 		},
@@ -57,6 +59,8 @@ func Schema() map[string]*schema.Schema {
 		constants.FieldImageStorageClassName: {
 			Type:         schema.TypeString,
 			Optional:     true,
+			Computed:     true,
+			ForceNew:     true,
 			ValidateFunc: util.IsValidName,
 		},
 		constants.FieldImageStorageClassParameters: {
