@@ -52,6 +52,7 @@ data "harvester_virtualmachine" "opensuse154" {
 - **message** (String)
 - **network_interface** (List of Object) (see [below for nested schema](#nestedatt--network_interface))
 - **node_name** (String)
+- **node_selector** (Map of String) Node selector for scheduling the VM. The key is the label key and the value is the label value.
 - **reserved_memory** (String)
 - **restart_after_update** (Boolean) restart vm after the vm is updated
 - **run_strategy** (String) more info: https://kubevirt.io/user-guide/virtual_machines/run_strategies/

@@ -207,6 +207,7 @@ resource "harvester_virtualmachine" "opensuse154" {
 - **machine_type** (String)
 - **memory** (String)
 - **namespace** (String)
+- **node_selector** (Map of String) Node selector for scheduling the VM. The key is the label key and the value is the label value.
 - **reserved_memory** (String)
 - **restart_after_update** (Boolean) restart vm after the vm is updated
 - **run_strategy** (String) more info: https://kubevirt.io/user-guide/virtual_machines/run_strategies/
