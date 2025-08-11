@@ -393,6 +393,7 @@ func ResourceVirtualMachineStateGetter(vm *kubevirtv1.VirtualMachine, vmi *kubev
 			constants.FieldVirtualMachineSecureBoot:            vmImporter.SecureBoot(),
 			constants.FieldVirtualMachineCPUPinning:            vmImporter.DedicatedCPUPlacement(),
 			constants.FieldVirtualMachineIsolateEmulatorThread: vmImporter.IsolateEmulatorThread(),
+			constants.FieldVirtualMachineNodeSelector:          vm.Spec.Template.Spec.NodeSelector,
 		},
 	}, nil
 }
