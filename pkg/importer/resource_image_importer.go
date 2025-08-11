@@ -18,6 +18,7 @@ func ResourceImageStateGetter(obj *harvsterv1.VirtualMachineImage) (*StateGetter
 		constants.FieldImageDisplayName:            obj.Spec.DisplayName,
 		constants.FieldImageSourceType:             obj.Spec.SourceType,
 		constants.FieldImageURL:                    obj.Spec.URL,
+		constants.FieldImageChecksum:               obj.Spec.Checksum,
 		constants.FieldImagePVCNamespace:           obj.Spec.PVCNamespace,
 		constants.FieldImagePVCName:                obj.Spec.PVCName,
 		constants.FieldImageProgress:               obj.Status.Progress,
