@@ -49,6 +49,8 @@ func ResourceNetworkStateGetter(obj *nadv1.NetworkAttachmentDefinition) (*StateG
 		constants.FieldNetworkConfig:             obj.Spec.Config,
 		constants.FieldNetworkRouteMode:          layer3NetworkConf.Mode,
 		constants.FieldNetworkRouteDHCPServerIP:  layer3NetworkConf.ServerIPAddr,
+		constants.FieldNetworkRouteCIDR:          layer3NetworkConf.CIDR,
+		constants.FieldNetworkRouteGateWay:       layer3NetworkConf.Gateway,
 		constants.FieldNetworkRouteConnectivity:  layer3NetworkConf.Connectivity,
 		constants.FieldNetworkClusterNetworkName: obj.Labels[networkutils.KeyClusterNetworkLabel],
 	}
