@@ -3,6 +3,7 @@ package constants
 const (
 	ResourceTypeImage = "harvester_image"
 
+	FieldImageBackend                = "backend"
 	FieldImageDisplayName            = "display_name"
 	FieldImageURL                    = "url"
 	FieldImagePVCNamespace           = "pvc_namespace"
