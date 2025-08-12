@@ -36,6 +36,7 @@ data "harvester_image" "ssd-replicas-3" {
 ### Read-Only
 
 - **allow_volume_expansion** (Boolean)
+- **allowed_topologies** (List of Object) Restrict the node topologies where volumes can be dynamically provisioned. (see [below for nested schema](#nestedatt--allowed_topologies))
 - **description** (String) Any text you want that better describes this resource
 - **is_default** (Boolean)
 - **message** (String)
@@ -45,5 +46,20 @@ data "harvester_image" "ssd-replicas-3" {
 - **tags** (Map of String)
 - **volume_binding_mode** (String)
 - **volume_provisioner** (String)
+
+<a id="nestedatt--allowed_topologies"></a>
+### Nested Schema for `allowed_topologies`
+
+Read-Only:
+
+- **match_label_expressions** (List of Object) (see [below for nested schema](#nestedobjatt--allowed_topologies--match_label_expressions))
+
+<a id="nestedobjatt--allowed_topologies--match_label_expressions"></a>
+### Nested Schema for `allowed_topologies.match_label_expressions`
+
+Read-Only:
+
+- **key** (String)
+- **values** (Set of String)
 
 

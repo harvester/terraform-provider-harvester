@@ -55,6 +55,37 @@ func Schema() map[string]*schema.Schema {
 			Required:    true,
 			Description: "refer to https://longhorn.io/docs/latest/volumes-and-nodes/storage-tags. \"migratable\": \"true\" is required for Harvester Virtual Machine LiveMigration",
 		},
+		constants.FieldStorageClassAllowedTopologies: {
+			Type:        schema.TypeList,
+			Description: "Restrict the node topologies where volumes can be dynamically provisioned.",
+			Optional:    true,
+			ForceNew:    true,
+			MaxItems:    1,
+			Elem: &schema.Resource{
+				Schema: map[string]*schema.Schema{
+					constants.FieldStorageClassMatchLabelExpressions: {
+						Type:        schema.TypeList,
+						Description: "A list of topology selector requirements by labels.",
+						Optional:    true,
+						Elem: &schema.Resource{
+							Schema: map[string]*schema.Schema{
+								"key": {
+									Type:        schema.TypeString,
+									Description: "The label key that the selector applies to.",
+									Optional:    true,
+								},
+								"values": {
+									Type:        schema.TypeSet,
+									Description: "An array of string values. One value must match the label to be selected.",
+									Optional:    true,
+									Elem:        &schema.Schema{Type: schema.TypeString},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
 	}
 	util.NonNamespacedSchemaWrap(s)
 	return s
