@@ -18,6 +18,7 @@ const (
 	FieldImageCryptoOperation        = "crypto_operation"
 	FieldImageSourceImageName        = "source_image_name"
 	FieldImageSourceImageNamespace   = "source_image_namespace"
+	FieldImageChecksum               = "checksum"
 
 	StateImageUploading    = "Uploading"
 	StateImageDownloading  = "Downloading"

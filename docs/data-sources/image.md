@@ -37,6 +37,7 @@ data "harvester_image" "opensuse154" {
 ### Read-Only
 
 - **backend** (String) The backend type of the image, either 'backing-image' or 'cdi'.
+- **checksum** (String) SHA-512 checksum of the image
 - **description** (String) Any text you want that better describes this resource
 - **message** (String)
 - **progress** (Number)

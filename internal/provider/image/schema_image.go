@@ -88,6 +88,12 @@ func Schema() map[string]*schema.Schema {
 			Description:  "Security parameters for encryption/decryption operations. When specified, source_type must be 'clone'. Required keys: crypto_operation, source_image_name, source_image_namespace",
 			ValidateFunc: validateSecurityParameters,
 		},
+		constants.FieldImageChecksum: {
+			Type:        schema.TypeString,
+			Optional:    true,
+			ForceNew:    true,
+			Description: "SHA-512 checksum of the image",
+		},
 	}
 	util.NamespacedSchemaWrap(s, false)
 	return s
