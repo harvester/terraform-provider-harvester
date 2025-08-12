@@ -382,6 +382,17 @@ func (c *Constructor) Setup() util.Processors {
 				return nil
 			},
 		},
+		{
+			Field: constants.FieldVirtualMachineNodeSelector,
+			Parser: func(i interface{}) error {
+				v := i.(map[string]interface{})
+				vmBuilder.VirtualMachine.Spec.Template.Spec.NodeSelector = make(map[string]string)
+				for k, val := range v {
+					vmBuilder.VirtualMachine.Spec.Template.Spec.NodeSelector[k] = val.(string)
+				}
+				return nil
+			},
+		},
 	}
 	return append(processors, customProcessors...)
 }

@@ -142,6 +142,11 @@ please use %s instead of this deprecated field:
 			Optional:    true,
 			Default:     false,
 		},
+		constants.FieldVirtualMachineNodeSelector: {
+			Type:        schema.TypeMap,
+			Description: "Node selector for scheduling the VM. The key is the label key and the value is the label value.",
+			Optional:    true,
+		},
 	}
 	util.NamespacedSchemaWrap(s, false)
 	s[constants.FieldCommonTags].Description = "The tag is reflected as label on the VM.\n" +
