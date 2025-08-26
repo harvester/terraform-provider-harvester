@@ -601,7 +601,7 @@ func updateCPUManagerPolicy(ctx context.Context, nodeName string, enableCPUManag
 	if err != nil {
 		return fmt.Errorf("failed to send request: %v", err)
 	}
-	defer resp.Body.Close()
+	defer resp.Body.Close() //nolint:errcheck
 
 	if resp.StatusCode != http.StatusNoContent && resp.StatusCode != http.StatusOK {
 		bodyBytes, err := io.ReadAll(resp.Body)
