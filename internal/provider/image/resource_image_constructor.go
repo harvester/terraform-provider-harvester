@@ -68,6 +68,14 @@ func (c *Constructor) Setup() util.Processors {
 			Required: true,
 		},
 		{
+			Field: constants.FieldImageChecksum,
+			Parser: func(i interface{}) error {
+				checksum := i.(string)
+				c.Image.Spec.Checksum = checksum
+				return nil
+			},
+		},
+		{
 			Field: constants.FieldImageStorageClassName,
 			Parser: func(i interface{}) error {
 				storageClassName := i.(string)
