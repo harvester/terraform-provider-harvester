@@ -4,5 +4,8 @@
     ],
     "baseBranches": [
         "master"
+    ],
+    "ignorePaths": [
+        "**/package/**"
     ]
 }
