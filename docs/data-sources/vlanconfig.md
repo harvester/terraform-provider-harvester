@@ -23,31 +23,26 @@ data "harvester_vlanconfig" "foo" {
 
 ### Required
 
-- **name** (String) A unique name
-
-### Optional
-
-- **id** (String) The ID of this resource.
+- `name` (String) A unique name
 
 ### Read-Only
 
-- **cluster_network_name** (String) mgmt is a built-in cluster network and does not support creating/updating network configs.
-- **description** (String) Any text you want that better describes this resource
-- **matched_nodes** (List of String)
-- **message** (String)
-- **node_selector** (Map of String) refer to https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#nodeselector
-- **state** (String)
-- **tags** (Map of String)
-- **uplink** (List of Object) (see [below for nested schema](#nestedatt--uplink))
+- `cluster_network_name` (String) mgmt is a built-in cluster network and does not support creating/updating network configs.
+- `description` (String) Any text you want that better describes this resource
+- `id` (String) The ID of this resource.
+- `matched_nodes` (List of String)
+- `message` (String)
+- `node_selector` (Map of String) refer to https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#nodeselector
+- `state` (String)
+- `tags` (Map of String)
+- `uplink` (List of Object) (see [below for nested schema](#nestedatt--uplink))
 
 <a id="nestedatt--uplink"></a>
 ### Nested Schema for `uplink`
 
 Read-Only:
 
-- **bond_miimon** (Number)
-- **bond_mode** (String)
-- **mtu** (Number)
-- **nics** (List of String)
-
-
+- `bond_miimon` (Number)
+- `bond_mode` (String)
+- `mtu` (Number)
+- `nics` (List of String)
