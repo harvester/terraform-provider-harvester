@@ -70,39 +70,41 @@ resource "harvester_cloudinit_secret" "cloud-config-ubuntu20" {
 
 ### Required
 
-- **name** (String) A unique name
+- `name` (String) A unique name
 
 ### Optional
 
-- **description** (String) Any text you want that better describes this resource
-- **id** (String) The ID of this resource.
-- **namespace** (String)
-- **network_data** (String)
-- **network_data_base64** (String)
-- **tags** (Map of String)
-- **timeouts** (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))
-- **user_data** (String)
-- **user_data_base64** (String)
+- `description` (String) Any text you want that better describes this resource
+- `namespace` (String)
+- `network_data` (String)
+- `network_data_base64` (String)
+- `tags` (Map of String)
+- `timeouts` (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))
+- `user_data` (String)
+- `user_data_base64` (String)
 
 ### Read-Only
 
-- **message** (String)
-- **state** (String)
+- `id` (String) The ID of this resource.
+- `message` (String)
+- `state` (String)
 
 <a id="nestedblock--timeouts"></a>
 ### Nested Schema for `timeouts`
 
 Optional:
 
-- **create** (String)
-- **default** (String)
-- **delete** (String)
-- **read** (String)
-- **update** (String)
+- `create` (String)
+- `default` (String)
+- `delete` (String)
+- `read` (String)
+- `update` (String)
 
 ## Import
 
 Import is supported using the following syntax:
+
+The [`terraform import` command](https://developer.hashicorp.com/terraform/cli/commands/import) can be used, for example:
 
 ```shell
 terraform import harvester_cloudinit_secret.foo <Namespace>/<Name>
