@@ -17,33 +17,33 @@ description: |-
 
 ### Required
 
-- **name** (String) A unique name
+- `name` (String) A unique name
 
 ### Optional
 
-- **id** (String) The ID of this resource.
-- **namespace** (String)
+- `namespace` (String)
 
 ### Read-Only
 
-- **backend_selector** (Set of Object) (see [below for nested schema](#nestedatt--backend_selector))
-- **description** (String) Any text you want that better describes this resource
-- **healthcheck** (List of Object) (see [below for nested schema](#nestedatt--healthcheck))
-- **ipam** (String) Where the load balancer gets its IP address from. Can be `dhcp` or `pool`.
-- **ippool** (String) Which IP pool to get the IP address from.
-- **listener** (List of Object) (see [below for nested schema](#nestedatt--listener))
-- **message** (String)
-- **state** (String)
-- **tags** (Map of String)
-- **workload_type** (String) Can be `vm` or `cluster`
+- `backend_selector` (Set of Object) (see [below for nested schema](#nestedatt--backend_selector))
+- `description` (String) Any text you want that better describes this resource
+- `healthcheck` (List of Object) (see [below for nested schema](#nestedatt--healthcheck))
+- `id` (String) The ID of this resource.
+- `ipam` (String) Where the load balancer gets its IP address from. Can be `dhcp` or `pool`.
+- `ippool` (String) Which IP pool to get the IP address from.
+- `listener` (List of Object) (see [below for nested schema](#nestedatt--listener))
+- `message` (String)
+- `state` (String)
+- `tags` (Map of String)
+- `workload_type` (String) Can be `vm` or `cluster`
 
 <a id="nestedatt--backend_selector"></a>
 ### Nested Schema for `backend_selector`
 
 Read-Only:
 
-- **key** (String)
-- **values** (List of String)
+- `key` (String)
+- `values` (List of String)
 
 
 <a id="nestedatt--healthcheck"></a>
@@ -51,11 +51,11 @@ Read-Only:
 
 Read-Only:
 
-- **failure_threshold** (Number)
-- **period_seconds** (Number)
-- **port** (Number)
-- **success_threshold** (Number)
-- **timeout_seconds** (Number)
+- `failure_threshold` (Number)
+- `period_seconds` (Number)
+- `port` (Number)
+- `success_threshold` (Number)
+- `timeout_seconds` (Number)
 
 
 <a id="nestedatt--listener"></a>
@@ -63,9 +63,7 @@ Read-Only:
 
 Read-Only:
 
-- **backend_port** (Number)
-- **name** (String)
-- **port** (Number)
-- **protocol** (String)
-
-
+- `backend_port` (Number)
+- `name` (String)
+- `port` (Number)
+- `protocol` (String)

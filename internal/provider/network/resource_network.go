@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	nadv1 "github.com/k8snetworkplumbingwg/network-attachment-definition-client/pkg/apis/k8s.cni.cncf.io/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -119,7 +119,7 @@ func resourceNetworkDelete(ctx context.Context, d *schema.ResourceData, meta int
 		return diag.FromErr(err)
 	}
 
-	stateConf := &resource.StateChangeConf{
+	stateConf := &retry.StateChangeConf{
 		Pending:    []string{constants.StateCommonActive},
 		Target:     []string{constants.StateCommonRemoved},
 		Refresh:    resourceNetworkRefresh(ctx, d, meta),
@@ -143,7 +143,7 @@ func resourceNetworkImport(d *schema.ResourceData, obj *nadv1.NetworkAttachmentD
 	return util.ResourceStatesSet(d, stateGetter)
 }
 
-func resourceNetworkRefresh(ctx context.Context, d *schema.ResourceData, meta interface{}) resource.StateRefreshFunc {
+func resourceNetworkRefresh(ctx context.Context, d *schema.ResourceData, meta interface{}) retry.StateRefreshFunc {
 	return func() (interface{}, string, error) {
 		c, err := meta.(*config.Config).K8sClient()
 		if err != nil {

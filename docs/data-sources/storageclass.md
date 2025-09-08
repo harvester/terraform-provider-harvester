@@ -27,23 +27,18 @@ data "harvester_image" "ssd-replicas-3" {
 
 ### Required
 
-- **name** (String) A unique name
-
-### Optional
-
-- **id** (String) The ID of this resource.
+- `name` (String) A unique name
 
 ### Read-Only
 
-- **allow_volume_expansion** (Boolean)
-- **description** (String) Any text you want that better describes this resource
-- **is_default** (Boolean)
-- **message** (String)
-- **parameters** (Map of String) refer to https://longhorn.io/docs/latest/volumes-and-nodes/storage-tags. "migratable": "true" is required for Harvester Virtual Machine LiveMigration
-- **reclaim_policy** (String)
-- **state** (String)
-- **tags** (Map of String)
-- **volume_binding_mode** (String)
-- **volume_provisioner** (String)
-
-
+- `allow_volume_expansion` (Boolean)
+- `description` (String) Any text you want that better describes this resource
+- `id` (String) The ID of this resource.
+- `is_default` (Boolean)
+- `message` (String)
+- `parameters` (Map of String) refer to https://longhorn.io/docs/latest/volumes-and-nodes/storage-tags. "migratable": "true" is required for Harvester Virtual Machine LiveMigration
+- `reclaim_policy` (String)
+- `state` (String)
+- `tags` (Map of String)
+- `volume_binding_mode` (String)
+- `volume_provisioner` (String)

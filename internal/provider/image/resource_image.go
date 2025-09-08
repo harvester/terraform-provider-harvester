@@ -7,7 +7,7 @@ import (
 
 	harvsterv1 "github.com/harvester/harvester/pkg/apis/harvesterhci.io/v1beta1"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -120,7 +120,7 @@ func resourceImageDelete(ctx context.Context, d *schema.ResourceData, meta inter
 		return diag.FromErr(err)
 	}
 
-	stateConf := &resource.StateChangeConf{
+	stateConf := &retry.StateChangeConf{
 		Pending:    []string{constants.StateImageTerminating, constants.StateCommonActive},
 		Target:     []string{constants.StateCommonRemoved},
 		Refresh:    resourceImageRefresh(ctx, d, meta),
@@ -146,7 +146,7 @@ func resourceImageImport(d *schema.ResourceData, obj *harvsterv1.VirtualMachineI
 }
 
 func resourceImageWaitForState(ctx context.Context, d *schema.ResourceData, meta interface{}, timeOutKey string) error {
-	stateConf := &resource.StateChangeConf{
+	stateConf := &retry.StateChangeConf{
 		Pending:    []string{constants.StateImageInitializing, constants.StateImageDownloading, constants.StateImageUploading, constants.StateImageExporting},
 		Target:     []string{constants.StateCommonActive},
 		Refresh:    resourceImageRefresh(ctx, d, meta),
@@ -158,7 +158,7 @@ func resourceImageWaitForState(ctx context.Context, d *schema.ResourceData, meta
 	return err
 }
 
-func resourceImageRefresh(ctx context.Context, d *schema.ResourceData, meta interface{}) resource.StateRefreshFunc {
+func resourceImageRefresh(ctx context.Context, d *schema.ResourceData, meta interface{}) retry.StateRefreshFunc {
 	return func() (interface{}, string, error) {
 		c, err := meta.(*config.Config).K8sClient()
 		if err != nil {

@@ -24,20 +24,18 @@ data "harvester_ssh_key" "mysshkey" {
 
 ### Required
 
-- **name** (String) A unique name
+- `name` (String) A unique name
 
 ### Optional
 
-- **id** (String) The ID of this resource.
-- **namespace** (String)
+- `namespace` (String)
 
 ### Read-Only
 
-- **description** (String) Any text you want that better describes this resource
-- **fingerprint** (String)
-- **message** (String)
-- **public_key** (String)
-- **state** (String)
-- **tags** (Map of String)
-
-
+- `description` (String) Any text you want that better describes this resource
+- `fingerprint` (String)
+- `id` (String) The ID of this resource.
+- `message` (String)
+- `public_key` (String)
+- `state` (String)
+- `tags` (Map of String)

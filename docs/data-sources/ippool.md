@@ -30,30 +30,27 @@ data "harvester_ippool" "service_ips" {
 
 ### Required
 
-- **name** (String) A unique name
-
-### Optional
-
-- **id** (String) The ID of this resource.
+- `name` (String) A unique name
 
 ### Read-Only
 
-- **description** (String) Any text you want that better describes this resource
-- **message** (String)
-- **range** (List of Object) IP Range belonging to this pool, can be given multiple times (see [below for nested schema](#nestedatt--range))
-- **selector** (List of Object) (see [below for nested schema](#nestedatt--selector))
-- **state** (String)
-- **tags** (Map of String)
+- `description` (String) Any text you want that better describes this resource
+- `id` (String) The ID of this resource.
+- `message` (String)
+- `range` (List of Object) IP Range belonging to this pool, can be given multiple times (see [below for nested schema](#nestedatt--range))
+- `selector` (List of Object) (see [below for nested schema](#nestedatt--selector))
+- `state` (String)
+- `tags` (Map of String)
 
 <a id="nestedatt--range"></a>
 ### Nested Schema for `range`
 
 Read-Only:
 
-- **end** (String)
-- **gateway** (String)
-- **start** (String)
-- **subnet** (String)
+- `end` (String)
+- `gateway` (String)
+- `start` (String)
+- `subnet` (String)
 
 
 <a id="nestedatt--selector"></a>
@@ -61,17 +58,15 @@ Read-Only:
 
 Read-Only:
 
-- **network** (String)
-- **priority** (Number)
-- **scope** (List of Object) (see [below for nested schema](#nestedobjatt--selector--scope))
+- `network` (String)
+- `priority` (Number)
+- `scope` (List of Object) (see [below for nested schema](#nestedobjatt--selector--scope))
 
 <a id="nestedobjatt--selector--scope"></a>
 ### Nested Schema for `selector.scope`
 
 Read-Only:
 
-- **guest_cluster** (String)
-- **namespace** (String)
-- **project** (String)
-
-
+- `guest_cluster` (String)
+- `namespace` (String)
+- `project` (String)
