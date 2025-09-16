@@ -7,7 +7,7 @@ import (
 
 	harvesterutil "github.com/harvester/harvester/pkg/util"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -172,7 +172,7 @@ func resourceVirtualMachineDelete(ctx context.Context, d *schema.ResourceData, m
 		return diag.FromErr(err)
 	}
 
-	stateConf := &resource.StateChangeConf{
+	stateConf := &retry.StateChangeConf{
 		Pending: []string{
 			constants.StateCommonReady,
 			constants.StateCommonFailed,
@@ -220,7 +220,7 @@ func resourceVirtualMachineWaitForState(ctx context.Context, d *schema.ResourceD
 	default:
 		return nil
 	}
-	stateConf := &resource.StateChangeConf{
+	stateConf := &retry.StateChangeConf{
 		Pending:    pending,
 		Target:     target,
 		Refresh:    resourceVirtualMachineRefresh(ctx, d, meta, namespace, name, oldInstanceUID),
@@ -232,7 +232,7 @@ func resourceVirtualMachineWaitForState(ctx context.Context, d *schema.ResourceD
 	return err
 }
 
-func resourceVirtualMachineRefresh(ctx context.Context, d *schema.ResourceData, meta interface{}, namespace, name, oldInstanceUID string) resource.StateRefreshFunc {
+func resourceVirtualMachineRefresh(ctx context.Context, d *schema.ResourceData, meta interface{}, namespace, name, oldInstanceUID string) retry.StateRefreshFunc {
 	return func() (interface{}, string, error) {
 		c, err := meta.(*config.Config).K8sClient()
 		if err != nil {

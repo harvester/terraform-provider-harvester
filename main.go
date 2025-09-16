@@ -21,10 +21,13 @@ func main() {
 	opts := &plugin.ServeOpts{ProviderFunc: provider.Provider}
 
 	if debugMode {
-		err := plugin.Debug(context.Background(), "registry.terraform.io/harvester/harvester", opts)
+		reattachConfig, closeCh, err := plugin.DebugServe(context.Background(), opts)
 		if err != nil {
 			log.Fatal(err.Error())
 		}
+
+		log.Printf("Provider running in debug mode. To attach a debugger, use the following reattach config: %+v", reattachConfig)
+		<-closeCh
 		return
 	}
 
