@@ -4,7 +4,7 @@ import (
 	"time"
 
 	harvsternetworkv1 "github.com/harvester/harvester-network-controller/pkg/apis/network.harvesterhci.io/v1beta1"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -13,7 +13,7 @@ import (
 )
 
 func (c *Constructor) waitForClusterNetworkReady(name string, timeout time.Duration) error {
-	stateConf := &resource.StateChangeConf{
+	stateConf := &retry.StateChangeConf{
 		Pending:    []string{constants.StateCommonActive},
 		Target:     []string{constants.StateCommonReady},
 		Refresh:    c.clusterNetworkStateRefresh(name),
@@ -25,7 +25,7 @@ func (c *Constructor) waitForClusterNetworkReady(name string, timeout time.Durat
 	return err
 }
 
-func (c *Constructor) clusterNetworkStateRefresh(name string) resource.StateRefreshFunc {
+func (c *Constructor) clusterNetworkStateRefresh(name string) retry.StateRefreshFunc {
 	return func() (interface{}, string, error) {
 		obj, err := c.Client.HarvesterNetworkClient.NetworkV1beta1().ClusterNetworks().Get(c.Context, name, metav1.GetOptions{})
 		if err != nil {

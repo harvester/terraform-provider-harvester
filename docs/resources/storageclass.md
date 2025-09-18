@@ -57,41 +57,41 @@ resource "harvester_storageclass" "lvm" {
 
 ### Required
 
-- **name** (String) A unique name
-- **parameters** (Map of String) refer to https://longhorn.io/docs/latest/volumes-and-nodes/storage-tags. "migratable": "true" is required for Harvester Virtual Machine LiveMigration
+- `name` (String) A unique name
+- `parameters` (Map of String) refer to https://longhorn.io/docs/latest/volumes-and-nodes/storage-tags. "migratable": "true" is required for Harvester Virtual Machine LiveMigration
 
 ### Optional
 
-- **allow_volume_expansion** (Boolean)
-- **allowed_topologies** (Block List, Max: 1) Restrict the node topologies where volumes can be dynamically provisioned. (see [below for nested schema](#nestedblock--allowed_topologies))
-- **description** (String) Any text you want that better describes this resource
-- **id** (String) The ID of this resource.
-- **is_default** (Boolean)
-- **reclaim_policy** (String)
-- **tags** (Map of String)
-- **timeouts** (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))
-- **volume_binding_mode** (String)
-- **volume_provisioner** (String)
+- `allow_volume_expansion` (Boolean)
+- `allowed_topologies` (Block List, Max: 1) Restrict the node topologies where volumes can be dynamically provisioned. (see [below for nested schema](#nestedblock--allowed_topologies))
+- `description` (String) Any text you want that better describes this resource
+- `is_default` (Boolean)
+- `reclaim_policy` (String)
+- `tags` (Map of String)
+- `timeouts` (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))
+- `volume_binding_mode` (String)
+- `volume_provisioner` (String)
 
 ### Read-Only
 
-- **message** (String)
-- **state** (String)
+- `id` (String) The ID of this resource.
+- `message` (String)
+- `state` (String)
 
 <a id="nestedblock--allowed_topologies"></a>
 ### Nested Schema for `allowed_topologies`
 
 Optional:
 
-- **match_label_expressions** (Block List) A list of topology selector requirements by labels. (see [below for nested schema](#nestedblock--allowed_topologies--match_label_expressions))
+- `match_label_expressions` (Block List) A list of topology selector requirements by labels. (see [below for nested schema](#nestedblock--allowed_topologies--match_label_expressions))
 
 <a id="nestedblock--allowed_topologies--match_label_expressions"></a>
 ### Nested Schema for `allowed_topologies.match_label_expressions`
 
 Optional:
 
-- **key** (String) The label key that the selector applies to.
-- **values** (Set of String) An array of string values. One value must match the label to be selected.
+- `key` (String) The label key that the selector applies to.
+- `values` (Set of String) An array of string values. One value must match the label to be selected.
 
 
 
@@ -100,15 +100,17 @@ Optional:
 
 Optional:
 
-- **create** (String)
-- **default** (String)
-- **delete** (String)
-- **read** (String)
-- **update** (String)
+- `create` (String)
+- `default` (String)
+- `delete` (String)
+- `read` (String)
+- `update` (String)
 
 ## Import
 
 Import is supported using the following syntax:
+
+The [`terraform import` command](https://developer.hashicorp.com/terraform/cli/commands/import) can be used, for example:
 
 ```shell
 terraform import harvester_storageclass.foo <Name>

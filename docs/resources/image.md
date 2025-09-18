@@ -131,48 +131,50 @@ resource "harvester_image" "decrypted_image" {
 
 ### Required
 
-- **display_name** (String)
-- **name** (String) A unique name
-- **source_type** (String)
+- `display_name` (String)
+- `name` (String) A unique name
+- `source_type` (String)
 
 ### Optional
 
-- **backend** (String) The backend type of the image, either 'backing-image' or 'cdi'.
-- **checksum** (String) SHA-512 checksum of the image
-- **description** (String) Any text you want that better describes this resource
-- **id** (String) The ID of this resource.
-- **namespace** (String)
-- **pvc_name** (String)
-- **pvc_namespace** (String)
-- **security_parameters** (Map of String) Security parameters for encryption/decryption operations. When specified, source_type must be 'clone'. Required keys: crypto_operation, source_image_name, source_image_namespace
-- **storage_class_name** (String)
-- **tags** (Map of String)
-- **timeouts** (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))
-- **url** (String) supports the `raw` and `qcow2` image formats which are supported by [qemu](https://www.qemu.org/docs/master/system/images.html#disk-image-file-formats). Bootable ISO images can also be used and are treated like `raw` images.
+- `backend` (String) The backend type of the image, either 'backing-image' or 'cdi'.
+- `checksum` (String) SHA-512 checksum of the image
+- `description` (String) Any text you want that better describes this resource
+- `namespace` (String)
+- `pvc_name` (String)
+- `pvc_namespace` (String)
+- `security_parameters` (Map of String) Security parameters for encryption/decryption operations. When specified, source_type must be 'clone'. Required keys: crypto_operation, source_image_name, source_image_namespace
+- `storage_class_name` (String)
+- `tags` (Map of String)
+- `timeouts` (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))
+- `url` (String) supports the `raw` and `qcow2` image formats which are supported by [qemu](https://www.qemu.org/docs/master/system/images.html#disk-image-file-formats). Bootable ISO images can also be used and are treated like `raw` images.
 
 ### Read-Only
 
-- **message** (String)
-- **progress** (Number)
-- **size** (Number)
-- **state** (String)
-- **storage_class_parameters** (Map of String)
-- **volume_storage_class_name** (String)
+- `id` (String) The ID of this resource.
+- `message` (String)
+- `progress` (Number)
+- `size` (Number)
+- `state` (String)
+- `storage_class_parameters` (Map of String)
+- `volume_storage_class_name` (String)
 
 <a id="nestedblock--timeouts"></a>
 ### Nested Schema for `timeouts`
 
 Optional:
 
-- **create** (String)
-- **default** (String)
-- **delete** (String)
-- **read** (String)
-- **update** (String)
+- `create` (String)
+- `default` (String)
+- `delete` (String)
+- `read` (String)
+- `update` (String)
 
 ## Import
 
 Import is supported using the following syntax:
+
+The [`terraform import` command](https://developer.hashicorp.com/terraform/cli/commands/import) can be used, for example:
 
 ```shell
 terraform import harvester_image.foo <Namespace>/<Name>

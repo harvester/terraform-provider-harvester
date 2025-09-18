@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -50,8 +50,8 @@ func testAccPreCheck(t *testing.T) {
 	})
 }
 
-func getStateChangeConf(refresh resource.StateRefreshFunc) *resource.StateChangeConf {
-	return &resource.StateChangeConf{
+func getStateChangeConf(refresh retry.StateRefreshFunc) *retry.StateChangeConf {
+	return &retry.StateChangeConf{
 		Pending:    []string{testAccResourceStateExist},
 		Target:     []string{testAccResourceStateRemoved},
 		Refresh:    refresh,
@@ -61,7 +61,7 @@ func getStateChangeConf(refresh resource.StateRefreshFunc) *resource.StateChange
 	}
 }
 
-func getResourceStateRefreshFunc(getResourceFunc func() (interface{}, error)) resource.StateRefreshFunc {
+func getResourceStateRefreshFunc(getResourceFunc func() (interface{}, error)) retry.StateRefreshFunc {
 	return func() (interface{}, string, error) {
 		obj, err := getResourceFunc()
 		if err != nil {

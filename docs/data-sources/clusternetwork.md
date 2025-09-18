@@ -23,17 +23,12 @@ data "harvester_clusternetwork" "mgmt" {
 
 ### Required
 
-- **name** (String) A unique name
-
-### Optional
-
-- **id** (String) The ID of this resource.
+- `name` (String) A unique name
 
 ### Read-Only
 
-- **description** (String) Any text you want that better describes this resource
-- **message** (String)
-- **state** (String)
-- **tags** (Map of String)
-
-
+- `description` (String) Any text you want that better describes this resource
+- `id` (String) The ID of this resource.
+- `message` (String)
+- `state` (String)
+- `tags` (Map of String)

@@ -17,17 +17,15 @@ description: |-
 
 ### Required
 
-- **api_url** (String) API URL in the harvester
-- **password** (String, Sensitive) New password for admin user
+- `api_url` (String) API URL in the harvester
+- `password` (String, Sensitive) New password for admin user
 
 ### Optional
 
-- **id** (String) The ID of this resource.
-- **initial_password** (String, Sensitive) Default password in the harvester
-- **kubeconfig** (String) Path to store the kubeconfig file
+- `initial_password` (String, Sensitive) Default password in the harvester
+- `kubeconfig` (String) Path to store the kubeconfig file
 
 ### Read-Only
 
-- **should_update_password** (Boolean)
-
-
+- `id` (String) The ID of this resource.
+- `should_update_password` (Boolean)
