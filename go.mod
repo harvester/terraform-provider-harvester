@@ -3,31 +3,31 @@ module github.com/harvester/terraform-provider-harvester
 go 1.24.5
 
 replace (
-	github.com/harvester/harvester => github.com/harvester/harvester v0.0.0-20250812053042-51f486c93bf3
-	github.com/harvester/harvester-network-controller => github.com/harvester/harvester-network-controller v0.3.1
+	github.com/harvester/harvester => github.com/harvester/harvester v0.3.0
+	github.com/harvester/harvester-network-controller => github.com/harvester/harvester-network-controller v0.6.0
 
 	github.com/openshift/api => github.com/openshift/api v0.0.0-20191219222812-2987a591a72c
 	github.com/openshift/client-go => github.com/openshift/client-go v0.0.0-20200521150516-05eb9880269c
 
-	github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring => github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring v0.68.0
+	github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring => github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring v0.85.0
 	github.com/rancher/rancher/pkg/apis => github.com/rancher/rancher/pkg/apis v0.0.0-20240919204204-3da2ae0cabd1
 	github.com/rancher/rancher/pkg/client => github.com/rancher/rancher/pkg/client v0.0.0-20240919204204-3da2ae0cabd1
 
-	helm.sh/helm/v3 => github.com/rancher/helm/v3 v3.9.0-rancher1
+	helm.sh/helm/v3 => github.com/rancher/helm/v3 v3.11.3
 
-	k8s.io/api => k8s.io/api v0.31.5
-	k8s.io/apiextensions-apiserver => k8s.io/apiextensions-apiserver v0.31.5
-	k8s.io/apimachinery => k8s.io/apimachinery v0.31.5
-	k8s.io/client-go => k8s.io/client-go v0.31.5
-	k8s.io/kube-aggregator => k8s.io/kube-aggregator v0.31.5
+	k8s.io/api => k8s.io/api v0.34.1
+	k8s.io/apiextensions-apiserver => k8s.io/apiextensions-apiserver v0.34.1
+	k8s.io/apimachinery => k8s.io/apimachinery v0.34.1
+	k8s.io/client-go => k8s.io/client-go v0.34.1
+	k8s.io/kube-aggregator => k8s.io/kube-aggregator v0.34.1
 
 	k8s.io/kube-openapi => k8s.io/kube-openapi v0.0.0-20240228011516-70dd3763d340
 )
 
 require (
 	github.com/google/uuid v1.6.0
-	github.com/harvester/harvester v1.5.0
-	github.com/harvester/harvester-load-balancer v1.5.0
+	github.com/harvester/harvester v1.6.0
+	github.com/harvester/harvester-load-balancer v1.6.0
 	github.com/harvester/harvester-network-controller v1.6.0-rc3
 	github.com/hashicorp/terraform-plugin-docs v0.22.0
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.37.0
@@ -35,11 +35,11 @@ require (
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/rancher/wrangler/v3 v3.2.2
 	gopkg.in/yaml.v2 v2.4.0
-	k8s.io/api v0.33.1
-	k8s.io/apimachinery v0.33.1
+	k8s.io/api v0.34.1
+	k8s.io/apimachinery v0.34.1
 	k8s.io/client-go v12.0.0+incompatible
 	k8s.io/utils v0.0.0-20250502105355-0f33e8f1c979
-	kubevirt.io/api v1.5.0
+	kubevirt.io/api v1.6.0
 )
 
 require (
