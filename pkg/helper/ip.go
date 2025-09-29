@@ -29,8 +29,5 @@ func IsIPv4LinkLocal(ip string) bool {
  * Link-local IPv6 addresses are fe80::/64
  */
 func IsIPv6LinkLocal(ip string) bool {
-	if strings.HasPrefix(strings.ToLower(ip), IPv6LinkLocalCIDRPrefix) {
-		return true
-	}
-	return false
+	return strings.HasPrefix(strings.ToLower(ip), IPv6LinkLocalCIDRPrefix)
 }
