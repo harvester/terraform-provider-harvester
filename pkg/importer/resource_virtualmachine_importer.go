@@ -3,6 +3,7 @@ package importer
 import (
 	"encoding/json"
 	"fmt"
+	"slices"
 
 	corev1 "k8s.io/api/core/v1"
 	kubevirtv1 "kubevirt.io/api/core/v1"
@@ -166,8 +167,15 @@ func (v *VMImporter) NetworkInterface() ([]map[string]interface{}, error) {
 			constants.FieldNetworkInterfaceBootOrder:   networkInterface.BootOrder,
 		}
 		if interfaceStatus, ok := interfaceStatusMap[networkInterface.Name]; ok {
-			networkInterfaceState[constants.FieldNetworkInterfaceIPAddress] = interfaceStatus.IP
-			networkInterfaceState[constants.FieldNetworkInterfaceInterfaceName] = interfaceStatus.InterfaceName
+			// disregard any link-local addresses
+			ips := slices.DeleteFunc(
+				slices.DeleteFunc(interfaceStatus.IPs, helper.IsIPv6LinkLocal),
+				helper.IsIPv4LinkLocal)
+			slices.Sort(ips)
+			if len(ips) > 0 {
+				networkInterfaceState[constants.FieldNetworkInterfaceIPAddress] = slices.Min(ips)
+				networkInterfaceState[constants.FieldNetworkInterfaceInterfaceName] = interfaceStatus.InterfaceName
+			}
 		}
 		_, ok := waitForLeaseInterfaceMap[networkInterface.Name]
 		networkInterfaceState[constants.FieldNetworkInterfaceWaitForLease] = ok
