@@ -3,6 +3,7 @@ package constants
 const (
 	ResourceTypeLoadBalancer = "harvester_loadbalancer"
 
+	FieldLoadBalancerIPAddress    = "ip_address"
 	FieldLoadBalancerDescription  = "description"
 	FieldLoadBalancerWorkloadType = "workload_type"
 	FieldLoadBalancerIPAM         = "ipam"

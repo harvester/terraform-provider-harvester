@@ -2,6 +2,7 @@ package loadbalancer
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	loadbalancerv1 "github.com/harvester/harvester-load-balancer/pkg/apis/loadbalancer.harvesterhci.io/v1beta1"
@@ -49,15 +50,63 @@ func resourceLoadBalancerCreate(ctx context.Context, data *schema.ResourceData, 
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	lb, err := c.HarvesterLoadbalancerClient.
+
+	loadbalancer, err := c.HarvesterLoadbalancerClient.
 		LoadbalancerV1beta1().
 		LoadBalancers(namespace).
 		Create(ctx, toCreate.(*loadbalancerv1.LoadBalancer), metav1.CreateOptions{})
 	if err != nil {
 		return diag.FromErr(err)
 	}
+
 	data.SetId(helper.BuildID(namespace, name))
-	return diag.FromErr(resourceLoadBalancerImport(data, lb))
+
+	if resourceLoadBalancerSetIPAddress(ctx, data, meta) != nil {
+		return diag.FromErr(err)
+	}
+
+	return diag.FromErr(resourceLoadBalancerImport(data, loadbalancer))
+}
+
+func resourceLoadBalancerSetIPAddress(ctx context.Context, data *schema.ResourceData, meta interface{}) error {
+	c, err := meta.(*config.Config).K8sClient()
+	if err != nil {
+		return err
+	}
+
+	retryInterval := 3 * time.Second
+	retryTimeout := 10
+
+	namespace, name, err := helper.IDParts(data.Id())
+	if err != nil {
+		return err
+	}
+
+	for i := 0; i < retryTimeout; i++ {
+		loadbalancer, err := c.HarvesterLoadbalancerClient.
+			LoadbalancerV1beta1().
+			LoadBalancers(namespace).
+			Get(ctx, name, metav1.GetOptions{})
+		if err != nil {
+			return err
+		}
+
+		// If LB or Status is missing, retry
+		if loadbalancer == nil || &loadbalancer.Status == (&loadbalancerv1.LoadBalancerStatus{}) {
+			time.Sleep(retryInterval)
+			continue
+		}
+
+		if loadbalancer.Status.Address != "" {
+			if err := data.Set(constants.FieldLoadBalancerIPAddress, loadbalancer.Status.Address); err != nil {
+				return err
+			}
+			return nil
+		}
+		time.Sleep(retryInterval)
+	}
+
+	return errors.New("no address was populated for the loadbalancer")
 }
 
 func resourceLoadBalancerRead(ctx context.Context, data *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -75,6 +124,10 @@ func resourceLoadBalancerRead(ctx context.Context, data *schema.ResourceData, me
 		LoadBalancers(namespace).
 		Get(ctx, name, metav1.GetOptions{})
 	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	if resourceLoadBalancerSetIPAddress(ctx, data, meta) != nil {
 		return diag.FromErr(err)
 	}
 
@@ -111,6 +164,11 @@ func resourceLoadBalancerUpdate(ctx context.Context, data *schema.ResourceData, 
 	if err != nil {
 		return diag.FromErr(err)
 	}
+
+	if resourceLoadBalancerSetIPAddress(ctx, data, meta) != nil {
+		return diag.FromErr(err)
+	}
+
 	return diag.FromErr(resourceLoadBalancerImport(data, loadbalancer))
 }
 
