@@ -1,5 +1,7 @@
 package constants
 
+import "time"
+
 const (
 	ResourceTypeLoadBalancer = "harvester_loadbalancer"
 
@@ -44,4 +46,9 @@ const (
 const (
 	LoadBalancerIPAMPool = "pool"
 	LoadBalancerIPAMDHCP = "dhcp"
+)
+
+const (
+	LoadBalancerRetryInterval = 3 * time.Second
+	LoadBalancerRetryAttempts = 10
 )
