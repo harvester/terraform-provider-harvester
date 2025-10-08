@@ -63,6 +63,11 @@ func Schema() map[string]*schema.Schema {
 				Schema: subresourceSchemaLoadBalancerHealthCheck(),
 			},
 		},
+		constants.FieldLoadBalancerIPAddress: {
+			Type:        schema.TypeString,
+			Computed:    true,
+			Description: "The assigned IP address of the load balancer.",
+		},
 	}
 	util.NamespacedSchemaWrap(s, false)
 	return s
@@ -75,8 +80,9 @@ func DataSourceSchema() map[string]*schema.Schema {
 func subresourceSchemaLoadBalancerListener() map[string]*schema.Schema {
 	s := map[string]*schema.Schema{
 		constants.FieldListenerName: {
-			Type:     schema.TypeString,
-			Optional: true,
+			Type:        schema.TypeString,
+			Required:    true,
+			Description: "",
 		},
 		constants.FieldListenerPort: {
 			Type:        schema.TypeInt,

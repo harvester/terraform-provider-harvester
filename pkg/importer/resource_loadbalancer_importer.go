@@ -9,8 +9,9 @@ import (
 
 func ResourceLoadBalancerStateGetter(obj *loadbalancerv1.LoadBalancer) (*StateGetter, error) {
 	states := map[string]interface{}{
-		constants.FieldCommonNamespace: obj.Namespace,
-		constants.FieldCommonName:      obj.Name,
+		constants.FieldCommonNamespace:       obj.Namespace,
+		constants.FieldCommonName:            obj.Name,
+		constants.FieldLoadBalancerIPAddress: obj.Status.Address,
 	}
 	return &StateGetter{
 		ID:           helper.BuildID(obj.Namespace, obj.Name),
