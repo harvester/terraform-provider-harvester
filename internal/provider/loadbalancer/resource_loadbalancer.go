@@ -8,6 +8,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
@@ -49,15 +50,56 @@ func resourceLoadBalancerCreate(ctx context.Context, data *schema.ResourceData, 
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	lb, err := c.HarvesterLoadbalancerClient.
+
+	_, err = c.HarvesterLoadbalancerClient.
 		LoadbalancerV1beta1().
 		LoadBalancers(namespace).
 		Create(ctx, toCreate.(*loadbalancerv1.LoadBalancer), metav1.CreateOptions{})
 	if err != nil {
 		return diag.FromErr(err)
 	}
+
 	data.SetId(helper.BuildID(namespace, name))
-	return diag.FromErr(resourceLoadBalancerImport(data, lb))
+
+	loadbalancer, err := resourceLoadBalancerWaitIPAddress(ctx, meta, name, namespace)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	return diag.FromErr(resourceLoadBalancerImport(data, loadbalancer))
+}
+
+func resourceLoadBalancerWaitIPAddress(ctx context.Context, meta interface{}, name, namespace string) (*loadbalancerv1.LoadBalancer, error) {
+	var loadbalancer *loadbalancerv1.LoadBalancer
+	c, err := meta.(*config.Config).K8sClient()
+	if err != nil {
+		return loadbalancer, err
+	}
+
+	for i := 0; i < constants.LoadBalancerRetryAttempts; i++ {
+		loadbalancer, err := c.HarvesterLoadbalancerClient.
+			LoadbalancerV1beta1().
+			LoadBalancers(namespace).
+			Get(ctx, name, metav1.GetOptions{})
+		if err != nil {
+			return loadbalancer, err
+		}
+
+		if loadbalancer == nil || &loadbalancer.Status == (&loadbalancerv1.LoadBalancerStatus{}) {
+			time.Sleep(constants.LoadBalancerRetryInterval)
+			continue
+		}
+
+		if loadbalancer.Status.Address != "" {
+			return loadbalancer, nil
+		}
+		time.Sleep(constants.LoadBalancerRetryInterval)
+	}
+
+	// some cases may not return a nonempty address. Warning via console instead of returning an error
+	tflog.Warn(ctx, "No Loadbalancer address was allocated.")
+
+	return loadbalancer, nil
 }
 
 func resourceLoadBalancerRead(ctx context.Context, data *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -104,13 +146,19 @@ func resourceLoadBalancerUpdate(ctx context.Context, data *schema.ResourceData, 
 		return diag.FromErr(err)
 	}
 
-	loadbalancer, err := c.HarvesterLoadbalancerClient.
+	_, err = c.HarvesterLoadbalancerClient.
 		LoadbalancerV1beta1().
 		LoadBalancers(namespace).
 		Update(ctx, toUpdate.(*loadbalancerv1.LoadBalancer), metav1.UpdateOptions{})
 	if err != nil {
 		return diag.FromErr(err)
 	}
+
+	loadbalancer, err := resourceLoadBalancerWaitIPAddress(ctx, meta, name, namespace)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
 	return diag.FromErr(resourceLoadBalancerImport(data, loadbalancer))
 }
 

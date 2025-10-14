@@ -35,6 +35,7 @@ description: |-
 ### Read-Only
 
 - `id` (String) The ID of this resource.
+- `ip_address` (String) The assigned IP address of the load balancer.
 - `message` (String)
 - `state` (String)
 
@@ -44,12 +45,9 @@ description: |-
 Required:
 
 - `backend_port` (Number)
+- `name` (String)
 - `port` (Number)
 - `protocol` (String)
-
-Optional:
-
-- `name` (String)
 
 
 <a id="nestedblock--backend_selector"></a>
