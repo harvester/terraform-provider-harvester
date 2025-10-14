@@ -1,6 +1,6 @@
 module github.com/harvester/terraform-provider-harvester
 
-go 1.24.5
+go 1.25
 
 replace (
 	github.com/harvester/harvester => github.com/harvester/harvester v0.0.0-20250812053042-51f486c93bf3
@@ -15,11 +15,11 @@ replace (
 
 	helm.sh/helm/v3 => github.com/rancher/helm/v3 v3.9.0-rancher1
 
-	k8s.io/api => k8s.io/api v0.31.5
-	k8s.io/apiextensions-apiserver => k8s.io/apiextensions-apiserver v0.31.5
-	k8s.io/apimachinery => k8s.io/apimachinery v0.31.5
-	k8s.io/client-go => k8s.io/client-go v0.31.5
-	k8s.io/kube-aggregator => k8s.io/kube-aggregator v0.31.5
+	k8s.io/api => k8s.io/api v0.32.5
+	k8s.io/apiextensions-apiserver => k8s.io/apiextensions-apiserver v0.32.5
+	k8s.io/apimachinery => k8s.io/apimachinery v0.32.5
+	k8s.io/client-go => k8s.io/client-go v0.32.5
+	k8s.io/kube-aggregator => k8s.io/kube-aggregator v0.32.5
 
 	k8s.io/kube-openapi => k8s.io/kube-openapi v0.0.0-20240228011516-70dd3763d340
 )
@@ -72,7 +72,6 @@ require (
 	github.com/fsnotify/fsnotify v1.9.0 // indirect
 	github.com/fxamacker/cbor/v2 v2.8.0 // indirect
 	github.com/ghodss/yaml v1.0.0 // indirect
-	github.com/go-kit/kit v0.13.0 // indirect
 	github.com/go-kit/log v0.2.1 // indirect
 	github.com/go-logfmt/logfmt v0.6.0 // indirect
 	github.com/go-logr/logr v1.4.2 // indirect
@@ -82,8 +81,6 @@ require (
 	github.com/go-openapi/swag v0.23.1 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/glog v1.2.5 // indirect
-	github.com/golang/groupcache v0.0.0-20241129210726-2c02b8208cf8 // indirect
-	github.com/golang/mock v1.6.0 // indirect
 	github.com/golang/protobuf v1.5.4 // indirect
 	github.com/google/gnostic-models v0.6.9 // indirect
 	github.com/google/go-cmp v0.7.0 // indirect
@@ -178,6 +175,7 @@ require (
 	go.opentelemetry.io/otel v1.36.0 // indirect
 	go.opentelemetry.io/otel/sdk/metric v1.36.0 // indirect
 	go.opentelemetry.io/otel/trace v1.36.0 // indirect
+	go.uber.org/mock v0.5.2 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	golang.org/x/crypto v0.38.0 // indirect
 	golang.org/x/exp v0.0.0-20250506013437-ce4c2cf36ca6 // indirect
@@ -205,7 +203,7 @@ require (
 	k8s.io/kube-aggregator v0.33.1 // indirect
 	k8s.io/kube-openapi v0.31.9 // indirect
 	k8s.io/kubernetes v1.32.2 // indirect
-	kubevirt.io/client-go v1.5.0 // indirect
+	kubevirt.io/client-go v1.6.2 // indirect
 	kubevirt.io/containerized-data-importer-api v1.61.0 // indirect
 	kubevirt.io/controller-lifecycle-operator-sdk/api v0.0.0-20220329064328-f3cc58c6ed90 // indirect
 	kubevirt.io/kubevirt v1.5.0 // indirect
