@@ -66,10 +66,6 @@ func resourceLoadBalancerCreate(ctx context.Context, data *schema.ResourceData, 
 		return diag.FromErr(err)
 	}
 
-	if err := data.Set(constants.FieldLoadBalancerIPAddress, loadbalancer.Status.Address); err != nil {
-		return diag.FromErr(err)
-	}
-
 	return diag.FromErr(resourceLoadBalancerImport(data, loadbalancer))
 }
 
@@ -160,10 +156,6 @@ func resourceLoadBalancerUpdate(ctx context.Context, data *schema.ResourceData, 
 
 	loadbalancer, err := resourceLoadBalancerWaitIPAddress(ctx, meta, name, namespace)
 	if err != nil {
-		return diag.FromErr(err)
-	}
-
-	if err := data.Set(constants.FieldLoadBalancerIPAddress, loadbalancer.Status.Address); err != nil {
 		return diag.FromErr(err)
 	}
 
