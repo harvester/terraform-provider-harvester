@@ -27,6 +27,7 @@ description: |-
 - `healthcheck` (Block List, Max: 1) (see [below for nested schema](#nestedblock--healthcheck))
 - `ipam` (String) Where the load balancer gets its IP address from. Can be `dhcp` or `pool`.
 - `ippool` (String) Which IP pool to get the IP address from.
+- `labels` (Map of String)
 - `namespace` (String)
 - `tags` (Map of String)
 - `timeouts` (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))

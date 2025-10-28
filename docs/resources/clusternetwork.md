@@ -28,6 +28,7 @@ resource "harvester_clusternetwork" "cluster-vlan" {
 ### Optional
 
 - `description` (String) Any text you want that better describes this resource
+- `labels` (Map of String)
 - `tags` (Map of String)
 - `timeouts` (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))
 

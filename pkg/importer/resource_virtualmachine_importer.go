@@ -383,6 +383,7 @@ func ResourceVirtualMachineStateGetter(vm *kubevirtv1.VirtualMachine, vmi *kubev
 			constants.FieldCommonName:                          vm.Name,
 			constants.FieldCommonDescription:                   GetDescriptions(vm.Annotations),
 			constants.FieldCommonTags:                          GetTags(vm.Labels),
+			constants.FieldCommonLabels:                        GetLabels(vm.Labels),
 			constants.FieldCommonState:                         vmImporter.State(networkInterface, oldInstanceUID),
 			constants.FieldVirtualMachineCPU:                   vmImporter.CPU(),
 			constants.FieldVirtualMachineMemory:                vmImporter.Memory(),

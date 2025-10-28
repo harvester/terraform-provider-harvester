@@ -46,6 +46,7 @@ resource "harvester_vlanconfig" "cluster-vlan-node1" {
 ### Optional
 
 - `description` (String) Any text you want that better describes this resource
+- `labels` (Map of String)
 - `node_selector` (Map of String) refer to https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#nodeselector
 - `tags` (Map of String)
 - `timeouts` (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))

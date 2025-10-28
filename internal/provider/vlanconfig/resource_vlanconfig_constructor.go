@@ -16,8 +16,12 @@ type Constructor struct {
 }
 
 func (c *Constructor) Setup() util.Processors {
-	processors := util.NewProcessors().Tags(&c.VLANConfig.Labels).Description(&c.VLANConfig.Annotations).
+	processors := util.NewProcessors().
+		Tags(&c.VLANConfig.Labels).
+		Labels(&c.VLANConfig.Labels).
+		Description(&c.VLANConfig.Annotations).
 		String(constants.FieldVLANConfigClusterNetworkName, &c.VLANConfig.Spec.ClusterNetwork, true)
+
 	customProcessors := []util.Processor{
 		{
 			Field: constants.FieldVLANConfigNodeSelector,

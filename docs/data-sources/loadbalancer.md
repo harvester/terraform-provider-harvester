@@ -32,6 +32,7 @@ description: |-
 - `ip_address` (String) The assigned IP address of the load balancer.
 - `ipam` (String) Where the load balancer gets its IP address from. Can be `dhcp` or `pool`.
 - `ippool` (String) Which IP pool to get the IP address from.
+- `labels` (Map of String)
 - `listener` (List of Object) (see [below for nested schema](#nestedatt--listener))
 - `message` (String)
 - `state` (String)

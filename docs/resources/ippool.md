@@ -23,6 +23,7 @@ description: |-
 ### Optional
 
 - `description` (String) Any text you want that better describes this resource
+- `labels` (Map of String)
 - `selector` (Block List, Max: 1) (see [below for nested schema](#nestedblock--selector))
 - `tags` (Map of String)
 - `timeouts` (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))

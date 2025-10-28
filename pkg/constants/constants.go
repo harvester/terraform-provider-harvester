@@ -11,6 +11,7 @@ const (
 	FieldCommonName        = "name"
 	FieldCommonNamespace   = "namespace"
 	FieldCommonTags        = "tags"
+	FieldCommonLabels      = "labels"
 	FieldCommonDescription = "description"
 	FieldCommonState       = "state"
 	FieldCommonMessage     = "message"

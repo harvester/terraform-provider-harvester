@@ -39,6 +39,7 @@ data "harvester_image" "opensuse154" {
 - `checksum` (String) SHA-512 checksum of the image
 - `description` (String) Any text you want that better describes this resource
 - `id` (String) The ID of this resource.
+- `labels` (Map of String)
 - `message` (String)
 - `progress` (Number)
 - `pvc_name` (String)

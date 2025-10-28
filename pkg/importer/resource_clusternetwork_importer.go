@@ -13,6 +13,7 @@ func ResourceClusterNetworkStateGetter(obj *harvsternetworkv1.ClusterNetwork) (*
 		constants.FieldCommonName:        obj.Name,
 		constants.FieldCommonDescription: GetDescriptions(obj.Annotations),
 		constants.FieldCommonTags:        GetTags(obj.Labels),
+		constants.FieldCommonLabels:      GetLabels(obj.Labels),
 	}
 	states[constants.FieldCommonState] = constants.StateCommonActive
 	for _, condition := range obj.Status.Conditions {

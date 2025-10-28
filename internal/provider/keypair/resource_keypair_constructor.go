@@ -16,7 +16,10 @@ type Constructor struct {
 }
 
 func (c *Constructor) Setup() util.Processors {
-	return util.NewProcessors().Tags(&c.KeyPair.Labels).Description(&c.KeyPair.Annotations).
+	return util.NewProcessors().
+		Tags(&c.KeyPair.Labels).
+		Labels(&c.KeyPair.Labels).
+		Description(&c.KeyPair.Annotations).
 		String(constants.FieldKeyPairPublicKey, &c.KeyPair.Spec.PublicKey, true)
 }
 

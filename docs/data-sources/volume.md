@@ -37,6 +37,7 @@ data "harvester_volume" "mount-disk" {
 - `description` (String) Any text you want that better describes this resource
 - `id` (String) The ID of this resource.
 - `image` (String)
+- `labels` (Map of String)
 - `message` (String)
 - `phase` (String)
 - `size` (String)

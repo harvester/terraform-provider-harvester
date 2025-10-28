@@ -41,7 +41,11 @@ func (c *Constructor) Setup() util.Processors {
 	if vmBuilder == nil {
 		return nil
 	}
-	processors := util.NewProcessors().Tags(&c.Builder.VirtualMachine.Labels).Description(&c.Builder.VirtualMachine.Annotations)
+	processors := util.NewProcessors().
+		Tags(&c.Builder.VirtualMachine.Labels).
+		Labels(&c.Builder.VirtualMachine.Labels).
+		Description(&c.Builder.VirtualMachine.Annotations)
+
 	customProcessors := []util.Processor{
 		{
 			Field: constants.FieldVirtualMachineCPU,

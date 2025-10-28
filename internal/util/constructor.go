@@ -74,6 +74,31 @@ func (p Processors) Tags(labels *map[string]string) Processors {
 	})
 }
 
+func (p Processors) Labels(labels *map[string]string) Processors {
+	for key := range *labels {
+		if !strings.HasPrefix(key, builder.LabelPrefixHarvesterTag) &&
+			!strings.HasPrefix(key, builder.LabelAnnotationPrefixHarvester) {
+			delete(*labels, key)
+		}
+	}
+
+	return append(p, Processor{
+		Field: constants.FieldCommonLabels,
+		Parser: func(i interface{}) error {
+			if *labels == nil {
+				*labels = map[string]string{}
+			}
+			for key, value := range i.(map[string]interface{}) {
+				if !strings.HasPrefix(key, builder.LabelPrefixHarvesterTag) &&
+					!strings.HasPrefix(key, builder.LabelAnnotationPrefixHarvester) {
+					(*labels)[key] = value.(string)
+				}
+			}
+			return nil
+		},
+	})
+}
+
 func NewProcessors() Processors {
 	return []Processor{}
 }

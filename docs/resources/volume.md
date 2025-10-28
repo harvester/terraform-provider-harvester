@@ -67,6 +67,7 @@ resource "harvester_volume" "opensuse154-image-disk" {
 - `access_mode` (String)
 - `description` (String) Any text you want that better describes this resource
 - `image` (String)
+- `labels` (Map of String)
 - `namespace` (String)
 - `size` (String)
 - `storage_class_name` (String)

@@ -36,6 +36,7 @@ data "harvester_network" "vlan1" {
 - `config` (String)
 - `description` (String) Any text you want that better describes this resource
 - `id` (String) The ID of this resource.
+- `labels` (Map of String)
 - `message` (String)
 - `route_cidr` (String) e.g. 172.16.0.1/24
 - `route_connectivity` (String)

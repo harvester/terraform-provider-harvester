@@ -15,6 +15,7 @@ func ResourceImageStateGetter(obj *harvsterv1.VirtualMachineImage) (*StateGetter
 		constants.FieldCommonName:                  obj.Name,
 		constants.FieldCommonDescription:           GetDescriptions(obj.Annotations),
 		constants.FieldCommonTags:                  GetTags(obj.Labels),
+		constants.FieldCommonLabels:                GetLabels(obj.Labels),
 		constants.FieldImageDisplayName:            obj.Spec.DisplayName,
 		constants.FieldImageSourceType:             obj.Spec.SourceType,
 		constants.FieldImageURL:                    obj.Spec.URL,

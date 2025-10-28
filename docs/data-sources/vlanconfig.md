@@ -30,6 +30,7 @@ data "harvester_vlanconfig" "foo" {
 - `cluster_network_name` (String) mgmt is a built-in cluster network and does not support creating/updating network configs.
 - `description` (String) Any text you want that better describes this resource
 - `id` (String) The ID of this resource.
+- `labels` (Map of String)
 - `matched_nodes` (List of String)
 - `message` (String)
 - `node_selector` (Map of String) refer to https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#nodeselector

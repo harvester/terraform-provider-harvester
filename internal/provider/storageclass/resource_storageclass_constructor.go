@@ -18,7 +18,10 @@ type Constructor struct {
 }
 
 func (c *Constructor) Setup() util.Processors {
-	processors := util.NewProcessors().Tags(&c.StorageClass.Labels).Description(&c.StorageClass.Annotations).
+	processors := util.NewProcessors().
+		Tags(&c.StorageClass.Labels).
+		Labels(&c.StorageClass.Labels).
+		Description(&c.StorageClass.Annotations).
 		String(constants.FieldStorageClassVolumeProvisioner, &c.StorageClass.Provisioner, true)
 	customProcessors := []util.Processor{
 		{

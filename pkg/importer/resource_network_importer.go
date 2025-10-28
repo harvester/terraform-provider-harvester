@@ -45,6 +45,7 @@ func ResourceNetworkStateGetter(obj *nadv1.NetworkAttachmentDefinition) (*StateG
 		constants.FieldCommonName:                obj.Name,
 		constants.FieldCommonDescription:         GetDescriptions(obj.Annotations),
 		constants.FieldCommonTags:                GetTags(obj.Labels),
+		constants.FieldCommonLabels:              GetLabels(obj.Labels),
 		constants.FieldNetworkVlanID:             vlanID,
 		constants.FieldNetworkConfig:             obj.Spec.Config,
 		constants.FieldNetworkRouteMode:          layer3NetworkConf.Mode,

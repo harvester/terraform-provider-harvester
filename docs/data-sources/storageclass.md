@@ -36,6 +36,7 @@ data "harvester_image" "ssd-replicas-3" {
 - `description` (String) Any text you want that better describes this resource
 - `id` (String) The ID of this resource.
 - `is_default` (Boolean)
+- `labels` (Map of String)
 - `message` (String)
 - `parameters` (Map of String) refer to https://longhorn.io/docs/latest/volumes-and-nodes/storage-tags. "migratable": "true" is required for Harvester Virtual Machine LiveMigration
 - `reclaim_policy` (String)

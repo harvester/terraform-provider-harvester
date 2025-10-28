@@ -30,7 +30,11 @@ type Constructor struct {
 }
 
 func (c *Constructor) Setup() util.Processors {
-	processors := util.NewProcessors().Tags(&c.Network.Labels).Description(&c.Network.Annotations)
+	processors := util.NewProcessors().
+		Tags(&c.Network.Labels).
+		Labels(&c.Network.Labels).
+		Description(&c.Network.Annotations)
+
 	customProcessors := []util.Processor{
 		{
 			Field: constants.FieldNetworkClusterNetworkName,

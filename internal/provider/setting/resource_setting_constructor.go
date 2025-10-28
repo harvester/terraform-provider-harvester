@@ -17,7 +17,10 @@ type Constructor struct {
 }
 
 func (c *Constructor) Setup() util.Processors {
-	return util.NewProcessors().Tags(&c.Setting.Labels).Description(&c.Setting.Annotations).
+	return util.NewProcessors().
+		Tags(&c.Setting.Labels).
+		Labels(&c.Setting.Labels).
+		Description(&c.Setting.Annotations).
 		String(constants.FieldSettingValue, &c.Setting.Value, true)
 }
 
