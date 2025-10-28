@@ -19,6 +19,7 @@ type Constructor struct {
 func (c *Constructor) Setup() util.Processors {
 	processors := util.NewProcessors().
 		Tags(&c.IPPool.Labels).
+		Labels(&c.IPPool.Labels).
 		String(constants.FieldIPPoolDescription, &c.IPPool.Spec.Description, false)
 
 	subresourceProcessors := []util.Processor{

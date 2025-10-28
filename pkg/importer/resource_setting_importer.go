@@ -13,6 +13,7 @@ func ResourceSettingStateGetter(obj *harvsterv1.Setting) (*StateGetter, error) {
 		constants.FieldCommonName:        obj.Name,
 		constants.FieldCommonDescription: GetDescriptions(obj.Annotations),
 		constants.FieldCommonTags:        GetTags(obj.Labels),
+		constants.FieldCommonLabels:      GetLabels(obj.Labels),
 		constants.FieldSettingValue:      obj.Value,
 	}
 

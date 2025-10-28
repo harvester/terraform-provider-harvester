@@ -29,6 +29,7 @@ data "harvester_setting" "backup-target" {
 
 - `description` (String) Any text you want that better describes this resource
 - `id` (String) The ID of this resource.
+- `labels` (Map of String)
 - `message` (String)
 - `state` (String)
 - `tags` (Map of String)

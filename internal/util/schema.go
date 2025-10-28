@@ -41,6 +41,10 @@ func NonNamespacedSchemaWrap(s map[string]*schema.Schema) {
 		Type:     schema.TypeMap,
 		Optional: true,
 	}
+	s[constants.FieldCommonLabels] = &schema.Schema{
+		Type:     schema.TypeMap,
+		Optional: true,
+	}
 	s[constants.FieldCommonState] = &schema.Schema{
 		Type:     schema.TypeString,
 		Computed: true,

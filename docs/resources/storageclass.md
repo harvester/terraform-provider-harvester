@@ -66,6 +66,7 @@ resource "harvester_storageclass" "lvm" {
 - `allowed_topologies` (Block List, Max: 1) Restrict the node topologies where volumes can be dynamically provisioned. (see [below for nested schema](#nestedblock--allowed_topologies))
 - `description` (String) Any text you want that better describes this resource
 - `is_default` (Boolean)
+- `labels` (Map of String)
 - `reclaim_policy` (String)
 - `tags` (Map of String)
 - `timeouts` (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))

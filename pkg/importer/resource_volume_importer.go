@@ -20,6 +20,7 @@ func ResourceVolumeStateGetter(client *client.Client, obj *corev1.PersistentVolu
 		constants.FieldCommonName:        obj.Name,
 		constants.FieldCommonDescription: GetDescriptions(obj.Annotations),
 		constants.FieldCommonTags:        GetTags(obj.Labels),
+		constants.FieldCommonLabels:      GetLabels(obj.Labels),
 		constants.FieldVolumeSize:        obj.Spec.Resources.Requests.Storage().String(),
 		constants.FieldPhase:             obj.Status.Phase,
 	}

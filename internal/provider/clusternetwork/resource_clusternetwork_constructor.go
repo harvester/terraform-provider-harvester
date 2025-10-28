@@ -15,7 +15,10 @@ type Constructor struct {
 }
 
 func (c *Constructor) Setup() util.Processors {
-	processors := util.NewProcessors().Tags(&c.ClusterNetwork.Labels).Description(&c.ClusterNetwork.Annotations)
+	processors := util.NewProcessors().
+		Tags(&c.ClusterNetwork.Labels).
+		Labels(&c.ClusterNetwork.Labels).
+		Description(&c.ClusterNetwork.Annotations)
 	customProcessors := []util.Processor{}
 	return append(processors, customProcessors...)
 }

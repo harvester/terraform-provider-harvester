@@ -140,6 +140,7 @@ resource "harvester_image" "decrypted_image" {
 - `backend` (String) The backend type of the image, either 'backing-image' or 'cdi'.
 - `checksum` (String) SHA-512 checksum of the image
 - `description` (String) Any text you want that better describes this resource
+- `labels` (Map of String)
 - `namespace` (String)
 - `pvc_name` (String)
 - `pvc_namespace` (String)

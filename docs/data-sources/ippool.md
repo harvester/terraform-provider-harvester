@@ -36,6 +36,7 @@ data "harvester_ippool" "service_ips" {
 
 - `description` (String) Any text you want that better describes this resource
 - `id` (String) The ID of this resource.
+- `labels` (Map of String)
 - `message` (String)
 - `range` (List of Object) IP Range belonging to this pool, can be given multiple times (see [below for nested schema](#nestedatt--range))
 - `selector` (List of Object) (see [below for nested schema](#nestedatt--selector))

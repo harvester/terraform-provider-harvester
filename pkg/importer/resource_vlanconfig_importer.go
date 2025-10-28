@@ -15,6 +15,7 @@ func ResourceVLANConfigStateGetter(obj *harvsternetworkv1.VlanConfig) (*StateGet
 		constants.FieldCommonName:                   obj.Name,
 		constants.FieldCommonDescription:            GetDescriptions(obj.Annotations),
 		constants.FieldCommonTags:                   GetTags(obj.Labels),
+		constants.FieldCommonLabels:                 GetLabels(obj.Labels),
 		constants.FieldVLANConfigClusterNetworkName: obj.Spec.ClusterNetwork,
 		constants.FieldVLANConfigNodeSelector:       obj.Spec.NodeSelector,
 	}

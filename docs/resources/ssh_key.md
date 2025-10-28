@@ -32,6 +32,7 @@ resource "harvester_ssh_key" "mysshkey" {
 ### Optional
 
 - `description` (String) Any text you want that better describes this resource
+- `labels` (Map of String)
 - `namespace` (String)
 - `tags` (Map of String)
 - `timeouts` (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))

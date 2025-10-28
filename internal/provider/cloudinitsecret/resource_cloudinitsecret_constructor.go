@@ -24,7 +24,10 @@ func (c *Constructor) Setup() util.Processors {
 	}
 	c.CloudInitSecret.Data = map[string][]byte{}
 
-	processors := util.NewProcessors().Tags(&c.CloudInitSecret.Labels).Description(&c.CloudInitSecret.Annotations)
+	processors := util.NewProcessors().
+		Tags(&c.CloudInitSecret.Labels).
+		Labels(&c.CloudInitSecret.Labels).
+		Description(&c.CloudInitSecret.Annotations)
 	customProcessors := []util.Processor{
 		{
 			Field: constants.FieldCloudInitSecretUserData,

@@ -22,7 +22,11 @@ type Constructor struct {
 }
 
 func (c *Constructor) Setup() util.Processors {
-	processors := util.NewProcessors().Tags(&c.Volume.Labels).Description(&c.Volume.Annotations)
+	processors := util.NewProcessors().
+		Tags(&c.Volume.Labels).
+		Labels(&c.Volume.Labels).
+		Description(&c.Volume.Annotations)
+
 	customProcessors := []util.Processor{
 		{
 			Field: constants.FieldVolumeSize,

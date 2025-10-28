@@ -14,6 +14,7 @@ func ResourceKeyPairStateGetter(obj *harvsterv1.KeyPair) (*StateGetter, error) {
 		constants.FieldCommonName:         obj.Name,
 		constants.FieldCommonDescription:  GetDescriptions(obj.Annotations),
 		constants.FieldCommonTags:         GetTags(obj.Labels),
+		constants.FieldCommonLabels:       GetLabels(obj.Labels),
 		constants.FieldKeyPairPublicKey:   obj.Spec.PublicKey,
 		constants.FieldKeyPairFingerPrint: obj.Status.FingerPrint,
 	}

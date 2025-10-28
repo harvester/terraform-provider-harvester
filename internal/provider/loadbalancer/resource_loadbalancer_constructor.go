@@ -25,6 +25,7 @@ type Constructor struct {
 func (c *Constructor) Setup() util.Processors {
 	processors := util.NewProcessors().
 		Tags(&c.LoadBalancer.Labels).
+		Labels(&c.LoadBalancer.Labels).
 		Description(&c.LoadBalancer.Annotations).
 		String(constants.FieldLoadBalancerDescription, &c.LoadBalancer.Spec.Description, false)
 

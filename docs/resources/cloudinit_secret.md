@@ -75,6 +75,7 @@ resource "harvester_cloudinit_secret" "cloud-config-ubuntu20" {
 ### Optional
 
 - `description` (String) Any text you want that better describes this resource
+- `labels` (Map of String)
 - `namespace` (String)
 - `network_data` (String)
 - `network_data_base64` (String)

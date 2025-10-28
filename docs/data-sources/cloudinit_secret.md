@@ -39,6 +39,7 @@ data "harvester_cloudinit_secret" "cloud-config-ubuntu20" {
 
 - `description` (String) Any text you want that better describes this resource
 - `id` (String) The ID of this resource.
+- `labels` (Map of String)
 - `message` (String)
 - `network_data` (String)
 - `network_data_base64` (String)

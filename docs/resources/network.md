@@ -71,6 +71,7 @@ resource "harvester_network" "cluster-vlan" {
 
 - `config` (String)
 - `description` (String) Any text you want that better describes this resource
+- `labels` (Map of String)
 - `namespace` (String)
 - `route_cidr` (String) e.g. 172.16.0.1/24
 - `route_dhcp_server_ip` (String)
