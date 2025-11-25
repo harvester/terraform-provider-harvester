@@ -2,11 +2,18 @@ package setting
 
 import (
 	"context"
+	"encoding/json"
+	"reflect"
+	"slices"
 	"time"
 
 	harvsterv1 "github.com/harvester/harvester/pkg/apis/harvesterhci.io/v1beta1"
+	harvclient "github.com/harvester/harvester/pkg/generated/clientset/versioned"
+	"github.com/harvester/harvester/pkg/settings"
+	"github.com/harvester/harvester/pkg/util/network"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/sirupsen/logrus"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -48,18 +55,7 @@ func resourceSettingCreate(ctx context.Context, d *schema.ResourceData, meta int
 	if err != nil {
 		return diag.FromErr(err)
 	}
-
-	toUpdate, err := util.ResourceConstruct(d, Updater(obj))
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
-	obj, err = c.HarvesterClient.HarvesterhciV1beta1().Settings().Update(ctx, toUpdate.(*harvsterv1.Setting), metav1.UpdateOptions{})
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
-	return diag.FromErr(resourceSettingImport(d, obj))
+	return updateSetting(ctx, c.HarvesterClient, d, obj)
 }
 
 func resourceSettingUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -80,17 +76,7 @@ func resourceSettingUpdate(ctx context.Context, d *schema.ResourceData, meta int
 		}
 		return diag.FromErr(err)
 	}
-
-	toUpdate, err := util.ResourceConstruct(d, Updater(obj))
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	obj, err = c.HarvesterClient.HarvesterhciV1beta1().Settings().Update(ctx, toUpdate.(*harvsterv1.Setting), metav1.UpdateOptions{})
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
-	return diag.FromErr(resourceSettingImport(d, obj))
+	return updateSetting(ctx, c.HarvesterClient, d, obj)
 }
 
 func resourceSettingRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -110,6 +96,7 @@ func resourceSettingRead(ctx context.Context, d *schema.ResourceData, meta inter
 		}
 		return diag.FromErr(err)
 	}
+	handleStorageNetworkSetting(obj, d.Get(constants.FieldSettingValue).(string))
 	return diag.FromErr(resourceSettingImport(d, obj))
 }
 
@@ -150,4 +137,58 @@ func resourceSettingImport(d *schema.ResourceData, obj *harvsterv1.Setting) erro
 		return err
 	}
 	return util.ResourceStatesSet(d, stateGetter)
+}
+
+// handleStorageNetworkSetting handles the special case for the "storage-network" setting.
+// If the new value is functionally equivalent to the old value (ignoring the order of excluded networks),
+// it retains the old value to avoid unnecessary updates.
+func handleStorageNetworkSetting(newSetting *harvsterv1.Setting, oldValue string) {
+	if newSetting.Name != settings.StorageNetworkName {
+		return
+	}
+
+	var (
+		oldConfig network.Config
+		newConfig network.Config
+		err       error
+	)
+	if err = json.Unmarshal([]byte(oldValue), &oldConfig); err != nil {
+		logrus.WithError(err).
+			WithField("value", oldValue).
+			Warn("Failed to unmarshal old storage-network setting")
+		return
+	}
+	if err = json.Unmarshal([]byte(newSetting.Value), &newConfig); err != nil {
+		logrus.WithError(err).
+			WithField("value", newSetting.Value).
+			Warn("Failed to unmarshal new storage-network setting")
+		return
+	}
+
+	slices.Sort(oldConfig.Exclude)
+	slices.Sort(newConfig.Exclude)
+	if reflect.DeepEqual(oldConfig, newConfig) {
+		newSetting.Value = oldValue
+	}
+}
+
+func updateSetting(ctx context.Context, harvesterClient *harvclient.Clientset, d *schema.ResourceData, oldSetting *harvsterv1.Setting) diag.Diagnostics {
+	oldValue := oldSetting.Value
+
+	toUpdate, err := util.ResourceConstruct(d, Updater(oldSetting))
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	newSetting := toUpdate.(*harvsterv1.Setting)
+	newValue := newSetting.Value
+	handleStorageNetworkSetting(newSetting, oldValue)
+
+	newSetting, err = harvesterClient.HarvesterhciV1beta1().Settings().Update(ctx, toUpdate.(*harvsterv1.Setting), metav1.UpdateOptions{})
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	newSetting.Value = newValue
+	return diag.FromErr(resourceSettingImport(d, newSetting))
 }
