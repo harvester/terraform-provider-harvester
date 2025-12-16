@@ -67,6 +67,7 @@ const (
 	FieldDiskType               = "type"
 	FieldDiskSize               = "size"
 	FieldDiskBus                = "bus"
+	FieldDiskCacheMode          = "cache_mode"
 	FieldDiskBootOrder          = "boot_order"
 	FieldDiskExistingVolumeName = "existing_volume_name"
 	FieldDiskContainerImageName = "container_image_name"
@@ -89,4 +90,10 @@ const (
 
 const (
 	LabelSSHUsername = "ssh-user"
+)
+
+const (
+	DiskCacheModeNone         = "none"
+	DiskCacheModeWriteBack    = "writeback"
+	DiskCacheModeWriteThrough = "writethrough"
 )

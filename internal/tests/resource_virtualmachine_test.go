@@ -436,6 +436,59 @@ resource harvester_virtualmachine "disk_test" {
 	})
 }
 
+func TestAccVirtualMachine_disk_cache_mode(t *testing.T) {
+	var (
+		testAccVMName         = "disk-cache-mode-test"
+		testAccVMResourceName = constants.ResourceTypeVirtualMachine + "." + testAccVMName
+		testAccCacheMode      = constants.DiskCacheModeWriteBack
+		ctx                   = context.Background()
+	)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckVirtualMachineDestroy(ctx),
+		Steps: []resource.TestStep{
+			{
+				Config: fmt.Sprintf(`
+resource harvester_virtualmachine "%s" {
+	name = "%s"
+	namespace = "default"
+
+  cpu = 1
+  memory = "1Gi"
+
+  run_strategy = "RerunOnFailure"
+  machine_type = "q35"
+
+  network_interface {
+    name         = "default"
+  }
+
+  disk {
+    name       = "rootdisk"
+    type       = "disk"
+    bus        = "virtio"
+		cache_mode = "%s"
+    boot_order = 1
+		container_image_name = "kubevirt/fedora-cloud-container-disk-demo:v0.35.0"
+  }
+}
+`,
+					testAccVMName,
+					testAccVMName,
+					testAccCacheMode,
+				),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(testAccVMResourceName, constants.FieldCommonName, testAccVMName),
+					resource.TestCheckResourceAttr(testAccVMResourceName, constants.FieldVirtualMachineDisk+".#", "1"),
+					resource.TestCheckResourceAttr(testAccVMResourceName, constants.FieldVirtualMachineDisk+".0."+constants.FieldDiskCacheMode, testAccCacheMode),
+				),
+			},
+		},
+	})
+}
+
 func TestAccVirtualMachine_labels(t *testing.T) {
 	var (
 		vm             *kubevirtv1.VirtualMachine

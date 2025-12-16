@@ -39,6 +39,17 @@ func resourceDiskSchema() map[string]*schema.Schema {
 				"",
 			}, false),
 		},
+		constants.FieldDiskCacheMode: {
+			Type:     schema.TypeString,
+			Optional: true,
+			Default:  "",
+			ValidateFunc: validation.StringInSlice([]string{
+				constants.DiskCacheModeNone,
+				constants.DiskCacheModeWriteBack,
+				constants.DiskCacheModeWriteThrough,
+				"",
+			}, false),
+		},
 		constants.FieldDiskBootOrder: {
 			Type:         schema.TypeInt,
 			Optional:     true,

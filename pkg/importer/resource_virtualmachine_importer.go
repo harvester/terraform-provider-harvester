@@ -312,10 +312,12 @@ func (v *VMImporter) Volume() ([]map[string]interface{}, []map[string]interface{
 		} else {
 			return nil, nil, fmt.Errorf("unsupported volume type found on volume %s. ", disk.Name)
 		}
+
 		diskState[constants.FieldDiskName] = disk.Name
 		diskState[constants.FieldDiskBootOrder] = disk.BootOrder
 		diskState[constants.FieldDiskType] = diskType
 		diskState[constants.FieldDiskBus] = diskBus
+		diskState[constants.FieldDiskCacheMode] = disk.Cache
 
 		if volume, hasVolume := volumesMap[disk.Name]; hasVolume {
 			if volume.CloudInitNoCloud != nil || volume.CloudInitConfigDrive != nil {
