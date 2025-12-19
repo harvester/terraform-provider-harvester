@@ -440,7 +440,7 @@ func TestAccVirtualMachine_labels(t *testing.T) {
 			{
 				Config: `
 resource "harvester_virtualmachine" "test-acc-labels" {
-	name = "test-vm"
+	name = "test-vm-for-labels"
 	namespace = "default"
 
 	tags = {
@@ -518,7 +518,10 @@ func testAccGetVirtualMachine(ctx context.Context, state *terraform.State, resou
 	}
 
 	id := resource.Primary.ID
-	c := testAccProvider.Meta().(*client.Client)
+	c, err := testAccProvider.Meta().(*config.Config).K8sClient()
+	if err != nil {
+		return nil, err
+	}
 
 	namespace, name, err := helper.IDParts(id)
 	if err != nil {

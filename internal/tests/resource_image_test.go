@@ -9,6 +9,8 @@ import (
 	harvsterv1 "github.com/harvester/harvester/pkg/apis/harvesterhci.io/v1beta1"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	corev1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/harvester/terraform-provider-harvester/internal/config"
@@ -23,13 +25,21 @@ const (
 	testAccImageDisplayName  = "foo"
 	testAccImageSourceType   = "download"
 
-	testAccImageURL = "http://cloud-images.ubuntu.com/releases/focal/release/ubuntu-20.04-server-cloudimg-amd64.img"
+	testAccImageURL = "https://dl-cdn.alpinelinux.org/alpine/v3.23/releases/cloud/nocloud_alpine-3.23.0-x86_64-bios-tiny-r0.qcow2"
 
 	// Crypto test constants
 	testAccImageCryptoName         = "test-acc-crypto-foo"
 	testAccImageCryptoResourceName = constants.ResourceTypeImage + "." + testAccImageCryptoName
 	testAccImageCryptoDisplayName  = "crypto-foo"
+	testAccImageCryptoDescription  = "Terraform Harvester crypto image acceptance test"
 	testAccImageCryptoSourceType   = "clone"
+	testAccImageCryptoOp           = "encrypt"
+
+	testAccCryptoSourceImageName         = "test-acc-crypto-source"
+	testAccCryptoSourceImageResourceName = constants.ResourceTypeImage + "." + testAccCryptoSourceImageName
+	testAccCryptoSourceImageDisplayName  = "test-acc-crypto-source"
+	testAccCryptoSourceImageNamespace    = "default"
+	testAccCryptoSecretName              = "crypto"
 
 	testAccImageConfigTemplate = `
 resource %s "%s" {
@@ -48,11 +58,13 @@ resource %s "%s" {
 	%s = "%s"
 	%s = "%s"
 	%s = "%s"
+	storage_class_name = "encryption"
 	%s = {
 		%s = "%s"
 		%s = "%s"
 		%s = "%s"
 	}
+	%s
 }
 `
 )
@@ -67,6 +79,19 @@ func buildImageConfig(name, description, displayName, sourceType, url string) st
 }
 
 func buildImageCryptoConfig(name, description, displayName, sourceType, cryptoOp, sourceImageName, sourceImageNamespace string) string {
+	if sourceType == "download" {
+		return fmt.Sprintf(testAccImageCryptoConfigTemplate, constants.ResourceTypeImage, name,
+			constants.FieldCommonName, name,
+			constants.FieldCommonDescription, description,
+			constants.FieldImageDisplayName, displayName,
+			constants.FieldImageSourceType, sourceType,
+			constants.FieldImageSecurityParameters,
+			constants.FieldImageCryptoOperation, cryptoOp,
+			constants.FieldImageSourceImageName, sourceImageName,
+			constants.FieldImageSourceImageNamespace, sourceImageNamespace,
+			fmt.Sprintf("  %s = \"%s\"", constants.FieldImageURL, testAccImageURL),
+		)
+	}
 	return fmt.Sprintf(testAccImageCryptoConfigTemplate, constants.ResourceTypeImage, name,
 		constants.FieldCommonName, name,
 		constants.FieldCommonDescription, description,
@@ -75,7 +100,56 @@ func buildImageCryptoConfig(name, description, displayName, sourceType, cryptoOp
 		constants.FieldImageSecurityParameters,
 		constants.FieldImageCryptoOperation, cryptoOp,
 		constants.FieldImageSourceImageName, sourceImageName,
-		constants.FieldImageSourceImageNamespace, sourceImageNamespace)
+		constants.FieldImageSourceImageNamespace, sourceImageNamespace,
+		"",
+	)
+}
+
+func buildCryptoStorageClass() string {
+	return fmt.Sprintf(`
+resource "harvester_storageclass" "encryption" {
+  name = "encryption"
+
+  parameters = {
+    "migratable"                                       = "true"
+    "numberOfReplicas"                                 = "1"
+    "staleReplicaTimeout"                              = "30"
+    "encrypted"                                        = "true"
+    "csi.storage.k8s.io/node-publish-secret-name"      = "crypto"
+    "csi.storage.k8s.io/node-publish-secret-namespace" = "default"
+    "csi.storage.k8s.io/node-stage-secret-name"        = "crypto"
+    "csi.storage.k8s.io/node-stage-secret-namespace"   = "default"
+    "csi.storage.k8s.io/provisioner-secret-name"       = "crypto"
+    "csi.storage.k8s.io/provisioner-secret-namespace"  = "default"
+  }
+}
+`)
+}
+
+func buildCryptoSourceImage() string {
+	return fmt.Sprintf(`
+resource "harvester_image" "%s" {
+  name = "%s"
+	namespace = "%s"
+
+	display_name = "%s"
+
+	source_type = "download"
+	url = "%s"
+}
+`,
+		testAccCryptoSourceImageName,
+		testAccCryptoSourceImageName,
+		testAccCryptoSourceImageNamespace,
+		testAccCryptoSourceImageDisplayName,
+		testAccImageURL,
+	)
+}
+
+func buildCryptoStorageClassConfigAndSourceImage() string {
+	storageClass := buildCryptoStorageClass()
+	sourceImage := buildCryptoSourceImage()
+	return fmt.Sprintf("%s\n\n%s", storageClass, sourceImage)
 }
 
 func TestAccImage_basic(t *testing.T) {
@@ -142,57 +216,151 @@ func testAccImageExists(ctx context.Context, n string, image *harvsterv1.Virtual
 
 func testAccCheckImageDestroy(ctx context.Context) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
+		c, err := testAccProvider.Meta().(*config.Config).K8sClient()
+		if err != nil {
+			return err
+		}
 		for _, rs := range s.RootModule().Resources {
-			if rs.Type != constants.ResourceTypeImage {
-				continue
-			}
-
-			c, err := testAccProvider.Meta().(*config.Config).K8sClient()
-			if err != nil {
-				return err
-			}
 			namespace, name, err := helper.IDParts(rs.Primary.ID)
 			if err != nil {
 				return err
 			}
 
-			imageStateRefreshFunc := getResourceStateRefreshFunc(func() (interface{}, error) {
-				return c.HarvesterClient.HarvesterhciV1beta1().VirtualMachineImages(namespace).Get(ctx, name, metav1.GetOptions{})
-			})
-			stateConf := getStateChangeConf(imageStateRefreshFunc)
-			if _, err = stateConf.WaitForStateContext(ctx); err != nil {
-				return fmt.Errorf(
-					"[ERROR] waiting for image (%s) to be removed: %s", rs.Primary.ID, err)
+			if rs.Type == constants.ResourceTypeImage {
+				imageStateRefreshFunc := getResourceStateRefreshFunc(func() (interface{}, error) {
+					return c.HarvesterClient.HarvesterhciV1beta1().VirtualMachineImages(namespace).Get(ctx, name, metav1.GetOptions{})
+				})
+				stateConf := getStateChangeConf(imageStateRefreshFunc)
+				if _, err = stateConf.WaitForStateContext(ctx); err != nil {
+					return fmt.Errorf(
+						"[ERROR] waiting for image (%s) to be removed: %s", rs.Primary.ID, err)
+				}
+			} else if rs.Type == constants.ResourceTypeStorageClass {
+				scStateRefreshFunc := getResourceStateRefreshFunc(func() (interface{}, error) {
+					return c.KubeClient.StorageV1().StorageClasses().Get(ctx, name, metav1.GetOptions{})
+				})
+				stateConf := getStateChangeConf(scStateRefreshFunc)
+				if _, err = stateConf.WaitForStateContext(ctx); err != nil {
+					return fmt.Errorf(
+						"[ERROR] waiting for storage class (%s) to be removed: %s", rs.Primary.ID, err)
+				}
 			}
 		}
+
+		err = c.KubeClient.
+			CoreV1().
+			Secrets(testAccCryptoSourceImageNamespace).
+			Delete(ctx, testAccCryptoSecretName, metav1.DeleteOptions{})
+		if err != nil && !apierrors.IsNotFound(err) {
+			return err
+		}
+
 		return nil
 	}
 }
 
-func TestAccImage_crypto(t *testing.T) {
+func testAccCryptoCreateSecret(t *testing.T) {
+	c, err := testAccProvider.Meta().(*config.Config).K8sClient()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	secret := corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      testAccCryptoSecretName,
+			Namespace: testAccCryptoSourceImageNamespace,
+		},
+		StringData: map[string]string{
+			"CRYPTO_KEY_VALUE":    "your-encryption-passphrase-here",
+			"CRYPTO_KEY_CIPHER":   "aes-xts-plain64",
+			"CRYPTO_KEY_HASH":     "sha256",
+			"CRYPTO_KEY_PROVIDER": "secret",
+			"CRYPTO_KEY_SIZE":     "256",
+			"CRYPTO_PBKDF":        "argon2i",
+		},
+	}
+
+	_, err = c.KubeClient.
+		CoreV1().
+		Secrets(testAccCryptoSourceImageNamespace).
+		Create(context.Background(), &secret, metav1.CreateOptions{})
+	if err != nil && !apierrors.IsAlreadyExists(err) {
+		t.Fatal(err)
+	}
+}
+
+func TestAccImage_crypto_invalid(t *testing.T) {
 	var (
-		image *harvsterv1.VirtualMachineImage
-		ctx   = context.Background()
+		ctx = context.Background()
 	)
+
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
 		CheckDestroy: testAccCheckImageDestroy(ctx),
 		Steps: []resource.TestStep{
 			{
-				Config:      buildImageCryptoConfig(testAccImageCryptoName, testAccImageDescription, testAccImageCryptoDisplayName, "download", "encrypt", "source-image", "default"),
-				ExpectError: regexp.MustCompile(`source_type must be 'clone' when using security_parameters`),
+				Config: buildImageCryptoConfig(
+					testAccImageCryptoName,
+					testAccImageDescription,
+					testAccImageCryptoDisplayName,
+					"download",
+					"encrypt",
+					testAccCryptoSourceImageName,
+					testAccCryptoSourceImageNamespace,
+				),
+				ExpectError: regexp.MustCompile(`security parameters can only be set when source type is 'clone'`),
+			},
+		},
+	},
+	)
+}
+
+func TestAccImage_crypto(t *testing.T) {
+	var (
+		sourceImage *harvsterv1.VirtualMachineImage
+		image       *harvsterv1.VirtualMachineImage
+		ctx         = context.Background()
+	)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			testAccPreCheck(t)
+			testAccCryptoCreateSecret(t)
+		},
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckImageDestroy(ctx),
+		Steps: []resource.TestStep{
+			{
+				Config: buildCryptoStorageClassConfigAndSourceImage(),
+				Check: resource.ComposeTestCheckFunc(
+					testAccImageExists(ctx, testAccCryptoSourceImageResourceName, sourceImage),
+				),
 			},
 			{
-				Config: buildImageCryptoConfig(testAccImageCryptoName, testAccImageDescription, testAccImageCryptoDisplayName, testAccImageCryptoSourceType, "encrypt", "source-image", "default"),
+				Config: fmt.Sprintf("%s\n\n%s", buildCryptoStorageClassConfigAndSourceImage(), buildImageCryptoConfig(
+					testAccImageCryptoName,
+					testAccImageCryptoDescription,
+					testAccImageCryptoDisplayName,
+					testAccImageCryptoSourceType,
+					testAccImageCryptoOp,
+					testAccCryptoSourceImageName,
+					testAccCryptoSourceImageNamespace,
+				)),
 				Check: resource.ComposeTestCheckFunc(
 					testAccImageExists(ctx, testAccImageCryptoResourceName, image),
 					resource.TestCheckResourceAttr(testAccImageCryptoResourceName, constants.FieldCommonName, testAccImageCryptoName),
-					resource.TestCheckResourceAttr(testAccImageCryptoResourceName, constants.FieldCommonDescription, testAccImageDescription),
+					resource.TestCheckResourceAttr(testAccImageCryptoResourceName, constants.FieldCommonDescription, testAccImageCryptoDescription),
 					resource.TestCheckResourceAttr(testAccImageCryptoResourceName, constants.FieldImageSourceType, testAccImageCryptoSourceType),
 					resource.TestCheckResourceAttr(testAccImageCryptoResourceName, fmt.Sprintf("%s.%s", constants.FieldImageSecurityParameters, constants.FieldImageCryptoOperation), "encrypt"),
-					resource.TestCheckResourceAttr(testAccImageCryptoResourceName, fmt.Sprintf("%s.%s", constants.FieldImageSecurityParameters, constants.FieldImageSourceImageName), "source-image"),
-					resource.TestCheckResourceAttr(testAccImageCryptoResourceName, fmt.Sprintf("%s.%s", constants.FieldImageSecurityParameters, constants.FieldImageSourceImageNamespace), "default"),
+					resource.TestCheckResourceAttr(testAccImageCryptoResourceName, fmt.Sprintf("%s.%s", constants.FieldImageSecurityParameters, constants.FieldImageSourceImageName), testAccCryptoSourceImageName),
+					resource.TestCheckResourceAttr(testAccImageCryptoResourceName, fmt.Sprintf("%s.%s", constants.FieldImageSecurityParameters, constants.FieldImageSourceImageNamespace), testAccCryptoSourceImageNamespace),
+				),
+			},
+			{
+				Config: buildCryptoStorageClassConfigAndSourceImage(),
+				Check: resource.ComposeTestCheckFunc(
+					testAccImageExists(ctx, testAccCryptoSourceImageResourceName, sourceImage),
 				),
 			},
 		},

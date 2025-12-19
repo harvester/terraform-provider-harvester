@@ -15,17 +15,21 @@ import (
 const (
 	testAccBootstrapName            = "test-admin"
 	testAccBootstrapResourceName    = constants.ResourceTypeBootstrap + "." + testAccBootstrapName
-	testAccBootstrapAPIURL          = "https://192.168.3.131"
-	testAccBootstrapInitialPassword = "admin"
-	testAccBootstrapPassword        = "passwdpasswd"
+	testAccBootstrapAPIURL          = "https://192.168.0.131"
+	testAccBootstrapInitialPassword = "password1234"
+	testAccBootstrapPassword        = "newpassword1234"
+	testAccKubeConfigPath           = "kubeconfig_test.yaml"
 
 	testAccBootstrapConfigTemplate = `
 provider "harvester" {
   bootstrap = true
+	alias = "bootstrap"
 }
 
 resource harvester_bootstrap "%s" {
+	provider = harvester.bootstrap
 
+	%s = "%s"
 	%s = "%s"
 	%s = "%s"
 	%s = "%s"
@@ -37,7 +41,9 @@ func buildBootstrapConfig(name, url, initialPassword, password string) string {
 	return fmt.Sprintf(testAccBootstrapConfigTemplate, name,
 		constants.FieldBootstrapAPIURL, url,
 		constants.FieldBootstrapInitialPassword, initialPassword,
-		constants.FieldBootstrapPassword, password)
+		constants.FieldBootstrapPassword, password,
+		constants.FieldBootstrapKubeConfig, testAccKubeConfigPath,
+	)
 }
 
 func TestAccBootstrap_basic(t *testing.T) {
