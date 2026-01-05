@@ -10,4 +10,3 @@ type RecurringJobSpec struct {
 	Concurrency int               `json:"concurrency"`
 	Labels      map[string]string `json:"labels,omitempty"`
 }
-

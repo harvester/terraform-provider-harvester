@@ -9,10 +9,10 @@ import (
 	"strings"
 	"time"
 
-	corev1 "k8s.io/api/core/v1"
 	harvsterv1 "github.com/harvester/harvester/pkg/apis/harvesterhci.io/v1beta1"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -55,11 +55,11 @@ func resourceVolumeBackupCreate(ctx context.Context, d *schema.ResourceData, met
 
 	namespace := d.Get(constants.FieldCommonNamespace).(string)
 	name := d.Get(constants.FieldCommonName).(string)
-	
+
 	// Get VM name - prefer vm_name over deprecated volume_name for backward compatibility
 	var vmName string
 	var vmNamespace string
-	
+
 	if vmNameRaw, ok := d.GetOk(constants.FieldVolumeBackupVMName); ok {
 		vmNamespace, vmName, err = helper.NamespacedNamePartsByDefault(vmNameRaw.(string), namespace)
 		if err != nil {
@@ -97,7 +97,7 @@ func resourceVolumeBackupCreate(ctx context.Context, d *schema.ResourceData, met
 				}
 			}
 		}
-		
+
 		if vmName == "" {
 			return diag.Errorf("no VirtualMachine found using volume %s/%s", volNamespace, volName)
 		}
@@ -136,10 +136,10 @@ func resourceVolumeBackupCreate(ctx context.Context, d *schema.ResourceData, met
 			Namespace: vmNamespace,
 		},
 		Spec: harvsterv1.ScheduleVMBackupSpec{
-			Cron:      schedule,
-			Retain:    retain,
+			Cron:       schedule,
+			Retain:     retain,
 			MaxFailure: maxFailure,
-			Suspend:   false,
+			Suspend:    false,
 			VMBackupSpec: harvsterv1.VirtualMachineBackupSpec{
 				Type: "backup",
 				Source: corev1.TypedLocalObjectReference{
@@ -224,7 +224,7 @@ func resourceVolumeBackupUpdate(ctx context.Context, d *schema.ResourceData, met
 	if len(parts) < 3 {
 		return diag.Errorf("invalid resource ID format: %s (expected namespace/vmname/jobname)", id)
 	}
-	
+
 	vmNamespace := parts[0]
 	vmName := parts[1]
 	jobName := parts[2]
@@ -232,7 +232,7 @@ func resourceVolumeBackupUpdate(ctx context.Context, d *schema.ResourceData, met
 	// Get VM name from resource data (may have changed)
 	var targetVMName string
 	var targetVMNamespace string
-	
+
 	if vmNameRaw, ok := d.GetOk(constants.FieldVolumeBackupVMName); ok {
 		targetVMNamespace, targetVMName, err = helper.NamespacedNamePartsByDefault(vmNameRaw.(string), vmNamespace)
 		if err != nil {
@@ -268,10 +268,10 @@ func resourceVolumeBackupUpdate(ctx context.Context, d *schema.ResourceData, met
 			Namespace: targetVMNamespace,
 		},
 		Spec: harvsterv1.ScheduleVMBackupSpec{
-			Cron:      schedule,
-			Retain:    retain,
+			Cron:       schedule,
+			Retain:     retain,
 			MaxFailure: maxFailure,
-			Suspend:   !enabled,
+			Suspend:    !enabled,
 			VMBackupSpec: harvsterv1.VirtualMachineBackupSpec{
 				Type: "backup",
 				Source: corev1.TypedLocalObjectReference{
@@ -333,7 +333,7 @@ func resourceVolumeBackupRead(ctx context.Context, d *schema.ResourceData, meta 
 	if len(parts) < 3 {
 		return diag.Errorf("invalid resource ID format: %s (expected namespace/vmname/jobname)", id)
 	}
-	
+
 	vmNamespace := parts[0]
 	vmName := parts[1]
 	jobName := parts[2]
@@ -398,7 +398,7 @@ func resourceVolumeBackupDelete(ctx context.Context, d *schema.ResourceData, met
 	if len(parts) < 3 {
 		return diag.Errorf("invalid resource ID format: %s (expected namespace/vmname/jobname)", id)
 	}
-	
+
 	vmNamespace := parts[0]
 	jobName := parts[2]
 
@@ -413,4 +413,3 @@ func resourceVolumeBackupDelete(ctx context.Context, d *schema.ResourceData, met
 	d.SetId("")
 	return nil
 }
-

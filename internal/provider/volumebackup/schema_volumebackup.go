@@ -31,17 +31,17 @@ func Schema() map[string]*schema.Schema {
 			Description: "Cron schedule for the backup in UTC timezone (e.g., '0 0 * * *' for daily at midnight UTC). Harvester uses UTC time, not local time.",
 		},
 		constants.FieldVolumeBackupRetain: {
-			Type:        schema.TypeInt,
-			Optional:    true,
-			Default:     5,
-			Description: "Number of backups to retain. Older backups will be automatically deleted. Minimum: 1, Default: 5",
+			Type:         schema.TypeInt,
+			Optional:     true,
+			Default:      5,
+			Description:  "Number of backups to retain. Older backups will be automatically deleted. Minimum: 1, Default: 5",
 			ValidateFunc: validation.IntAtLeast(1),
 		},
 		constants.FieldVolumeBackupConcurrency: {
-			Type:        schema.TypeInt,
-			Optional:    true,
-			Default:     1,
-			Description: "Number of concurrent backup jobs. Note: This field is currently not used by Harvester's ScheduleVMBackup but is kept for API compatibility. Default: 1",
+			Type:         schema.TypeInt,
+			Optional:     true,
+			Default:      1,
+			Description:  "Number of concurrent backup jobs. Note: This field is currently not used by Harvester's ScheduleVMBackup but is kept for API compatibility. Default: 1",
 			ValidateFunc: validation.IntBetween(1, 10),
 		},
 		constants.FieldVolumeBackupLabels: {
@@ -70,4 +70,3 @@ func Schema() map[string]*schema.Schema {
 func DataSourceSchema() map[string]*schema.Schema {
 	return util.DataSourceSchemaWrap(Schema())
 }
-

@@ -53,7 +53,7 @@ func (c *Constructor) Setup() util.Processors {
 					Retain:      5,
 					Concurrency: 1,
 				}
-				
+
 				// Store in annotation
 				if c.Volume.Annotations == nil {
 					c.Volume.Annotations = make(map[string]string)
@@ -200,8 +200,8 @@ func Creator(namespace, name string, volumeName string) util.Constructor {
 	// The actual volume will be updated with annotations
 	volume := &corev1.PersistentVolumeClaim{
 		ObjectMeta: metav1.ObjectMeta{
-			Namespace: volNamespace,
-			Name:      volName,
+			Namespace:   volNamespace,
+			Name:        volName,
 			Annotations: make(map[string]string),
 		},
 	}
@@ -211,4 +211,3 @@ func Creator(namespace, name string, volumeName string) util.Constructor {
 func Updater(volume *corev1.PersistentVolumeClaim) util.Constructor {
 	return newVolumeBackupConstructor(volume)
 }
-

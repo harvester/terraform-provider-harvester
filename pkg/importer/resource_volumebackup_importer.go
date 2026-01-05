@@ -22,13 +22,13 @@ func ResourceVolumeBackupStateGetter(obj *harvsterv1.ScheduleVMBackup) (*StateGe
 
 	// Build the resource states from the ScheduleVMBackup CRD
 	states := map[string]interface{}{
-		constants.FieldCommonNamespace:        obj.Namespace,
-		constants.FieldCommonName:             obj.Name,
+		constants.FieldCommonNamespace:         obj.Namespace,
+		constants.FieldCommonName:              obj.Name,
 		constants.FieldVolumeBackupVMName:      helper.BuildNamespacedName(obj.Namespace, vmName),
-		constants.FieldVolumeBackupSchedule:   obj.Spec.Cron,
-		constants.FieldVolumeBackupRetain:     obj.Spec.Retain,
+		constants.FieldVolumeBackupSchedule:    obj.Spec.Cron,
+		constants.FieldVolumeBackupRetain:      obj.Spec.Retain,
 		constants.FieldVolumeBackupConcurrency: 1, // Default value, not used by ScheduleVMBackup
-		constants.FieldVolumeBackupEnabled:    !obj.Spec.Suspend,
+		constants.FieldVolumeBackupEnabled:     !obj.Spec.Suspend,
 	}
 
 	// Add labels if present
@@ -47,4 +47,3 @@ func ResourceVolumeBackupStateGetter(obj *harvsterv1.ScheduleVMBackup) (*StateGe
 		States:       states,
 	}, nil
 }
-
