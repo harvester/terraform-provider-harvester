@@ -122,7 +122,8 @@ func testAccCheckLoadBalancerDestroy(ctx context.Context) resource.TestCheckFunc
 				return err
 			}
 
-			if rs.Type == constants.ResourceTypeLoadBalancer {
+			switch t := rs.Type; t {
+			case constants.ResourceTypeLoadBalancer:
 				lbStateRefreshFunc := getResourceStateRefreshFunc(func() (interface{}, error) {
 					return c.HarvesterLoadbalancerClient.
 						LoadbalancerV1beta1().
@@ -133,7 +134,7 @@ func testAccCheckLoadBalancerDestroy(ctx context.Context) resource.TestCheckFunc
 				if _, err = stateConf.WaitForStateContext(ctx); err != nil {
 					return fmt.Errorf("[ERROR] waiting for loadbalancer (%s) to be removed: %s", rs.Primary.ID, err)
 				}
-			} else if rs.Type == constants.ResourceTypeVirtualMachine {
+			case constants.ResourceTypeVirtualMachine:
 				vmStateRefreshFunc := getResourceStateRefreshFunc(func() (interface{}, error) {
 					return c.HarvesterClient.
 						KubevirtV1().

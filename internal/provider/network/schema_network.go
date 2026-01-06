@@ -25,7 +25,7 @@ func Schema() map[string]*schema.Schema {
 		constants.FieldNetworkClusterNetworkName: {
 			Type:         schema.TypeString,
 			Required:     true,
-			Description:  "", //TODO
+			Description:  "Name of the cluster network",
 			ValidateFunc: validation.StringIsNotEmpty,
 		},
 		constants.FieldNetworkRouteMode: {
