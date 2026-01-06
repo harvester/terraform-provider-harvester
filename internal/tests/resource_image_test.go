@@ -115,15 +115,19 @@ resource "harvester_storageclass" "encryption" {
     "numberOfReplicas"                                 = "1"
     "staleReplicaTimeout"                              = "30"
     "encrypted"                                        = "true"
-    "csi.storage.k8s.io/node-publish-secret-name"      = "crypto"
+    "csi.storage.k8s.io/node-publish-secret-name"      = "%s"
     "csi.storage.k8s.io/node-publish-secret-namespace" = "default"
-    "csi.storage.k8s.io/node-stage-secret-name"        = "crypto"
+    "csi.storage.k8s.io/node-stage-secret-name"        = "%s"
     "csi.storage.k8s.io/node-stage-secret-namespace"   = "default"
-    "csi.storage.k8s.io/provisioner-secret-name"       = "crypto"
+    "csi.storage.k8s.io/provisioner-secret-name"       = "%s"
     "csi.storage.k8s.io/provisioner-secret-namespace"  = "default"
   }
 }
-`)
+`,
+		testAccCryptoSecretName,
+		testAccCryptoSecretName,
+		testAccCryptoSecretName,
+	)
 }
 
 func buildCryptoSourceImage() string {
@@ -226,7 +230,8 @@ func testAccCheckImageDestroy(ctx context.Context) resource.TestCheckFunc {
 				return err
 			}
 
-			if rs.Type == constants.ResourceTypeImage {
+			switch t := rs.Type; t {
+			case constants.ResourceTypeImage:
 				imageStateRefreshFunc := getResourceStateRefreshFunc(func() (interface{}, error) {
 					return c.HarvesterClient.HarvesterhciV1beta1().VirtualMachineImages(namespace).Get(ctx, name, metav1.GetOptions{})
 				})
@@ -235,7 +240,7 @@ func testAccCheckImageDestroy(ctx context.Context) resource.TestCheckFunc {
 					return fmt.Errorf(
 						"[ERROR] waiting for image (%s) to be removed: %s", rs.Primary.ID, err)
 				}
-			} else if rs.Type == constants.ResourceTypeStorageClass {
+			case constants.ResourceTypeStorageClass:
 				scStateRefreshFunc := getResourceStateRefreshFunc(func() (interface{}, error) {
 					return c.KubeClient.StorageV1().StorageClasses().Get(ctx, name, metav1.GetOptions{})
 				})

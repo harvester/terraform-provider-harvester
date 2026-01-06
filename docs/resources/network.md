@@ -63,7 +63,7 @@ resource "harvester_network" "cluster-vlan" {
 
 ### Required
 
-- `cluster_network_name` (String)
+- `cluster_network_name` (String) Name of the cluster network
 - `name` (String) A unique name
 - `vlan_id` (Number) e.g. 0-4094
 
