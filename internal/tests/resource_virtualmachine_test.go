@@ -254,6 +254,7 @@ func TestAccVirtualMachine_network_boot(t *testing.T) {
 func TestAccVirtualMachine_cpu_pinning(t *testing.T) {
 	var (
 		testAccVirtualMachineName         = "test-acc-cpu-pinning" + uuid.New().String()[:6]
+		testAccVirtualMachineNamespace    = "default"
 		testAccVirtualMachineResourceName = constants.ResourceTypeVirtualMachine + "." + testAccVirtualMachineName
 		vm                                = &kubevirtv1.VirtualMachine{}
 		ctx                               = context.Background()
@@ -266,34 +267,26 @@ func TestAccVirtualMachine_cpu_pinning(t *testing.T) {
 	// enableCPUManager and disableCPUManager are placed outside acc test because acc tests lack beforeAll/afterAll support.
 	// To minimize delays, CPUManager is enable/disable only once rather than before/after each test step.
 	testAccPreCheck(t)
+
 	c, err := testAccProvider.Meta().(*config.Config).K8sClient()
 	if err != nil {
 		t.Fatal("failed to find any node")
 	}
-	nodes, err := c.KubeClient.CoreV1().Nodes().List(ctx, metav1.ListOptions{})
-	if err != nil {
-		t.Fatal(err)
-	}
-	if len(nodes.Items) == 0 {
-		t.Fatal("failed to find any node")
-	}
-	nodeName := nodes.Items[0].Name
-
-	t.Log("enable cpu manager on node " + nodeName)
-	enableCPUManager(t, ctx, nodeName)
+	ensureNodeManagerEnabled(ctx, t, c)
 
 	resource.Test(t, resource.TestCase{
-		Providers: testAccProviders,
-		CheckDestroy: func(s *terraform.State) error {
-			err := testAccCheckVirtualMachineDestroy(ctx)(s)
-			return err
-		},
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckVirtualMachineDestroy(ctx),
 		Steps: []resource.TestStep{
 			{
 				Config: NewVMResourceBuilder(testAccVirtualMachineName).SetCPUPinning(true).Build(),
 				Check: resource.ComposeTestCheckFunc(
 					testAccVirtualMachineExists(ctx, testAccVirtualMachineResourceName, vm),
 					func(s *terraform.State) error {
+						vm, err = c.HarvesterClient.KubevirtV1().VirtualMachines(testAccVirtualMachineNamespace).Get(ctx, testAccVirtualMachineName, metav1.GetOptions{})
+						if err != nil {
+							return err
+						}
 						if vm.Spec.Template == nil || vm.Spec.Template.Spec.Domain.CPU == nil || !vm.Spec.Template.Spec.Domain.CPU.DedicatedCPUPlacement {
 							return errors.New("DedicatedCPUPlacement should be true")
 						}
@@ -314,6 +307,10 @@ func TestAccVirtualMachine_cpu_pinning(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccVirtualMachineExists(ctx, testAccVirtualMachineResourceName, vm),
 					func(s *terraform.State) error {
+						vm, err = c.HarvesterClient.KubevirtV1().VirtualMachines(testAccVirtualMachineNamespace).Get(ctx, testAccVirtualMachineName, metav1.GetOptions{})
+						if err != nil {
+							return err
+						}
 						if vm.Spec.Template == nil || vm.Spec.Template.Spec.Domain.CPU == nil || !vm.Spec.Template.Spec.Domain.CPU.DedicatedCPUPlacement {
 							return errors.New("DedicatedCPUPlacement should be true")
 						}
@@ -331,9 +328,23 @@ func TestAccVirtualMachine_cpu_pinning(t *testing.T) {
 			},
 		},
 	})
+}
 
-	t.Log("disable cpu manager on node " + nodeName)
-	disableCPUManager(t, ctx, nodeName)
+func ensureNodeManagerEnabled(ctx context.Context, t *testing.T, c *client.Client) {
+	nodes, err := c.KubeClient.CoreV1().Nodes().List(ctx, metav1.ListOptions{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(nodes.Items) == 0 {
+		t.Fatal("failed to find any node")
+	}
+	node := nodes.Items[0]
+	nodeName := node.Name
+	enabled, ok := node.Labels["cpumanager"]
+	if !ok || enabled != "true" {
+		t.Log("enable cpu manager on node " + nodeName)
+		enableCPUManager(t, ctx, nodeName)
+	}
 }
 
 func TestAccVirtualMachine_input(t *testing.T) {
@@ -566,12 +577,6 @@ func testAccCheckVirtualMachineDestroy(ctx context.Context) resource.TestCheckFu
 func enableCPUManager(t *testing.T, ctx context.Context, nodeName string) {
 	if err := updateCPUManagerPolicy(ctx, nodeName, true); err != nil {
 		t.Fatalf("failed to enable cpu manager: %v", err)
-	}
-}
-
-func disableCPUManager(t *testing.T, ctx context.Context, nodeName string) {
-	if err := updateCPUManagerPolicy(ctx, nodeName, false); err != nil {
-		t.Fatalf("failed to disable cpu manager: %v", err)
 	}
 }
 
