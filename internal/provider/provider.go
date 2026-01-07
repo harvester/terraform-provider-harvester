@@ -21,7 +21,7 @@ import (
 	"github.com/harvester/terraform-provider-harvester/internal/provider/virtualmachine"
 	"github.com/harvester/terraform-provider-harvester/internal/provider/vlanconfig"
 	"github.com/harvester/terraform-provider-harvester/internal/provider/volume"
-	"github.com/harvester/terraform-provider-harvester/internal/provider/volumebackup"
+	"github.com/harvester/terraform-provider-harvester/internal/provider/schedulebackup"
 	"github.com/harvester/terraform-provider-harvester/pkg/constants"
 )
 
@@ -73,7 +73,7 @@ func Provider() *schema.Provider {
 			constants.ResourceTypeVLANConfig:      vlanconfig.ResourceVLANConfig(),
 			constants.ResourceTypeVirtualMachine:  virtualmachine.ResourceVirtualMachine(),
 			constants.ResourceTypeVolume:          volume.ResourceVolume(),
-			constants.ResourceTypeVolumeBackup:    volumebackup.ResourceVolumeBackup(),
+			constants.ResourceTypeScheduleBackup:    schedulebackup.ResourceScheduleBackup(),
 			constants.ResourceTypeBootstrap:       bootstrap.ResourceBootstrap(),
 		},
 		ConfigureContextFunc: providerConfig,
