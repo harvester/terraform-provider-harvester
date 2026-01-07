@@ -17,6 +17,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/harvester/terraform-provider-harvester/internal/config"
+	"github.com/harvester/terraform-provider-harvester/pkg/client"
 	"github.com/harvester/terraform-provider-harvester/pkg/constants"
 	"github.com/harvester/terraform-provider-harvester/pkg/helper"
 )
@@ -46,7 +47,7 @@ func ResourceVolumeBackup() *schema.Resource {
 
 // getVMNameFromResource extracts the VM name and namespace from the Terraform resource data.
 // It supports both vm_name (preferred) and deprecated volume_name for backward compatibility.
-func getVMNameFromResource(ctx context.Context, c *config.K8sClient, d *schema.ResourceData, namespace string) (vmNamespace, vmName string, diags diag.Diagnostics) {
+func getVMNameFromResource(ctx context.Context, c *client.Client, d *schema.ResourceData, namespace string) (vmNamespace, vmName string, diags diag.Diagnostics) {
 	if vmNameRaw, ok := d.GetOk(constants.FieldVolumeBackupVMName); ok {
 		var err error
 		vmNamespace, vmName, err = helper.NamespacedNamePartsByDefault(vmNameRaw.(string), namespace)
@@ -64,7 +65,7 @@ func getVMNameFromResource(ctx context.Context, c *config.K8sClient, d *schema.R
 }
 
 // findVMFromVolume finds the VM that uses the specified volume (backward compatibility).
-func findVMFromVolume(ctx context.Context, c *config.K8sClient, volumeNameRaw, namespace string) (vmNamespace, vmName string, diags diag.Diagnostics) {
+func findVMFromVolume(ctx context.Context, c *client.Client, volumeNameRaw, namespace string) (vmNamespace, vmName string, diags diag.Diagnostics) {
 	volNamespace, volName, err := helper.NamespacedNamePartsByDefault(volumeNameRaw, namespace)
 	if err != nil {
 		return "", "", diag.FromErr(fmt.Errorf("invalid volume name format: %w", err))
@@ -134,7 +135,7 @@ func buildScheduleVMBackup(vmNamespace, vmName, name, schedule string, retain in
 
 // createOrUpdateScheduleVMBackup creates or updates a ScheduleVMBackup resource.
 // It handles the case where a schedule already exists for the VM.
-func createOrUpdateScheduleVMBackup(ctx context.Context, c *config.K8sClient, scheduleVMBackup *harvsterv1.ScheduleVMBackup, vmNamespace, vmName string) (jobName string, diags diag.Diagnostics) {
+func createOrUpdateScheduleVMBackup(ctx context.Context, c *client.Client, scheduleVMBackup *harvsterv1.ScheduleVMBackup, vmNamespace, vmName string) (jobName string, diags diag.Diagnostics) {
 	name := scheduleVMBackup.ObjectMeta.Name
 	_, err := c.HarvesterClient.HarvesterhciV1beta1().ScheduleVMBackups(vmNamespace).Create(ctx, scheduleVMBackup, metav1.CreateOptions{})
 	if err == nil {
@@ -165,7 +166,7 @@ func createOrUpdateScheduleVMBackup(ctx context.Context, c *config.K8sClient, sc
 }
 
 // updateExistingScheduleForVM finds and updates an existing ScheduleVMBackup for the specified VM.
-func updateExistingScheduleForVM(ctx context.Context, c *config.K8sClient, scheduleVMBackup *harvsterv1.ScheduleVMBackup, vmNamespace, vmName string) (jobName string, diags diag.Diagnostics) {
+func updateExistingScheduleForVM(ctx context.Context, c *client.Client, scheduleVMBackup *harvsterv1.ScheduleVMBackup, vmNamespace, vmName string) (jobName string, diags diag.Diagnostics) {
 	existingSchedules, listErr := c.HarvesterClient.HarvesterhciV1beta1().ScheduleVMBackups(vmNamespace).List(ctx, metav1.ListOptions{})
 	if listErr != nil {
 		return "", diag.FromErr(fmt.Errorf("failed to list existing schedules: %w", listErr))
