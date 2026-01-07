@@ -20,6 +20,53 @@ type Constructor struct {
 	Volume *corev1.PersistentVolumeClaim
 }
 
+// getOrCreateJobSpec retrieves the existing job spec from annotations or creates a new one.
+func (c *Constructor) getOrCreateJobSpec() (RecurringJobSpec, error) {
+	if c.Volume.Annotations == nil {
+		c.Volume.Annotations = make(map[string]string)
+	}
+
+	backupJSON := c.Volume.Annotations[constants.AnnotationRecurringJobBackup]
+	if backupJSON != "" {
+		var jobSpec RecurringJobSpec
+		if err := json.Unmarshal([]byte(backupJSON), &jobSpec); err != nil {
+			return RecurringJobSpec{}, fmt.Errorf("failed to unmarshal backup job spec: %w", err)
+		}
+		return jobSpec, nil
+	}
+
+	// Create new job spec
+	return RecurringJobSpec{
+		Name:        c.Volume.Name + "-backup",
+		Task:        "backup",
+		Retain:      5,
+		Concurrency: 1,
+	}, nil
+}
+
+// saveJobSpec saves the job spec to annotations.
+func (c *Constructor) saveJobSpec(jobSpec RecurringJobSpec) error {
+	if c.Volume.Annotations == nil {
+		c.Volume.Annotations = make(map[string]string)
+	}
+	jobJSON, err := json.Marshal(jobSpec)
+	if err != nil {
+		return fmt.Errorf("failed to marshal backup job spec: %w", err)
+	}
+	c.Volume.Annotations[constants.AnnotationRecurringJobBackup] = string(jobJSON)
+	return nil
+}
+
+// updateJobSpecField updates a specific field in the job spec.
+func (c *Constructor) updateJobSpecField(updateFunc func(*RecurringJobSpec)) error {
+	jobSpec, err := c.getOrCreateJobSpec()
+	if err != nil {
+		return err
+	}
+	updateFunc(&jobSpec)
+	return c.saveJobSpec(jobSpec)
+}
+
 func (c *Constructor) Setup() util.Processors {
 	processors := util.NewProcessors().
 		Tags(&c.Volume.Labels).
@@ -35,7 +82,9 @@ func (c *Constructor) Setup() util.Processors {
 				if err != nil {
 					return err
 				}
-				// Store the volume reference in annotations for later use
+				if c.Volume.Annotations == nil {
+					c.Volume.Annotations = make(map[string]string)
+				}
 				c.Volume.Annotations["terraform-provider-harvester/backup-volume"] = helper.BuildNamespacedName(namespace, name)
 				return nil
 			},
@@ -45,25 +94,12 @@ func (c *Constructor) Setup() util.Processors {
 			Field: constants.FieldVolumeBackupSchedule,
 			Parser: func(i interface{}) error {
 				schedule := i.(string)
-				// Create the recurring job spec
-				jobSpec := RecurringJobSpec{
-					Name:        c.Volume.Name + "-backup",
-					Task:        "backup",
-					Cron:        schedule,
-					Retain:      5,
-					Concurrency: 1,
-				}
-
-				// Store in annotation
-				if c.Volume.Annotations == nil {
-					c.Volume.Annotations = make(map[string]string)
-				}
-				jobJSON, err := json.Marshal(jobSpec)
+				jobSpec, err := c.getOrCreateJobSpec()
 				if err != nil {
-					return fmt.Errorf("failed to marshal backup job spec: %w", err)
+					return err
 				}
-				c.Volume.Annotations[constants.AnnotationRecurringJobBackup] = string(jobJSON)
-				return nil
+				jobSpec.Cron = schedule
+				return c.saveJobSpec(jobSpec)
 			},
 			Required: true,
 		},
@@ -71,40 +107,18 @@ func (c *Constructor) Setup() util.Processors {
 			Field: constants.FieldVolumeBackupRetain,
 			Parser: func(i interface{}) error {
 				retain := i.(int)
-				// Update the existing backup job spec
-				if backupJSON := c.Volume.Annotations[constants.AnnotationRecurringJobBackup]; backupJSON != "" {
-					var jobSpec RecurringJobSpec
-					if err := json.Unmarshal([]byte(backupJSON), &jobSpec); err != nil {
-						return fmt.Errorf("failed to unmarshal backup job spec: %w", err)
-					}
-					jobSpec.Retain = retain
-					jobJSON, err := json.Marshal(jobSpec)
-					if err != nil {
-						return fmt.Errorf("failed to marshal backup job spec: %w", err)
-					}
-					c.Volume.Annotations[constants.AnnotationRecurringJobBackup] = string(jobJSON)
-				}
-				return nil
+				return c.updateJobSpecField(func(js *RecurringJobSpec) {
+					js.Retain = retain
+				})
 			},
 		},
 		{
 			Field: constants.FieldVolumeBackupConcurrency,
 			Parser: func(i interface{}) error {
 				concurrency := i.(int)
-				// Update the existing backup job spec
-				if backupJSON := c.Volume.Annotations[constants.AnnotationRecurringJobBackup]; backupJSON != "" {
-					var jobSpec RecurringJobSpec
-					if err := json.Unmarshal([]byte(backupJSON), &jobSpec); err != nil {
-						return fmt.Errorf("failed to unmarshal backup job spec: %w", err)
-					}
-					jobSpec.Concurrency = concurrency
-					jobJSON, err := json.Marshal(jobSpec)
-					if err != nil {
-						return fmt.Errorf("failed to marshal backup job spec: %w", err)
-					}
-					c.Volume.Annotations[constants.AnnotationRecurringJobBackup] = string(jobJSON)
-				}
-				return nil
+				return c.updateJobSpecField(func(js *RecurringJobSpec) {
+					js.Concurrency = concurrency
+				})
 			},
 		},
 		{
@@ -115,20 +129,9 @@ func (c *Constructor) Setup() util.Processors {
 				for k, v := range labels {
 					labelMap[k] = v.(string)
 				}
-				// Update the existing backup job spec
-				if backupJSON := c.Volume.Annotations[constants.AnnotationRecurringJobBackup]; backupJSON != "" {
-					var jobSpec RecurringJobSpec
-					if err := json.Unmarshal([]byte(backupJSON), &jobSpec); err != nil {
-						return fmt.Errorf("failed to unmarshal backup job spec: %w", err)
-					}
-					jobSpec.Labels = labelMap
-					jobJSON, err := json.Marshal(jobSpec)
-					if err != nil {
-						return fmt.Errorf("failed to marshal backup job spec: %w", err)
-					}
-					c.Volume.Annotations[constants.AnnotationRecurringJobBackup] = string(jobJSON)
-				}
-				return nil
+				return c.updateJobSpecField(func(js *RecurringJobSpec) {
+					js.Labels = labelMap
+				})
 			},
 		},
 		{
@@ -139,20 +142,9 @@ func (c *Constructor) Setup() util.Processors {
 				for i, g := range groups {
 					groupList[i] = g.(string)
 				}
-				// Update the existing backup job spec
-				if backupJSON := c.Volume.Annotations[constants.AnnotationRecurringJobBackup]; backupJSON != "" {
-					var jobSpec RecurringJobSpec
-					if err := json.Unmarshal([]byte(backupJSON), &jobSpec); err != nil {
-						return fmt.Errorf("failed to unmarshal backup job spec: %w", err)
-					}
-					jobSpec.Groups = groupList
-					jobJSON, err := json.Marshal(jobSpec)
-					if err != nil {
-						return fmt.Errorf("failed to marshal backup job spec: %w", err)
-					}
-					c.Volume.Annotations[constants.AnnotationRecurringJobBackup] = string(jobJSON)
-				}
-				return nil
+				return c.updateJobSpecField(func(js *RecurringJobSpec) {
+					js.Groups = groupList
+				})
 			},
 		},
 		{
@@ -160,10 +152,10 @@ func (c *Constructor) Setup() util.Processors {
 			Parser: func(i interface{}) error {
 				enabled := i.(bool)
 				if !enabled {
-					// Remove the backup annotation if disabled
-					delete(c.Volume.Annotations, constants.AnnotationRecurringJobBackup)
+					if c.Volume.Annotations != nil {
+						delete(c.Volume.Annotations, constants.AnnotationRecurringJobBackup)
+					}
 				}
-				// If enabled, the schedule field will have already set the annotation
 				return nil
 			},
 		},
