@@ -160,7 +160,7 @@ func (c *Constructor) subresourceLoadBalancerBackendSelectorParser(data interfac
 		key := selector[constants.FieldBackendSelectorKey].(string)
 		valuesData := selector[constants.FieldBackendSelectorValues].([]interface{})
 
-		values := make([]string, 0)
+		values := make([]string, 0, len(valuesData))
 
 		for _, valueData := range valuesData {
 			values = append(values, valueData.(string))

@@ -77,8 +77,9 @@ func (c *Constructor) Setup() util.Processors {
 				if itemMap, ok := i.(map[string]interface{}); ok {
 					for _, requirement := range itemMap["match_label_expressions"].([]interface{}) {
 						if requirementMap, ok := requirement.(map[string]interface{}); ok {
-							values := []string{}
-							for _, value := range requirementMap["values"].(*schema.Set).List() {
+							valuesList := requirementMap["values"].(*schema.Set).List()
+							values := make([]string, 0, len(valuesList))
+							for _, value := range valuesList {
 								values = append(values, value.(string))
 							}
 							allowedTopologiesRequirements = append(allowedTopologiesRequirements, corev1.TopologySelectorLabelRequirement{
