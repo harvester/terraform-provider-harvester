@@ -267,47 +267,51 @@ func (v *VMImporter) Volume() ([]map[string]interface{}, []map[string]interface{
 	var (
 		disks          = v.VirtualMachine.Spec.Template.Spec.Domain.Devices.Disks
 		volumes        = v.VirtualMachine.Spec.Template.Spec.Volumes
+		volumesMap     = make(map[string]kubevirtv1.Volume, len(volumes))
 		cloudInitState = make([]map[string]interface{}, 0, 1)
 		diskStates     = make([]map[string]interface{}, 0, len(disks))
 	)
+
 	for _, volume := range volumes {
+		volumesMap[volume.Name] = volume
+	}
+
+	for _, disk := range disks {
 		diskState := make(map[string]interface{})
-		for _, disk := range disks {
-			if volume.Name != disk.Name {
-				continue
-			}
-			var (
-				diskType string
-				diskBus  string
-			)
-			if disk.CDRom != nil {
-				diskType = builder.DiskTypeCDRom
-				diskBus = string(disk.CDRom.Bus)
-			} else if disk.Disk != nil {
-				diskType = builder.DiskTypeDisk
-				diskBus = string(disk.Disk.Bus)
-			} else {
-				return nil, nil, fmt.Errorf("unsupported volume type found on volume %s. ", disk.Name)
-			}
-			diskState[constants.FieldDiskName] = disk.Name
-			diskState[constants.FieldDiskBootOrder] = disk.BootOrder
-			diskState[constants.FieldDiskType] = diskType
-			diskState[constants.FieldDiskBus] = diskBus
-		}
-		if volume.CloudInitNoCloud != nil || volume.CloudInitConfigDrive != nil {
-			cloudInitState = v.cloudInit(volume)
+		var (
+			diskType string
+			diskBus  string
+		)
+		if disk.CDRom != nil {
+			diskType = builder.DiskTypeCDRom
+			diskBus = string(disk.CDRom.Bus)
+		} else if disk.Disk != nil {
+			diskType = builder.DiskTypeDisk
+			diskBus = string(disk.Disk.Bus)
 		} else {
-			if volume.PersistentVolumeClaim != nil {
-				if err := v.pvcVolume(volume, diskState); err != nil {
-					return nil, nil, err
-				}
-			} else if volume.ContainerDisk != nil {
-				diskState[constants.FieldDiskContainerImageName] = volume.ContainerDisk.Image
-			} else {
-				return nil, nil, fmt.Errorf("unsupported volume type found on volume %s. ", volume.Name)
-			}
-			diskStates = append(diskStates, diskState)
+			return nil, nil, fmt.Errorf("unsupported volume type found on volume %s. ", disk.Name)
 		}
+		diskState[constants.FieldDiskName] = disk.Name
+		diskState[constants.FieldDiskBootOrder] = disk.BootOrder
+		diskState[constants.FieldDiskType] = diskType
+		diskState[constants.FieldDiskBus] = diskBus
+
+		if volume, hasVolume := volumesMap[disk.Name]; hasVolume {
+			if volume.CloudInitNoCloud != nil || volume.CloudInitConfigDrive != nil {
+				cloudInitState = v.cloudInit(volume)
+			} else {
+				if volume.PersistentVolumeClaim != nil {
+					if err := v.pvcVolume(volume, diskState); err != nil {
+						return nil, nil, err
+					}
+				} else if volume.ContainerDisk != nil {
+					diskState[constants.FieldDiskContainerImageName] = volume.ContainerDisk.Image
+				} else {
+					return nil, nil, fmt.Errorf("unsupported volume type found on volume %s. ", volume.Name)
+				}
+			}
+		}
+		diskStates = append(diskStates, diskState)
 	}
 	return diskStates, cloudInitState, nil
 }

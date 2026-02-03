@@ -212,10 +212,13 @@ func (c *Constructor) Setup() util.Processors {
 				}
 
 				vmBuilder.Disk(diskName, diskBus, isCDRom, uint(bootOrder)) // nolint: gosec
+
 				if existingVolumeName != "" {
 					vmBuilder.ExistingPVCVolume(diskName, existingVolumeName, hotPlug)
 				} else if containerImageName != "" {
 					vmBuilder.ContainerDiskVolume(diskName, containerImageName, builder.DefaultImagePullPolicy)
+				} else if isCDRom && imageNamespacedName == "" {
+					// Empty CDRom: don't prepare volume
 				} else {
 					pvcOption := &builder.PersistentVolumeClaimOption{
 						VolumeMode: corev1.PersistentVolumeBlock,
