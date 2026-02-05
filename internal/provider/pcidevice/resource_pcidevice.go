@@ -218,9 +218,10 @@ func resourcePCIDeviceRead(ctx context.Context, d *schema.ResourceData, meta int
 	if err := d.Set(constants.FieldCommonNamespace, vmNamespace); err != nil {
 		return diag.FromErr(err)
 	}
-	if err := d.Set(constants.FieldCommonName, claimName); err != nil {
-		return diag.FromErr(err)
-	}
+	// Note: We intentionally do NOT set the "name" field here.
+	// The PCIDeviceClaim name is auto-generated (format: nodename-address) and differs
+	// from the user-provided Terraform resource name. Setting it would cause drift.
+
 	if err := d.Set(constants.FieldPCIDeviceVMName, helper.BuildNamespacedName(vmNamespace, vmName)); err != nil {
 		return diag.FromErr(err)
 	}
@@ -230,9 +231,8 @@ func resourcePCIDeviceRead(ctx context.Context, d *schema.ResourceData, meta int
 		return diag.FromErr(err)
 	}
 
-	// PCIDeviceClaim uses single address, but we need to collect all addresses
-	// for this resource. For now, get the address from this claim.
-	// TODO: If multiple addresses, we need to list all claims with matching labels
+	// PCIDeviceClaim stores a single address per claim. When multiple PCI addresses
+	// are specified, multiple claims are created. Here we read the address from this claim.
 	address, ok := spec["address"].(string)
 	if ok && address != "" {
 		if err := d.Set(constants.FieldPCIDevicePCIAddresses, []string{address}); err != nil {
