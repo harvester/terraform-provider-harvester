@@ -23,6 +23,7 @@ const (
 	FieldVirtualMachineCPUPinning            = "cpu_pinning"
 	FieldVirtualMachineIsolateEmulatorThread = "isolate_emulator_thread"
 	FieldVirtualMachineNodeSelector          = "node_selector"
+	FieldVirtualMachineCreateInitialSnapshot = "create_initial_snapshot"
 
 	StateVirtualMachineStarting = "Starting"
 	StateVirtualMachineRunning  = "Running"
