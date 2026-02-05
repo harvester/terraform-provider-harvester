@@ -209,7 +209,10 @@ resource "harvester_virtualmachine" "opensuse154" {
 - `machine_type` (String)
 - `memory` (String)
 - `namespace` (String)
+- `node_affinity` (Block List, Max: 1) Node affinity rules for scheduling VMs based on node labels (see [below for nested schema](#nestedblock--node_affinity))
 - `node_selector` (Map of String) Node selector for scheduling the VM. The key is the label key and the value is the label value.
+- `pod_affinity` (Block List, Max: 1) Pod affinity rules to co-locate VMs with matching pods (see [below for nested schema](#nestedblock--pod_affinity))
+- `pod_anti_affinity` (Block List, Max: 1) Pod anti-affinity rules to separate VMs from matching pods (see [below for nested schema](#nestedblock--pod_anti_affinity))
 - `reserved_memory` (String)
 - `restart_after_update` (Boolean) restart vm after the vm is updated
 - `run_strategy` (String) more info: https://kubevirt.io/user-guide/virtual_machines/run_strategies/
@@ -304,6 +307,370 @@ Optional:
 
 - `bus` (String)
 - `type` (String)
+
+
+<a id="nestedblock--node_affinity"></a>
+### Nested Schema for `node_affinity`
+
+Optional:
+
+- `preferred` (Block List) The scheduler will prefer to schedule pods to nodes that satisfy the affinity expressions specified by this field (see [below for nested schema](#nestedblock--node_affinity--preferred))
+- `required` (Block List, Max: 1) If the affinity requirements specified by this field are not met at scheduling time, the pod will not be scheduled onto the node (see [below for nested schema](#nestedblock--node_affinity--required))
+
+<a id="nestedblock--node_affinity--preferred"></a>
+### Nested Schema for `node_affinity.preferred`
+
+Required:
+
+- `preference` (Block List, Min: 1, Max: 1) A node selector term, associated with the corresponding weight (see [below for nested schema](#nestedblock--node_affinity--preferred--preference))
+- `weight` (Number) Weight associated with matching the corresponding nodeSelectorTerm, in the range 1-100
+
+<a id="nestedblock--node_affinity--preferred--preference"></a>
+### Nested Schema for `node_affinity.preferred.preference`
+
+Optional:
+
+- `match_expressions` (Block List) A list of node selector requirements by node's labels (see [below for nested schema](#nestedblock--node_affinity--preferred--preference--match_expressions))
+- `match_fields` (Block List) A list of node selector requirements by node's fields (see [below for nested schema](#nestedblock--node_affinity--preferred--preference--match_fields))
+
+<a id="nestedblock--node_affinity--preferred--preference--match_expressions"></a>
+### Nested Schema for `node_affinity.preferred.preference.match_expressions`
+
+Required:
+
+- `key` (String) The label key that the selector applies to
+- `operator` (String) Operator represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists, DoesNotExist, Gt, and Lt
+
+Optional:
+
+- `values` (List of String) Values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty
+
+
+<a id="nestedblock--node_affinity--preferred--preference--match_fields"></a>
+### Nested Schema for `node_affinity.preferred.preference.match_fields`
+
+Required:
+
+- `key` (String) The label key that the selector applies to
+- `operator` (String) Operator represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists, DoesNotExist, Gt, and Lt
+
+Optional:
+
+- `values` (List of String) Values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty
+
+
+
+
+<a id="nestedblock--node_affinity--required"></a>
+### Nested Schema for `node_affinity.required`
+
+Required:
+
+- `node_selector_term` (Block List, Min: 1) Required. A list of node selector terms. The terms are ORed (see [below for nested schema](#nestedblock--node_affinity--required--node_selector_term))
+
+<a id="nestedblock--node_affinity--required--node_selector_term"></a>
+### Nested Schema for `node_affinity.required.node_selector_term`
+
+Optional:
+
+- `match_expressions` (Block List) A list of node selector requirements by node's labels (see [below for nested schema](#nestedblock--node_affinity--required--node_selector_term--match_expressions))
+- `match_fields` (Block List) A list of node selector requirements by node's fields (see [below for nested schema](#nestedblock--node_affinity--required--node_selector_term--match_fields))
+
+<a id="nestedblock--node_affinity--required--node_selector_term--match_expressions"></a>
+### Nested Schema for `node_affinity.required.node_selector_term.match_expressions`
+
+Required:
+
+- `key` (String) The label key that the selector applies to
+- `operator` (String) Operator represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists, DoesNotExist, Gt, and Lt
+
+Optional:
+
+- `values` (List of String) Values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty
+
+
+<a id="nestedblock--node_affinity--required--node_selector_term--match_fields"></a>
+### Nested Schema for `node_affinity.required.node_selector_term.match_fields`
+
+Required:
+
+- `key` (String) The label key that the selector applies to
+- `operator` (String) Operator represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists, DoesNotExist, Gt, and Lt
+
+Optional:
+
+- `values` (List of String) Values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty
+
+
+
+
+
+<a id="nestedblock--pod_affinity"></a>
+### Nested Schema for `pod_affinity`
+
+Optional:
+
+- `preferred` (Block List) The scheduler will prefer to schedule pods to nodes that satisfy the affinity expressions specified by this field (see [below for nested schema](#nestedblock--pod_affinity--preferred))
+- `required` (Block List) If the affinity requirements specified by this field are not met at scheduling time, the pod will not be scheduled onto the node (see [below for nested schema](#nestedblock--pod_affinity--required))
+
+<a id="nestedblock--pod_affinity--preferred"></a>
+### Nested Schema for `pod_affinity.preferred`
+
+Required:
+
+- `pod_affinity_term` (Block List, Min: 1, Max: 1) Required. A pod affinity term, associated with the corresponding weight (see [below for nested schema](#nestedblock--pod_affinity--preferred--pod_affinity_term))
+- `weight` (Number) Weight associated with matching the corresponding podAffinityTerm, in the range 1-100
+
+<a id="nestedblock--pod_affinity--preferred--pod_affinity_term"></a>
+### Nested Schema for `pod_affinity.preferred.pod_affinity_term`
+
+Required:
+
+- `topology_key` (String) TopologyKey is the key of node labels. Nodes that have a label with this key and identical values are considered to be in the same topology
+
+Optional:
+
+- `label_selector` (Block List, Max: 1) A label query over a set of resources, in this case pods (see [below for nested schema](#nestedblock--pod_affinity--preferred--pod_affinity_term--label_selector))
+- `namespace_selector` (Block List, Max: 1) A label query over the set of namespaces that the term applies to. The term is applied to the union of the namespaces selected by this field and the ones listed in the namespaces field (see [below for nested schema](#nestedblock--pod_affinity--preferred--pod_affinity_term--namespace_selector))
+- `namespaces` (List of String) Namespaces specifies a static list of namespace names that the term applies to. The term is applied to the union of the namespaces listed in this field and the ones selected by namespaceSelector
+
+<a id="nestedblock--pod_affinity--preferred--pod_affinity_term--label_selector"></a>
+### Nested Schema for `pod_affinity.preferred.pod_affinity_term.label_selector`
+
+Optional:
+
+- `match_expressions` (Block List) A list of label selector requirements. The requirements are ANDed (see [below for nested schema](#nestedblock--pod_affinity--preferred--pod_affinity_term--label_selector--match_expressions))
+- `match_labels` (Map of String) A map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is "key", the operator is "In", and the values array contains only "value"
+
+<a id="nestedblock--pod_affinity--preferred--pod_affinity_term--label_selector--match_expressions"></a>
+### Nested Schema for `pod_affinity.preferred.pod_affinity_term.label_selector.match_expressions`
+
+Required:
+
+- `key` (String) The label key that the selector applies to
+- `operator` (String) Operator represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists and DoesNotExist
+
+Optional:
+
+- `values` (List of String) Values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty
+
+
+
+<a id="nestedblock--pod_affinity--preferred--pod_affinity_term--namespace_selector"></a>
+### Nested Schema for `pod_affinity.preferred.pod_affinity_term.namespace_selector`
+
+Optional:
+
+- `match_expressions` (Block List) A list of label selector requirements. The requirements are ANDed (see [below for nested schema](#nestedblock--pod_affinity--preferred--pod_affinity_term--namespace_selector--match_expressions))
+- `match_labels` (Map of String) A map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is "key", the operator is "In", and the values array contains only "value"
+
+<a id="nestedblock--pod_affinity--preferred--pod_affinity_term--namespace_selector--match_expressions"></a>
+### Nested Schema for `pod_affinity.preferred.pod_affinity_term.namespace_selector.match_expressions`
+
+Required:
+
+- `key` (String) The label key that the selector applies to
+- `operator` (String) Operator represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists and DoesNotExist
+
+Optional:
+
+- `values` (List of String) Values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty
+
+
+
+
+
+<a id="nestedblock--pod_affinity--required"></a>
+### Nested Schema for `pod_affinity.required`
+
+Required:
+
+- `topology_key` (String) TopologyKey is the key of node labels. Nodes that have a label with this key and identical values are considered to be in the same topology
+
+Optional:
+
+- `label_selector` (Block List, Max: 1) A label query over a set of resources, in this case pods (see [below for nested schema](#nestedblock--pod_affinity--required--label_selector))
+- `namespace_selector` (Block List, Max: 1) A label query over the set of namespaces that the term applies to. The term is applied to the union of the namespaces selected by this field and the ones listed in the namespaces field (see [below for nested schema](#nestedblock--pod_affinity--required--namespace_selector))
+- `namespaces` (List of String) Namespaces specifies a static list of namespace names that the term applies to. The term is applied to the union of the namespaces listed in this field and the ones selected by namespaceSelector
+
+<a id="nestedblock--pod_affinity--required--label_selector"></a>
+### Nested Schema for `pod_affinity.required.label_selector`
+
+Optional:
+
+- `match_expressions` (Block List) A list of label selector requirements. The requirements are ANDed (see [below for nested schema](#nestedblock--pod_affinity--required--label_selector--match_expressions))
+- `match_labels` (Map of String) A map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is "key", the operator is "In", and the values array contains only "value"
+
+<a id="nestedblock--pod_affinity--required--label_selector--match_expressions"></a>
+### Nested Schema for `pod_affinity.required.label_selector.match_expressions`
+
+Required:
+
+- `key` (String) The label key that the selector applies to
+- `operator` (String) Operator represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists and DoesNotExist
+
+Optional:
+
+- `values` (List of String) Values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty
+
+
+
+<a id="nestedblock--pod_affinity--required--namespace_selector"></a>
+### Nested Schema for `pod_affinity.required.namespace_selector`
+
+Optional:
+
+- `match_expressions` (Block List) A list of label selector requirements. The requirements are ANDed (see [below for nested schema](#nestedblock--pod_affinity--required--namespace_selector--match_expressions))
+- `match_labels` (Map of String) A map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is "key", the operator is "In", and the values array contains only "value"
+
+<a id="nestedblock--pod_affinity--required--namespace_selector--match_expressions"></a>
+### Nested Schema for `pod_affinity.required.namespace_selector.match_expressions`
+
+Required:
+
+- `key` (String) The label key that the selector applies to
+- `operator` (String) Operator represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists and DoesNotExist
+
+Optional:
+
+- `values` (List of String) Values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty
+
+
+
+
+
+<a id="nestedblock--pod_anti_affinity"></a>
+### Nested Schema for `pod_anti_affinity`
+
+Optional:
+
+- `preferred` (Block List) The scheduler will prefer to schedule pods to nodes that satisfy the affinity expressions specified by this field (see [below for nested schema](#nestedblock--pod_anti_affinity--preferred))
+- `required` (Block List) If the affinity requirements specified by this field are not met at scheduling time, the pod will not be scheduled onto the node (see [below for nested schema](#nestedblock--pod_anti_affinity--required))
+
+<a id="nestedblock--pod_anti_affinity--preferred"></a>
+### Nested Schema for `pod_anti_affinity.preferred`
+
+Required:
+
+- `pod_affinity_term` (Block List, Min: 1, Max: 1) Required. A pod affinity term, associated with the corresponding weight (see [below for nested schema](#nestedblock--pod_anti_affinity--preferred--pod_affinity_term))
+- `weight` (Number) Weight associated with matching the corresponding podAffinityTerm, in the range 1-100
+
+<a id="nestedblock--pod_anti_affinity--preferred--pod_affinity_term"></a>
+### Nested Schema for `pod_anti_affinity.preferred.pod_affinity_term`
+
+Required:
+
+- `topology_key` (String) TopologyKey is the key of node labels. Nodes that have a label with this key and identical values are considered to be in the same topology
+
+Optional:
+
+- `label_selector` (Block List, Max: 1) A label query over a set of resources, in this case pods (see [below for nested schema](#nestedblock--pod_anti_affinity--preferred--pod_affinity_term--label_selector))
+- `namespace_selector` (Block List, Max: 1) A label query over the set of namespaces that the term applies to. The term is applied to the union of the namespaces selected by this field and the ones listed in the namespaces field (see [below for nested schema](#nestedblock--pod_anti_affinity--preferred--pod_affinity_term--namespace_selector))
+- `namespaces` (List of String) Namespaces specifies a static list of namespace names that the term applies to. The term is applied to the union of the namespaces listed in this field and the ones selected by namespaceSelector
+
+<a id="nestedblock--pod_anti_affinity--preferred--pod_affinity_term--label_selector"></a>
+### Nested Schema for `pod_anti_affinity.preferred.pod_affinity_term.label_selector`
+
+Optional:
+
+- `match_expressions` (Block List) A list of label selector requirements. The requirements are ANDed (see [below for nested schema](#nestedblock--pod_anti_affinity--preferred--pod_affinity_term--label_selector--match_expressions))
+- `match_labels` (Map of String) A map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is "key", the operator is "In", and the values array contains only "value"
+
+<a id="nestedblock--pod_anti_affinity--preferred--pod_affinity_term--label_selector--match_expressions"></a>
+### Nested Schema for `pod_anti_affinity.preferred.pod_affinity_term.label_selector.match_expressions`
+
+Required:
+
+- `key` (String) The label key that the selector applies to
+- `operator` (String) Operator represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists and DoesNotExist
+
+Optional:
+
+- `values` (List of String) Values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty
+
+
+
+<a id="nestedblock--pod_anti_affinity--preferred--pod_affinity_term--namespace_selector"></a>
+### Nested Schema for `pod_anti_affinity.preferred.pod_affinity_term.namespace_selector`
+
+Optional:
+
+- `match_expressions` (Block List) A list of label selector requirements. The requirements are ANDed (see [below for nested schema](#nestedblock--pod_anti_affinity--preferred--pod_affinity_term--namespace_selector--match_expressions))
+- `match_labels` (Map of String) A map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is "key", the operator is "In", and the values array contains only "value"
+
+<a id="nestedblock--pod_anti_affinity--preferred--pod_affinity_term--namespace_selector--match_expressions"></a>
+### Nested Schema for `pod_anti_affinity.preferred.pod_affinity_term.namespace_selector.match_expressions`
+
+Required:
+
+- `key` (String) The label key that the selector applies to
+- `operator` (String) Operator represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists and DoesNotExist
+
+Optional:
+
+- `values` (List of String) Values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty
+
+
+
+
+
+<a id="nestedblock--pod_anti_affinity--required"></a>
+### Nested Schema for `pod_anti_affinity.required`
+
+Required:
+
+- `topology_key` (String) TopologyKey is the key of node labels. Nodes that have a label with this key and identical values are considered to be in the same topology
+
+Optional:
+
+- `label_selector` (Block List, Max: 1) A label query over a set of resources, in this case pods (see [below for nested schema](#nestedblock--pod_anti_affinity--required--label_selector))
+- `namespace_selector` (Block List, Max: 1) A label query over the set of namespaces that the term applies to. The term is applied to the union of the namespaces selected by this field and the ones listed in the namespaces field (see [below for nested schema](#nestedblock--pod_anti_affinity--required--namespace_selector))
+- `namespaces` (List of String) Namespaces specifies a static list of namespace names that the term applies to. The term is applied to the union of the namespaces listed in this field and the ones selected by namespaceSelector
+
+<a id="nestedblock--pod_anti_affinity--required--label_selector"></a>
+### Nested Schema for `pod_anti_affinity.required.label_selector`
+
+Optional:
+
+- `match_expressions` (Block List) A list of label selector requirements. The requirements are ANDed (see [below for nested schema](#nestedblock--pod_anti_affinity--required--label_selector--match_expressions))
+- `match_labels` (Map of String) A map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is "key", the operator is "In", and the values array contains only "value"
+
+<a id="nestedblock--pod_anti_affinity--required--label_selector--match_expressions"></a>
+### Nested Schema for `pod_anti_affinity.required.label_selector.match_expressions`
+
+Required:
+
+- `key` (String) The label key that the selector applies to
+- `operator` (String) Operator represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists and DoesNotExist
+
+Optional:
+
+- `values` (List of String) Values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty
+
+
+
+<a id="nestedblock--pod_anti_affinity--required--namespace_selector"></a>
+### Nested Schema for `pod_anti_affinity.required.namespace_selector`
+
+Optional:
+
+- `match_expressions` (Block List) A list of label selector requirements. The requirements are ANDed (see [below for nested schema](#nestedblock--pod_anti_affinity--required--namespace_selector--match_expressions))
+- `match_labels` (Map of String) A map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is "key", the operator is "In", and the values array contains only "value"
+
+<a id="nestedblock--pod_anti_affinity--required--namespace_selector--match_expressions"></a>
+### Nested Schema for `pod_anti_affinity.required.namespace_selector.match_expressions`
+
+Required:
+
+- `key` (String) The label key that the selector applies to
+- `operator` (String) Operator represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists and DoesNotExist
+
+Optional:
+
+- `values` (List of String) Values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty
+
+
+
 
 
 <a id="nestedblock--timeouts"></a>

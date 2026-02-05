@@ -54,8 +54,11 @@ data "harvester_virtualmachine" "opensuse154" {
 - `memory` (String)
 - `message` (String)
 - `network_interface` (List of Object) (see [below for nested schema](#nestedatt--network_interface))
+- `node_affinity` (List of Object) Node affinity rules for scheduling VMs based on node labels (see [below for nested schema](#nestedatt--node_affinity))
 - `node_name` (String)
 - `node_selector` (Map of String) Node selector for scheduling the VM. The key is the label key and the value is the label value.
+- `pod_affinity` (List of Object) Pod affinity rules to co-locate VMs with matching pods (see [below for nested schema](#nestedatt--pod_affinity))
+- `pod_anti_affinity` (List of Object) Pod anti-affinity rules to separate VMs from matching pods (see [below for nested schema](#nestedatt--pod_anti_affinity))
 - `reserved_memory` (String)
 - `restart_after_update` (Boolean) restart vm after the vm is updated
 - `run_strategy` (String) more info: https://kubevirt.io/user-guide/virtual_machines/run_strategies/
@@ -131,6 +134,322 @@ Read-Only:
 - `network_name` (String)
 - `type` (String)
 - `wait_for_lease` (Boolean)
+
+
+<a id="nestedatt--node_affinity"></a>
+### Nested Schema for `node_affinity`
+
+Read-Only:
+
+- `preferred` (List of Object) (see [below for nested schema](#nestedobjatt--node_affinity--preferred))
+- `required` (List of Object) (see [below for nested schema](#nestedobjatt--node_affinity--required))
+
+<a id="nestedobjatt--node_affinity--preferred"></a>
+### Nested Schema for `node_affinity.preferred`
+
+Read-Only:
+
+- `preference` (List of Object) (see [below for nested schema](#nestedobjatt--node_affinity--preferred--preference))
+- `weight` (Number)
+
+<a id="nestedobjatt--node_affinity--preferred--preference"></a>
+### Nested Schema for `node_affinity.preferred.preference`
+
+Read-Only:
+
+- `match_expressions` (List of Object) (see [below for nested schema](#nestedobjatt--node_affinity--preferred--preference--match_expressions))
+- `match_fields` (List of Object) (see [below for nested schema](#nestedobjatt--node_affinity--preferred--preference--match_fields))
+
+<a id="nestedobjatt--node_affinity--preferred--preference--match_expressions"></a>
+### Nested Schema for `node_affinity.preferred.preference.match_expressions`
+
+Read-Only:
+
+- `key` (String)
+- `operator` (String)
+- `values` (List of String)
+
+
+<a id="nestedobjatt--node_affinity--preferred--preference--match_fields"></a>
+### Nested Schema for `node_affinity.preferred.preference.match_fields`
+
+Read-Only:
+
+- `key` (String)
+- `operator` (String)
+- `values` (List of String)
+
+
+
+
+<a id="nestedobjatt--node_affinity--required"></a>
+### Nested Schema for `node_affinity.required`
+
+Read-Only:
+
+- `node_selector_term` (List of Object) (see [below for nested schema](#nestedobjatt--node_affinity--required--node_selector_term))
+
+<a id="nestedobjatt--node_affinity--required--node_selector_term"></a>
+### Nested Schema for `node_affinity.required.node_selector_term`
+
+Read-Only:
+
+- `match_expressions` (List of Object) (see [below for nested schema](#nestedobjatt--node_affinity--required--node_selector_term--match_expressions))
+- `match_fields` (List of Object) (see [below for nested schema](#nestedobjatt--node_affinity--required--node_selector_term--match_fields))
+
+<a id="nestedobjatt--node_affinity--required--node_selector_term--match_expressions"></a>
+### Nested Schema for `node_affinity.required.node_selector_term.match_expressions`
+
+Read-Only:
+
+- `key` (String)
+- `operator` (String)
+- `values` (List of String)
+
+
+<a id="nestedobjatt--node_affinity--required--node_selector_term--match_fields"></a>
+### Nested Schema for `node_affinity.required.node_selector_term.match_fields`
+
+Read-Only:
+
+- `key` (String)
+- `operator` (String)
+- `values` (List of String)
+
+
+
+
+
+<a id="nestedatt--pod_affinity"></a>
+### Nested Schema for `pod_affinity`
+
+Read-Only:
+
+- `preferred` (List of Object) (see [below for nested schema](#nestedobjatt--pod_affinity--preferred))
+- `required` (List of Object) (see [below for nested schema](#nestedobjatt--pod_affinity--required))
+
+<a id="nestedobjatt--pod_affinity--preferred"></a>
+### Nested Schema for `pod_affinity.preferred`
+
+Read-Only:
+
+- `pod_affinity_term` (List of Object) (see [below for nested schema](#nestedobjatt--pod_affinity--preferred--pod_affinity_term))
+- `weight` (Number)
+
+<a id="nestedobjatt--pod_affinity--preferred--pod_affinity_term"></a>
+### Nested Schema for `pod_affinity.preferred.pod_affinity_term`
+
+Read-Only:
+
+- `label_selector` (List of Object) (see [below for nested schema](#nestedobjatt--pod_affinity--preferred--pod_affinity_term--label_selector))
+- `namespace_selector` (List of Object) (see [below for nested schema](#nestedobjatt--pod_affinity--preferred--pod_affinity_term--namespace_selector))
+- `namespaces` (List of String)
+- `topology_key` (String)
+
+<a id="nestedobjatt--pod_affinity--preferred--pod_affinity_term--label_selector"></a>
+### Nested Schema for `pod_affinity.preferred.pod_affinity_term.label_selector`
+
+Read-Only:
+
+- `match_expressions` (List of Object) (see [below for nested schema](#nestedobjatt--pod_affinity--preferred--pod_affinity_term--label_selector--match_expressions))
+- `match_labels` (Map of String)
+
+<a id="nestedobjatt--pod_affinity--preferred--pod_affinity_term--label_selector--match_expressions"></a>
+### Nested Schema for `pod_affinity.preferred.pod_affinity_term.label_selector.match_expressions`
+
+Read-Only:
+
+- `key` (String)
+- `operator` (String)
+- `values` (List of String)
+
+
+
+<a id="nestedobjatt--pod_affinity--preferred--pod_affinity_term--namespace_selector"></a>
+### Nested Schema for `pod_affinity.preferred.pod_affinity_term.namespace_selector`
+
+Read-Only:
+
+- `match_expressions` (List of Object) (see [below for nested schema](#nestedobjatt--pod_affinity--preferred--pod_affinity_term--namespace_selector--match_expressions))
+- `match_labels` (Map of String)
+
+<a id="nestedobjatt--pod_affinity--preferred--pod_affinity_term--namespace_selector--match_expressions"></a>
+### Nested Schema for `pod_affinity.preferred.pod_affinity_term.namespace_selector.match_expressions`
+
+Read-Only:
+
+- `key` (String)
+- `operator` (String)
+- `values` (List of String)
+
+
+
+
+
+<a id="nestedobjatt--pod_affinity--required"></a>
+### Nested Schema for `pod_affinity.required`
+
+Read-Only:
+
+- `label_selector` (List of Object) (see [below for nested schema](#nestedobjatt--pod_affinity--required--label_selector))
+- `namespace_selector` (List of Object) (see [below for nested schema](#nestedobjatt--pod_affinity--required--namespace_selector))
+- `namespaces` (List of String)
+- `topology_key` (String)
+
+<a id="nestedobjatt--pod_affinity--required--label_selector"></a>
+### Nested Schema for `pod_affinity.required.label_selector`
+
+Read-Only:
+
+- `match_expressions` (List of Object) (see [below for nested schema](#nestedobjatt--pod_affinity--required--label_selector--match_expressions))
+- `match_labels` (Map of String)
+
+<a id="nestedobjatt--pod_affinity--required--label_selector--match_expressions"></a>
+### Nested Schema for `pod_affinity.required.label_selector.match_expressions`
+
+Read-Only:
+
+- `key` (String)
+- `operator` (String)
+- `values` (List of String)
+
+
+
+<a id="nestedobjatt--pod_affinity--required--namespace_selector"></a>
+### Nested Schema for `pod_affinity.required.namespace_selector`
+
+Read-Only:
+
+- `match_expressions` (List of Object) (see [below for nested schema](#nestedobjatt--pod_affinity--required--namespace_selector--match_expressions))
+- `match_labels` (Map of String)
+
+<a id="nestedobjatt--pod_affinity--required--namespace_selector--match_expressions"></a>
+### Nested Schema for `pod_affinity.required.namespace_selector.match_expressions`
+
+Read-Only:
+
+- `key` (String)
+- `operator` (String)
+- `values` (List of String)
+
+
+
+
+
+<a id="nestedatt--pod_anti_affinity"></a>
+### Nested Schema for `pod_anti_affinity`
+
+Read-Only:
+
+- `preferred` (List of Object) (see [below for nested schema](#nestedobjatt--pod_anti_affinity--preferred))
+- `required` (List of Object) (see [below for nested schema](#nestedobjatt--pod_anti_affinity--required))
+
+<a id="nestedobjatt--pod_anti_affinity--preferred"></a>
+### Nested Schema for `pod_anti_affinity.preferred`
+
+Read-Only:
+
+- `pod_affinity_term` (List of Object) (see [below for nested schema](#nestedobjatt--pod_anti_affinity--preferred--pod_affinity_term))
+- `weight` (Number)
+
+<a id="nestedobjatt--pod_anti_affinity--preferred--pod_affinity_term"></a>
+### Nested Schema for `pod_anti_affinity.preferred.pod_affinity_term`
+
+Read-Only:
+
+- `label_selector` (List of Object) (see [below for nested schema](#nestedobjatt--pod_anti_affinity--preferred--pod_affinity_term--label_selector))
+- `namespace_selector` (List of Object) (see [below for nested schema](#nestedobjatt--pod_anti_affinity--preferred--pod_affinity_term--namespace_selector))
+- `namespaces` (List of String)
+- `topology_key` (String)
+
+<a id="nestedobjatt--pod_anti_affinity--preferred--pod_affinity_term--label_selector"></a>
+### Nested Schema for `pod_anti_affinity.preferred.pod_affinity_term.label_selector`
+
+Read-Only:
+
+- `match_expressions` (List of Object) (see [below for nested schema](#nestedobjatt--pod_anti_affinity--preferred--pod_affinity_term--label_selector--match_expressions))
+- `match_labels` (Map of String)
+
+<a id="nestedobjatt--pod_anti_affinity--preferred--pod_affinity_term--label_selector--match_expressions"></a>
+### Nested Schema for `pod_anti_affinity.preferred.pod_affinity_term.label_selector.match_expressions`
+
+Read-Only:
+
+- `key` (String)
+- `operator` (String)
+- `values` (List of String)
+
+
+
+<a id="nestedobjatt--pod_anti_affinity--preferred--pod_affinity_term--namespace_selector"></a>
+### Nested Schema for `pod_anti_affinity.preferred.pod_affinity_term.namespace_selector`
+
+Read-Only:
+
+- `match_expressions` (List of Object) (see [below for nested schema](#nestedobjatt--pod_anti_affinity--preferred--pod_affinity_term--namespace_selector--match_expressions))
+- `match_labels` (Map of String)
+
+<a id="nestedobjatt--pod_anti_affinity--preferred--pod_affinity_term--namespace_selector--match_expressions"></a>
+### Nested Schema for `pod_anti_affinity.preferred.pod_affinity_term.namespace_selector.match_expressions`
+
+Read-Only:
+
+- `key` (String)
+- `operator` (String)
+- `values` (List of String)
+
+
+
+
+
+<a id="nestedobjatt--pod_anti_affinity--required"></a>
+### Nested Schema for `pod_anti_affinity.required`
+
+Read-Only:
+
+- `label_selector` (List of Object) (see [below for nested schema](#nestedobjatt--pod_anti_affinity--required--label_selector))
+- `namespace_selector` (List of Object) (see [below for nested schema](#nestedobjatt--pod_anti_affinity--required--namespace_selector))
+- `namespaces` (List of String)
+- `topology_key` (String)
+
+<a id="nestedobjatt--pod_anti_affinity--required--label_selector"></a>
+### Nested Schema for `pod_anti_affinity.required.label_selector`
+
+Read-Only:
+
+- `match_expressions` (List of Object) (see [below for nested schema](#nestedobjatt--pod_anti_affinity--required--label_selector--match_expressions))
+- `match_labels` (Map of String)
+
+<a id="nestedobjatt--pod_anti_affinity--required--label_selector--match_expressions"></a>
+### Nested Schema for `pod_anti_affinity.required.label_selector.match_expressions`
+
+Read-Only:
+
+- `key` (String)
+- `operator` (String)
+- `values` (List of String)
+
+
+
+<a id="nestedobjatt--pod_anti_affinity--required--namespace_selector"></a>
+### Nested Schema for `pod_anti_affinity.required.namespace_selector`
+
+Read-Only:
+
+- `match_expressions` (List of Object) (see [below for nested schema](#nestedobjatt--pod_anti_affinity--required--namespace_selector--match_expressions))
+- `match_labels` (Map of String)
+
+<a id="nestedobjatt--pod_anti_affinity--required--namespace_selector--match_expressions"></a>
+### Nested Schema for `pod_anti_affinity.required.namespace_selector.match_expressions`
+
+Read-Only:
+
+- `key` (String)
+- `operator` (String)
+- `values` (List of String)
+
+
+
 
 
 <a id="nestedatt--tpm"></a>
