@@ -181,16 +181,11 @@ func resourcePCIDeviceRead(ctx context.Context, d *schema.ResourceData, meta int
 		return diag.FromErr(err)
 	}
 
-	// Parse ID: format is namespace/vmname/claimname
-	id := d.Id()
-	parts := strings.Split(id, "/")
-	if len(parts) < 3 {
-		return diag.Errorf("invalid resource ID format: %s (expected namespace/vmname/claimname)", id)
+	// Parse ID using helper
+	vmNamespace, vmName, claimName, err := helper.PCIDeviceIDParts(d.Id())
+	if err != nil {
+		return diag.FromErr(err)
 	}
-
-	vmNamespace := parts[0]
-	vmName := parts[1]
-	claimName := parts[2]
 
 	// Get the PCIDeviceClaim using dynamic client
 	dynamicClient, err := getDynamicClient(c)
@@ -208,56 +203,62 @@ func resourcePCIDeviceRead(ctx context.Context, d *schema.ResourceData, meta int
 		return diag.FromErr(err)
 	}
 
-	// Extract spec data
-	spec, ok := pcideviceClaim.Object["spec"].(map[string]interface{})
+	// Extract and set resource state
+	return setPCIDeviceResourceData(d, pcideviceClaim, vmNamespace, vmName)
+}
+
+// setPCIDeviceResourceData sets all resource data from PCIDeviceClaim
+func setPCIDeviceResourceData(d *schema.ResourceData, claim *unstructured.Unstructured, vmNamespace, vmName string) diag.Diagnostics {
+	spec, ok := claim.Object["spec"].(map[string]interface{})
 	if !ok {
 		return diag.Errorf("invalid PCIDeviceClaim spec")
 	}
 
-	// Set resource data
-	if err := d.Set(constants.FieldCommonNamespace, vmNamespace); err != nil {
-		return diag.FromErr(err)
-	}
+	// Build state map
 	// Note: We intentionally do NOT set the "name" field here.
 	// The PCIDeviceClaim name is auto-generated (format: nodename-address) and differs
 	// from the user-provided Terraform resource name. Setting it would cause drift.
-
-	if err := d.Set(constants.FieldPCIDeviceVMName, helper.BuildNamespacedName(vmNamespace, vmName)); err != nil {
-		return diag.FromErr(err)
+	states := map[string]interface{}{
+		constants.FieldCommonNamespace:   vmNamespace,
+		constants.FieldPCIDeviceVMName:   helper.BuildNamespacedName(vmNamespace, vmName),
+		constants.FieldPCIDeviceNodeName: getSpecField(spec, "nodeName"),
 	}
 
-	nodeName, _ := spec["nodeName"].(string)
-	if err := d.Set(constants.FieldPCIDeviceNodeName, nodeName); err != nil {
-		return diag.FromErr(err)
+	// Add address if present
+	if address := getSpecField(spec, "address"); address != "" {
+		states[constants.FieldPCIDevicePCIAddresses] = []string{address}
 	}
 
-	// PCIDeviceClaim stores a single address per claim. When multiple PCI addresses
-	// are specified, multiple claims are created. Here we read the address from this claim.
-	address, ok := spec["address"].(string)
-	if ok && address != "" {
-		if err := d.Set(constants.FieldPCIDevicePCIAddresses, []string{address}); err != nil {
+	// Add labels if present
+	if labels := extractLabelsFromUnstructured(claim); labels != nil {
+		states[constants.FieldPCIDeviceLabels] = labels
+	}
+
+	// Set all states
+	for key, value := range states {
+		if err := d.Set(key, value); err != nil {
 			return diag.FromErr(err)
 		}
 	}
 
-	metadata, ok := pcideviceClaim.Object["metadata"].(map[string]interface{})
-	if ok {
-		if labels, ok := metadata["labels"].(map[string]interface{}); ok && len(labels) > 0 {
-			labelMap := make(map[string]string)
-			for k, v := range labels {
-				if str, ok := v.(string); ok {
-					labelMap[k] = str
-				}
-			}
-			if len(labelMap) > 0 {
-				if err := d.Set(constants.FieldPCIDeviceLabels, labelMap); err != nil {
-					return diag.FromErr(err)
-				}
-			}
-		}
-	}
-
 	return nil
+}
+
+// getSpecField extracts a string field from spec
+func getSpecField(spec map[string]interface{}, field string) string {
+	if val, ok := spec[field].(string); ok {
+		return val
+	}
+	return ""
+}
+
+// extractLabelsFromUnstructured extracts labels from unstructured object metadata
+func extractLabelsFromUnstructured(obj *unstructured.Unstructured) map[string]string {
+	labels := obj.GetLabels()
+	if len(labels) == 0 {
+		return nil
+	}
+	return labels
 }
 
 // resourcePCIDeviceUpdate updates an existing PCIDeviceClaim resource.
@@ -267,16 +268,11 @@ func resourcePCIDeviceUpdate(ctx context.Context, d *schema.ResourceData, meta i
 		return diag.FromErr(err)
 	}
 
-	// Parse ID
-	id := d.Id()
-	parts := strings.Split(id, "/")
-	if len(parts) < 3 {
-		return diag.Errorf("invalid resource ID format: %s (expected namespace/vmname/claimname)", id)
+	// Parse ID using helper
+	vmNamespace, vmName, claimName, err := helper.PCIDeviceIDParts(d.Id())
+	if err != nil {
+		return diag.FromErr(err)
 	}
-
-	vmNamespace := parts[0]
-	vmName := parts[1]
-	claimName := parts[2]
 
 	// Get updated values
 	vmNameRaw := d.Get(constants.FieldPCIDeviceVMName).(string)
@@ -349,14 +345,11 @@ func resourcePCIDeviceDelete(ctx context.Context, d *schema.ResourceData, meta i
 		return diag.FromErr(err)
 	}
 
-	// Parse ID
-	id := d.Id()
-	parts := strings.Split(id, "/")
-	if len(parts) < 3 {
-		return diag.Errorf("invalid resource ID format: %s (expected namespace/vmname/claimname)", id)
+	// Parse ID using helper
+	_, _, claimName, err := helper.PCIDeviceIDParts(d.Id())
+	if err != nil {
+		return diag.FromErr(err)
 	}
-
-	claimName := parts[2]
 
 	// Delete the PCIDeviceClaim
 	dynamicClient, err := getDynamicClient(c)
