@@ -20,6 +20,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/rest"
 	kubevirtv1 "kubevirt.io/api/core/v1"
 
@@ -481,6 +482,243 @@ resource "harvester_virtualmachine" "test-acc-labels" {
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccVirtualMachineExists(ctx, "harvester_virtualmachine.test-acc-labels", vm),
 					testAccVirtualMachineLabels(ctx, "harvester_virtualmachine.test-acc-labels", expectedLabels),
+				),
+			},
+		},
+	})
+}
+
+func TestAccVirtualMachine_hotplug_cdrom_volume(t *testing.T) {
+	var (
+		testAccImageName                  = "test-acc-hp-cdrom-img"
+		testAccVirtualMachineName         = "test-acc-hp-cdrom"
+		testAccVirtualMachineNamespace    = "default"
+		testAccImageResourceName          = constants.ResourceTypeImage + "." + testAccImageName
+		testAccVirtualMachineResourceName = constants.ResourceTypeVirtualMachine + "." + testAccVirtualMachineName
+		vm                                = &kubevirtv1.VirtualMachine{}
+		vmiUid                            types.UID
+		ctx                               = context.Background()
+	)
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckVirtualMachineDestroy(ctx),
+		Steps: []resource.TestStep{
+			{
+				Config: fmt.Sprintf(`
+resource "harvester_virtualmachine" "%s" {
+	name = "%s"
+	namespace = "%s"
+
+	cpu = 1
+	memory = "1Gi"
+
+  run_strategy = "RerunOnFailure"
+  machine_type = "q35"
+
+  network_interface {
+    name         = "default"
+  }
+
+  disk {
+    name       = "rootdisk"
+    type       = "disk"
+    bus        = "virtio"
+    boot_order = 1
+
+    container_image_name = "kubevirt/fedora-cloud-container-disk-demo:v0.35.0"
+  }
+
+  disk {
+    name       = "cd1"
+    type       = "cd-rom"
+    bus        = "sata"
+    boot_order = 2
+  }
+}
+`,
+					testAccVirtualMachineName, testAccVirtualMachineName, testAccVirtualMachineNamespace,
+				),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					testAccVirtualMachineExists(ctx, testAccVirtualMachineResourceName, vm),
+					func(s *terraform.State) error {
+						c, err := testAccProvider.Meta().(*config.Config).K8sClient()
+						if err != nil {
+							return err
+						}
+						vm, err = c.HarvesterClient.KubevirtV1().VirtualMachines(testAccVirtualMachineNamespace).Get(ctx, testAccVirtualMachineName, metav1.GetOptions{})
+						if err != nil {
+							return err
+						}
+						disksCnt := len(vm.Spec.Template.Spec.Domain.Devices.Disks)
+						if disksCnt != 2 {
+							return fmt.Errorf("Should have 2 disk devices but got %d", disksCnt)
+						}
+						volumeCnts := len(vm.Spec.Template.Spec.Volumes)
+						if volumeCnts != 1 {
+							return fmt.Errorf("Should have 1 volume but got %d", volumeCnts)
+						}
+
+						vmi, err := c.HarvesterClient.KubevirtV1().VirtualMachineInstances(testAccVirtualMachineNamespace).Get(ctx, testAccVirtualMachineName, metav1.GetOptions{})
+						if err != nil {
+							return err
+						}
+						vmiUid = vmi.UID
+
+						return nil
+					},
+				),
+			},
+			{
+				Config: fmt.Sprintf(`
+resource harvester_image "%s" {
+  name = "%s"
+	namespace = "%s"
+	display_name = "%s"
+	source_type = "download"
+	url = "https://distro.ibiblio.org/tinycorelinux/16.x/x86/release/TinyCore-current.iso"
+	storage_class_name = "harvester-longhorn"
+}
+
+resource "harvester_virtualmachine" "%s" {
+	name = "%s"
+	namespace = "%s"
+
+	cpu = 1
+	memory = "1Gi"
+
+  run_strategy = "RerunOnFailure"
+  machine_type = "q35"
+
+  network_interface {
+    name         = "default"
+  }
+
+  disk {
+    name       = "rootdisk"
+    type       = "disk"
+    bus        = "virtio"
+    boot_order = 1
+
+    container_image_name = "kubevirt/fedora-cloud-container-disk-demo:v0.35.0"
+  }
+
+  disk {
+    name       = "cd1"
+    type       = "cd-rom"
+    bus        = "sata"
+    boot_order = 2
+
+		size        = "1Gi"
+		hot_plug    = true
+		image       = "%s/%s"
+		auto_delete = true
+  }
+}
+`,
+					testAccImageName, testAccImageName, testAccVirtualMachineNamespace, testAccImageName,
+					testAccVirtualMachineName, testAccVirtualMachineName, testAccVirtualMachineNamespace,
+					testAccVirtualMachineNamespace, testAccImageName,
+				),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(testAccImageResourceName, constants.FieldCommonName, "test-acc-hp-cdrom-img"),
+					resource.TestCheckResourceAttr(testAccImageResourceName, constants.FieldCommonNamespace, "default"),
+					testAccVirtualMachineExists(ctx, testAccVirtualMachineResourceName, vm),
+					func(s *terraform.State) error {
+						c, err := testAccProvider.Meta().(*config.Config).K8sClient()
+						if err != nil {
+							return err
+						}
+						vm, err = c.HarvesterClient.KubevirtV1().VirtualMachines(testAccVirtualMachineNamespace).Get(ctx, testAccVirtualMachineName, metav1.GetOptions{})
+						if err != nil {
+							return err
+						}
+						disksCnt := len(vm.Spec.Template.Spec.Domain.Devices.Disks)
+						if disksCnt != 2 {
+							return fmt.Errorf("Should have 2 disk devices but got %d", disksCnt)
+						}
+						volumeCnts := len(vm.Spec.Template.Spec.Volumes)
+						if volumeCnts != 2 {
+							return fmt.Errorf("Should have 2 volumes but got %d", volumeCnts)
+						}
+
+						vmi, err := c.HarvesterClient.KubevirtV1().VirtualMachineInstances(testAccVirtualMachineNamespace).Get(ctx, testAccVirtualMachineName, metav1.GetOptions{})
+						if err != nil {
+							return err
+						}
+						if vmiUid != vmi.UID {
+							return fmt.Errorf("Insert cdrom volume shouldn't trigger VMI re-creation. Expected: %s, Got: %s", vmiUid, vmi.UID)
+						}
+
+						return nil
+					},
+				),
+			},
+			{
+				Config: fmt.Sprintf(`
+resource "harvester_virtualmachine" "%s" {
+	name = "%s"
+	namespace = "%s"
+
+	cpu = 1
+	memory = "1Gi"
+
+  run_strategy = "RerunOnFailure"
+  machine_type = "q35"
+
+  network_interface {
+    name         = "default"
+  }
+
+  disk {
+    name       = "rootdisk"
+    type       = "disk"
+    bus        = "virtio"
+    boot_order = 1
+
+    container_image_name = "kubevirt/fedora-cloud-container-disk-demo:v0.35.0"
+  }
+
+  disk {
+    name       = "cd1"
+    type       = "cd-rom"
+    bus        = "sata"
+    boot_order = 2
+  }
+}
+`,
+					testAccVirtualMachineName, testAccVirtualMachineName, testAccVirtualMachineNamespace,
+				),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					testAccVirtualMachineExists(ctx, testAccVirtualMachineResourceName, vm),
+					func(s *terraform.State) error {
+						c, err := testAccProvider.Meta().(*config.Config).K8sClient()
+						if err != nil {
+							return err
+						}
+						vm, err = c.HarvesterClient.KubevirtV1().VirtualMachines(testAccVirtualMachineNamespace).Get(ctx, testAccVirtualMachineName, metav1.GetOptions{})
+						if err != nil {
+							return err
+						}
+						disksCnt := len(vm.Spec.Template.Spec.Domain.Devices.Disks)
+						if disksCnt != 2 {
+							return fmt.Errorf("Should have 2 disk devices but got %d", disksCnt)
+						}
+						volumeCnts := len(vm.Spec.Template.Spec.Volumes)
+						if volumeCnts != 1 {
+							return fmt.Errorf("Should have 1 volumes but got %d", volumeCnts)
+						}
+
+						vmi, err := c.HarvesterClient.KubevirtV1().VirtualMachineInstances(testAccVirtualMachineNamespace).Get(ctx, testAccVirtualMachineName, metav1.GetOptions{})
+						if err != nil {
+							return err
+						}
+						if vmiUid != vmi.UID {
+							return fmt.Errorf("Eject cdrom volume shouldn't trigger VMI re-creation. Expected: %s, Got: %s", vmiUid, vmi.UID)
+						}
+
+						return nil
+					},
 				),
 			},
 		},
