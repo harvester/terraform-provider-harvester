@@ -21,4 +21,3 @@ const (
 	// FieldPCIDeviceLabels are labels to apply to the PCIDeviceClaim resource (optional).
 	FieldPCIDeviceLabels = "labels"
 )
-
