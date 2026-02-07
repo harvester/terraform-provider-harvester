@@ -135,7 +135,7 @@ func parseWeightedPodAffinityTerms(data []interface{}) []corev1.WeightedPodAffin
 	for _, item := range data {
 		r := item.(map[string]interface{})
 		term := corev1.WeightedPodAffinityTerm{
-			Weight: int32(r[constants.FieldPreferredWeight].(int)),
+			Weight: int32(r[constants.FieldPreferredWeight].(int)), //nolint:gosec // weight is validated 1-100 by schema
 		}
 		if podAffinityTerm, ok := r[constants.FieldPodAffinityTerm].([]interface{}); ok && len(podAffinityTerm) > 0 {
 			parsed := parsePodAffinityTerms(podAffinityTerm)
@@ -563,7 +563,7 @@ func (c *Constructor) Setup() util.Processors {
 					for _, item := range preferred {
 						p := item.(map[string]interface{})
 						prefTerm := corev1.PreferredSchedulingTerm{
-							Weight: int32(p[constants.FieldPreferredWeight].(int)),
+							Weight: int32(p[constants.FieldPreferredWeight].(int)), //nolint:gosec // weight is validated 1-100 by schema
 						}
 						if pref, ok := p[constants.FieldPreferredPreference].([]interface{}); ok && len(pref) > 0 {
 							terms := parseNodeSelectorTerms(pref)
