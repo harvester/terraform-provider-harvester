@@ -132,7 +132,7 @@ func buildScheduleVMBackup(vmNamespace, vmName, name, schedule string, retain in
 		for k, v := range labels {
 			labelMap[k] = v.(string)
 		}
-		scheduleVMBackup.ObjectMeta.Labels = labelMap
+		scheduleVMBackup.Labels = labelMap
 	}
 
 	return scheduleVMBackup
@@ -141,7 +141,7 @@ func buildScheduleVMBackup(vmNamespace, vmName, name, schedule string, retain in
 // createOrUpdateScheduleVMBackup creates or updates a ScheduleVMBackup resource.
 // It handles the case where a schedule already exists for the VM.
 func createOrUpdateScheduleVMBackup(ctx context.Context, c *client.Client, scheduleVMBackup *harvsterv1.ScheduleVMBackup, vmNamespace, vmName string) (jobName string, diags diag.Diagnostics) {
-	name := scheduleVMBackup.ObjectMeta.Name
+	name := scheduleVMBackup.Name
 	_, err := c.HarvesterClient.HarvesterhciV1beta1().ScheduleVMBackups(vmNamespace).Create(ctx, scheduleVMBackup, metav1.CreateOptions{})
 	if err == nil {
 		return name, nil
@@ -153,8 +153,8 @@ func createOrUpdateScheduleVMBackup(ctx context.Context, c *client.Client, sched
 		if getErr != nil {
 			return "", diag.FromErr(fmt.Errorf("failed to get existing ScheduleVMBackup: %w", getErr))
 		}
-		scheduleVMBackup.ObjectMeta.ResourceVersion = existing.ObjectMeta.ResourceVersion
-		scheduleVMBackup.ObjectMeta.UID = existing.ObjectMeta.UID
+		scheduleVMBackup.ResourceVersion = existing.ResourceVersion
+		scheduleVMBackup.UID = existing.UID
 		_, err = c.HarvesterClient.HarvesterhciV1beta1().ScheduleVMBackups(vmNamespace).Update(ctx, scheduleVMBackup, metav1.UpdateOptions{})
 		if err != nil {
 			return "", diag.FromErr(fmt.Errorf("failed to update ScheduleVMBackup: %w", err))
@@ -179,14 +179,14 @@ func updateExistingScheduleForVM(ctx context.Context, c *client.Client, schedule
 
 	for _, existingSchedule := range existingSchedules.Items {
 		if existingSchedule.Spec.VMBackupSpec.Source.Name == vmName {
-			scheduleVMBackup.ObjectMeta.Name = existingSchedule.ObjectMeta.Name
-			scheduleVMBackup.ObjectMeta.ResourceVersion = existingSchedule.ObjectMeta.ResourceVersion
-			scheduleVMBackup.ObjectMeta.UID = existingSchedule.ObjectMeta.UID
+			scheduleVMBackup.Name = existingSchedule.Name
+			scheduleVMBackup.ResourceVersion = existingSchedule.ResourceVersion
+			scheduleVMBackup.UID = existingSchedule.UID
 			_, err := c.HarvesterClient.HarvesterhciV1beta1().ScheduleVMBackups(vmNamespace).Update(ctx, scheduleVMBackup, metav1.UpdateOptions{})
 			if err != nil {
 				return "", diag.FromErr(fmt.Errorf("failed to update existing ScheduleVMBackup: %w", err))
 			}
-			return existingSchedule.ObjectMeta.Name, nil
+			return existingSchedule.Name, nil
 		}
 	}
 
@@ -331,7 +331,7 @@ func resourceScheduleBackupUpdate(ctx context.Context, d *schema.ResourceData, m
 		for k, v := range labels.(map[string]interface{}) {
 			labelMap[k] = v.(string)
 		}
-		scheduleVMBackup.ObjectMeta.Labels = labelMap
+		scheduleVMBackup.Labels = labelMap
 	}
 
 	existing, getErr := c.HarvesterClient.HarvesterhciV1beta1().ScheduleVMBackups(targetVMNamespace).Get(ctx, jobName, metav1.GetOptions{})
@@ -347,8 +347,8 @@ func resourceScheduleBackupUpdate(ctx context.Context, d *schema.ResourceData, m
 		}
 	} else {
 		// Update existing
-		scheduleVMBackup.ObjectMeta.ResourceVersion = existing.ObjectMeta.ResourceVersion
-		scheduleVMBackup.ObjectMeta.UID = existing.ObjectMeta.UID
+		scheduleVMBackup.ResourceVersion = existing.ResourceVersion
+		scheduleVMBackup.UID = existing.UID
 		_, err = c.HarvesterClient.HarvesterhciV1beta1().ScheduleVMBackups(targetVMNamespace).Update(ctx, scheduleVMBackup, metav1.UpdateOptions{})
 		if err != nil {
 			return diag.FromErr(fmt.Errorf("failed to update ScheduleVMBackup: %w", err))
@@ -414,8 +414,8 @@ func resourceScheduleBackupRead(ctx context.Context, d *schema.ResourceData, met
 	if err := d.Set(constants.FieldScheduleBackupRetain, scheduleVMBackup.Spec.Retain); err != nil {
 		return diag.FromErr(err)
 	}
-	if scheduleVMBackup.ObjectMeta.Labels != nil && len(scheduleVMBackup.ObjectMeta.Labels) > 0 {
-		if err := d.Set(constants.FieldScheduleBackupLabels, scheduleVMBackup.ObjectMeta.Labels); err != nil {
+	if len(scheduleVMBackup.Labels) > 0 {
+		if err := d.Set(constants.FieldScheduleBackupLabels, scheduleVMBackup.Labels); err != nil {
 			return diag.FromErr(err)
 		}
 	}
