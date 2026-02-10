@@ -403,6 +403,7 @@ func TestNetworkInterface(t *testing.T) {
 	}
 }
 
+
 func TestCPU(t *testing.T) {
 	type testcase struct {
 		importer      *VMImporter
@@ -464,5 +465,55 @@ func TestCPU(t *testing.T) {
 		if model != tc.expectedModel {
 			t.Errorf("Test case %d: CPUModel() returned %q, expected %q", idx, model, tc.expectedModel)
 		}
+	}
+}
+
+func TestCPUTopologyImport(t *testing.T) {
+	// Test with explicit values
+	vm := &kubevirtv1.VirtualMachine{
+		Spec: kubevirtv1.VirtualMachineSpec{
+			Template: &kubevirtv1.VirtualMachineInstanceTemplateSpec{
+				Spec: kubevirtv1.VirtualMachineInstanceSpec{
+					Domain: kubevirtv1.DomainSpec{
+						CPU: &kubevirtv1.CPU{
+							Sockets: 2,
+							Threads: 4,
+						},
+					},
+				},
+			},
+		},
+	}
+	importer := &VMImporter{VirtualMachine: vm}
+
+	if got := importer.CPUSockets(); got != 2 {
+		t.Errorf("CPUSockets() = %d, want 2", got)
+	}
+	if got := importer.CPUThreads(); got != 4 {
+		t.Errorf("CPUThreads() = %d, want 4", got)
+	}
+
+	// Test with zero values (defaults)
+	vmZero := &kubevirtv1.VirtualMachine{
+		Spec: kubevirtv1.VirtualMachineSpec{
+			Template: &kubevirtv1.VirtualMachineInstanceTemplateSpec{
+				Spec: kubevirtv1.VirtualMachineInstanceSpec{
+					Domain: kubevirtv1.DomainSpec{
+						CPU: &kubevirtv1.CPU{
+							Sockets: 0,
+							Threads: 0,
+						},
+					},
+				},
+			},
+		},
+	}
+	importerZero := &VMImporter{VirtualMachine: vmZero}
+
+	if got := importerZero.CPUSockets(); got != 1 {
+		t.Errorf("CPUSockets() zero value = %d, want 1", got)
+	}
+	if got := importerZero.CPUThreads(); got != 1 {
+		t.Errorf("CPUThreads() zero value = %d, want 1", got)
 	}
 }

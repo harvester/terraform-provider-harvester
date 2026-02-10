@@ -26,6 +26,9 @@ const (
 	FieldVirtualMachineNodeSelector          = "node_selector"
 	FieldVirtualMachineCreateInitialSnapshot = "create_initial_snapshot"
 
+	FieldVirtualMachineCPUSockets = "cpu_sockets"
+	FieldVirtualMachineCPUThreads = "cpu_threads"
+
 	StateVirtualMachineStarting = "Starting"
 	StateVirtualMachineRunning  = "Running"
 	StateVirtualMachineStopping = "Stopping"

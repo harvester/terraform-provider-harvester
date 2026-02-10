@@ -200,6 +200,8 @@ resource "harvester_virtualmachine" "opensuse154" {
 - `cpu_model` (String) CPU model for the virtual machine
 - `cpu_pinning` (Boolean) To enable VM CPU pinning, ensure that at least one node has the CPU manager enabled
 - `create_initial_snapshot` (Boolean) Create an initial snapshot named {vm-name}-initial after the VM is created and ready
+- `cpu_sockets` (Number) Number of CPU sockets
+- `cpu_threads` (Number) Number of threads per core
 - `description` (String) Any text you want that better describes this resource
 - `efi` (Boolean)
 - `hostname` (String)
