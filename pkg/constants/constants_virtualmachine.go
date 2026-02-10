@@ -30,6 +30,12 @@ const (
 	FieldVirtualMachineCreateInitialSnapshot = "create_initial_snapshot"
 	FieldVirtualMachineHostDevice            = "host_device"
 
+	FieldVirtualMachineEvictionStrategy              = "eviction_strategy"
+	FieldVirtualMachineTerminationGracePeriodSeconds = "termination_grace_period_seconds"
+	FieldVirtualMachineOSType                        = "os_type"
+
+	AnnotationOSType = "harvesterhci.io/os"
+
 	StateVirtualMachineStarting = "Starting"
 	StateVirtualMachineRunning  = "Running"
 	StateVirtualMachineStopping = "Stopping"
