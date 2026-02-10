@@ -152,6 +152,18 @@ please use %s instead of this deprecated field:
 			Description: "Node selector for scheduling the VM. The key is the label key and the value is the label value.",
 			Optional:    true,
 		},
+		constants.FieldVirtualMachineCPUSockets: {
+			Type:        schema.TypeInt,
+			Description: "Number of CPU sockets",
+			Optional:    true,
+			Default:     1,
+		},
+		constants.FieldVirtualMachineCPUThreads: {
+			Type:        schema.TypeInt,
+			Description: "Number of threads per core",
+			Optional:    true,
+			Default:     1,
+		},
 	}
 	util.NamespacedSchemaWrap(s, false)
 	s[constants.FieldCommonTags].Description = "The tag is reflected as label on the VM.\n" +
