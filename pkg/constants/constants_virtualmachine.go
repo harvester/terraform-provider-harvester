@@ -30,6 +30,8 @@ const (
 	FieldVirtualMachineCreateInitialSnapshot = "create_initial_snapshot"
 	FieldVirtualMachineHostDevice            = "host_device"
 
+	FieldVirtualMachineHugepages = "hugepages"
+
 	StateVirtualMachineStarting = "Starting"
 	StateVirtualMachineRunning  = "Running"
 	StateVirtualMachineStopping = "Stopping"
