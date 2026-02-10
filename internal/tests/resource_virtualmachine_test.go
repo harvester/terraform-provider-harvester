@@ -544,6 +544,9 @@ resource "harvester_virtualmachine" "%s" {
 					testAccCheckCdRomSpec(ctx, testAccVirtualMachineNamespace, testAccVirtualMachineName, 2, 1),
 					func(s *terraform.State) error {
 						c, err := testAccProvider.Meta().(*config.Config).K8sClient()
+						if err != nil {
+							return err
+						}
 						vmi, err := c.HarvesterClient.KubevirtV1().VirtualMachineInstances(testAccVirtualMachineNamespace).Get(ctx, testAccVirtualMachineName, metav1.GetOptions{})
 						if err != nil {
 							return err
@@ -694,6 +697,9 @@ func testAccCheckCdRomSpec(ctx context.Context, vmNamespace, vmName string, expe
 func testAccCheckVmiUid(ctx context.Context, vmNamespace, vmName string, vmiUid types.UID) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		c, err := testAccProvider.Meta().(*config.Config).K8sClient()
+		if err != nil {
+			return err
+		}
 		vmi, err := c.HarvesterClient.KubevirtV1().VirtualMachineInstances(vmNamespace).Get(ctx, vmName, metav1.GetOptions{})
 		if err != nil {
 			return err
