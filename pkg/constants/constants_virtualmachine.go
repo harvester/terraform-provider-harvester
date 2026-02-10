@@ -30,6 +30,9 @@ const (
 	FieldVirtualMachineCreateInitialSnapshot = "create_initial_snapshot"
 	FieldVirtualMachineHostDevice            = "host_device"
 
+	FieldVirtualMachineCPUSockets = "cpu_sockets"
+	FieldVirtualMachineCPUThreads = "cpu_threads"
+
 	StateVirtualMachineStarting = "Starting"
 	StateVirtualMachineRunning  = "Running"
 	StateVirtualMachineStopping = "Stopping"
