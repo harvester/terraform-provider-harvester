@@ -541,30 +541,14 @@ resource "harvester_virtualmachine" "%s" {
 				),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccVirtualMachineExists(ctx, testAccVirtualMachineResourceName, vm),
+					testAccCheckCdRomSpec(ctx, testAccVirtualMachineNamespace, testAccVirtualMachineName, 2, 1),
 					func(s *terraform.State) error {
 						c, err := testAccProvider.Meta().(*config.Config).K8sClient()
-						if err != nil {
-							return err
-						}
-						vm, err = c.HarvesterClient.KubevirtV1().VirtualMachines(testAccVirtualMachineNamespace).Get(ctx, testAccVirtualMachineName, metav1.GetOptions{})
-						if err != nil {
-							return err
-						}
-						disksCnt := len(vm.Spec.Template.Spec.Domain.Devices.Disks)
-						if disksCnt != 2 {
-							return fmt.Errorf("Should have 2 disk devices but got %d", disksCnt)
-						}
-						volumeCnts := len(vm.Spec.Template.Spec.Volumes)
-						if volumeCnts != 1 {
-							return fmt.Errorf("Should have 1 volume but got %d", volumeCnts)
-						}
-
 						vmi, err := c.HarvesterClient.KubevirtV1().VirtualMachineInstances(testAccVirtualMachineNamespace).Get(ctx, testAccVirtualMachineName, metav1.GetOptions{})
 						if err != nil {
 							return err
 						}
 						vmiUid = vmi.UID
-
 						return nil
 					},
 				),
@@ -624,34 +608,8 @@ resource "harvester_virtualmachine" "%s" {
 					resource.TestCheckResourceAttr(testAccImageResourceName, constants.FieldCommonName, "test-acc-hp-cdrom-img"),
 					resource.TestCheckResourceAttr(testAccImageResourceName, constants.FieldCommonNamespace, "default"),
 					testAccVirtualMachineExists(ctx, testAccVirtualMachineResourceName, vm),
-					func(s *terraform.State) error {
-						c, err := testAccProvider.Meta().(*config.Config).K8sClient()
-						if err != nil {
-							return err
-						}
-						vm, err = c.HarvesterClient.KubevirtV1().VirtualMachines(testAccVirtualMachineNamespace).Get(ctx, testAccVirtualMachineName, metav1.GetOptions{})
-						if err != nil {
-							return err
-						}
-						disksCnt := len(vm.Spec.Template.Spec.Domain.Devices.Disks)
-						if disksCnt != 2 {
-							return fmt.Errorf("Should have 2 disk devices but got %d", disksCnt)
-						}
-						volumeCnts := len(vm.Spec.Template.Spec.Volumes)
-						if volumeCnts != 2 {
-							return fmt.Errorf("Should have 2 volumes but got %d", volumeCnts)
-						}
-
-						vmi, err := c.HarvesterClient.KubevirtV1().VirtualMachineInstances(testAccVirtualMachineNamespace).Get(ctx, testAccVirtualMachineName, metav1.GetOptions{})
-						if err != nil {
-							return err
-						}
-						if vmiUid != vmi.UID {
-							return fmt.Errorf("Insert cdrom volume shouldn't trigger VMI re-creation. Expected: %s, Got: %s", vmiUid, vmi.UID)
-						}
-
-						return nil
-					},
+					testAccCheckCdRomSpec(ctx, testAccVirtualMachineNamespace, testAccVirtualMachineName, 2, 2),
+					testAccCheckVmiUid(ctx, testAccVirtualMachineNamespace, testAccVirtualMachineName, vmiUid),
 				),
 			},
 			{
@@ -691,34 +649,8 @@ resource "harvester_virtualmachine" "%s" {
 				),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccVirtualMachineExists(ctx, testAccVirtualMachineResourceName, vm),
-					func(s *terraform.State) error {
-						c, err := testAccProvider.Meta().(*config.Config).K8sClient()
-						if err != nil {
-							return err
-						}
-						vm, err = c.HarvesterClient.KubevirtV1().VirtualMachines(testAccVirtualMachineNamespace).Get(ctx, testAccVirtualMachineName, metav1.GetOptions{})
-						if err != nil {
-							return err
-						}
-						disksCnt := len(vm.Spec.Template.Spec.Domain.Devices.Disks)
-						if disksCnt != 2 {
-							return fmt.Errorf("Should have 2 disk devices but got %d", disksCnt)
-						}
-						volumeCnts := len(vm.Spec.Template.Spec.Volumes)
-						if volumeCnts != 1 {
-							return fmt.Errorf("Should have 1 volumes but got %d", volumeCnts)
-						}
-
-						vmi, err := c.HarvesterClient.KubevirtV1().VirtualMachineInstances(testAccVirtualMachineNamespace).Get(ctx, testAccVirtualMachineName, metav1.GetOptions{})
-						if err != nil {
-							return err
-						}
-						if vmiUid != vmi.UID {
-							return fmt.Errorf("Eject cdrom volume shouldn't trigger VMI re-creation. Expected: %s, Got: %s", vmiUid, vmi.UID)
-						}
-
-						return nil
-					},
+					testAccCheckCdRomSpec(ctx, testAccVirtualMachineNamespace, testAccVirtualMachineName, 2, 1),
+					testAccCheckVmiUid(ctx, testAccVirtualMachineNamespace, testAccVirtualMachineName, vmiUid),
 				),
 			},
 		},
@@ -732,6 +664,43 @@ func testAccVirtualMachineExists(ctx context.Context, n string, vm *kubevirtv1.V
 			return err
 		}
 		vm = foundVM
+		return nil
+	}
+}
+
+func testAccCheckCdRomSpec(ctx context.Context, vmNamespace, vmName string, expectedDisksCnt, expectedVolumeCnts int) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		c, err := testAccProvider.Meta().(*config.Config).K8sClient()
+		if err != nil {
+			return err
+		}
+		vm, err := c.HarvesterClient.KubevirtV1().VirtualMachines(vmNamespace).Get(ctx, vmName, metav1.GetOptions{})
+		if err != nil {
+			return err
+		}
+		disksCnt := len(vm.Spec.Template.Spec.Domain.Devices.Disks)
+		if disksCnt != expectedDisksCnt {
+			return fmt.Errorf("Should have %d disk devices but got %d", expectedDisksCnt, disksCnt)
+		}
+		volumeCnts := len(vm.Spec.Template.Spec.Volumes)
+		if volumeCnts != expectedVolumeCnts {
+			return fmt.Errorf("Should have %d volumes but got %d", expectedVolumeCnts, volumeCnts)
+		}
+
+		return nil
+	}
+}
+
+func testAccCheckVmiUid(ctx context.Context, vmNamespace, vmName string, vmiUid types.UID) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		c, err := testAccProvider.Meta().(*config.Config).K8sClient()
+		vmi, err := c.HarvesterClient.KubevirtV1().VirtualMachineInstances(vmNamespace).Get(ctx, vmName, metav1.GetOptions{})
+		if err != nil {
+			return err
+		}
+		if vmi.UID != vmiUid {
+			return fmt.Errorf("Shouldn't trigger VMI re-creation. Expected: %s, Got: %s", vmiUid, vmi.UID)
+		}
 		return nil
 	}
 }
