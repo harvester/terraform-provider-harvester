@@ -416,6 +416,21 @@ func (c *Constructor) Setup() util.Processors {
 				return nil
 			},
 		},
+		{
+			Field: constants.FieldVirtualMachineHugepages,
+			Parser: func(i interface{}) error {
+				pageSize := i.(string)
+				if pageSize != "" {
+					vmBuilder.VirtualMachine.Spec.Template.Spec.Domain.Memory = &kubevirtv1.Memory{
+						Hugepages: &kubevirtv1.Hugepages{PageSize: pageSize},
+					}
+				} else {
+					vmBuilder.VirtualMachine.Spec.Template.Spec.Domain.Memory = nil
+				}
+				return nil
+			},
+			Required: true,
+		},
 	}
 	return append(processors, customProcessors...)
 }

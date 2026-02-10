@@ -73,6 +73,14 @@ func (v *VMImporter) SecureBoot() bool {
 	return v.EFI() && *v.VirtualMachine.Spec.Template.Spec.Domain.Firmware.Bootloader.EFI.SecureBoot
 }
 
+func (v *VMImporter) HugepagesSize() string {
+	memory := v.VirtualMachine.Spec.Template.Spec.Domain.Memory
+	if memory == nil || memory.Hugepages == nil {
+		return ""
+	}
+	return memory.Hugepages.PageSize
+}
+
 func (v *VMImporter) EvictionStrategy() bool {
 	return *v.VirtualMachine.Spec.Template.Spec.EvictionStrategy == kubevirtv1.EvictionStrategyLiveMigrate
 }
@@ -412,6 +420,7 @@ func ResourceVirtualMachineStateGetter(vm *kubevirtv1.VirtualMachine, vmi *kubev
 			constants.FieldVirtualMachineCPUPinning:            vmImporter.DedicatedCPUPlacement(),
 			constants.FieldVirtualMachineIsolateEmulatorThread: vmImporter.IsolateEmulatorThread(),
 			constants.FieldVirtualMachineNodeSelector:          vm.Spec.Template.Spec.NodeSelector,
+			constants.FieldVirtualMachineHugepages:             vmImporter.HugepagesSize(),
 		},
 	}, nil
 }
