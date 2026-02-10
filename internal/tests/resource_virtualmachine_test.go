@@ -593,10 +593,10 @@ resource "harvester_virtualmachine" "%s" {
     bus        = "sata"
     boot_order = 2
 
-		size        = "1Gi"
-		hot_plug    = true
-		image       = "%s/%s"
-		auto_delete = true
+    size        = "1Gi"
+    hot_plug    = true
+    image       = "%s/%s"
+    auto_delete = true
   }
 }
 `,
