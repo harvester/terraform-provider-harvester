@@ -612,7 +612,7 @@ resource "harvester_virtualmachine" "%s" {
 					resource.TestCheckResourceAttr(testAccImageResourceName, constants.FieldCommonNamespace, "default"),
 					testAccVirtualMachineExists(ctx, testAccVirtualMachineResourceName, vm),
 					testAccCheckCdRomSpec(ctx, testAccVirtualMachineNamespace, testAccVirtualMachineName, 2, 2),
-					testAccCheckVmiUid(ctx, testAccVirtualMachineNamespace, testAccVirtualMachineName, vmiUid),
+					testAccCheckVmiUid(ctx, testAccVirtualMachineNamespace, testAccVirtualMachineName, &vmiUid),
 				),
 			},
 			{
@@ -653,7 +653,7 @@ resource "harvester_virtualmachine" "%s" {
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccVirtualMachineExists(ctx, testAccVirtualMachineResourceName, vm),
 					testAccCheckCdRomSpec(ctx, testAccVirtualMachineNamespace, testAccVirtualMachineName, 2, 1),
-					testAccCheckVmiUid(ctx, testAccVirtualMachineNamespace, testAccVirtualMachineName, vmiUid),
+					testAccCheckVmiUid(ctx, testAccVirtualMachineNamespace, testAccVirtualMachineName, &vmiUid),
 				),
 			},
 		},
@@ -694,7 +694,7 @@ func testAccCheckCdRomSpec(ctx context.Context, vmNamespace, vmName string, expe
 	}
 }
 
-func testAccCheckVmiUid(ctx context.Context, vmNamespace, vmName string, vmiUid types.UID) resource.TestCheckFunc {
+func testAccCheckVmiUid(ctx context.Context, vmNamespace, vmName string, vmiUid *types.UID) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		c, err := testAccProvider.Meta().(*config.Config).K8sClient()
 		if err != nil {
@@ -704,8 +704,8 @@ func testAccCheckVmiUid(ctx context.Context, vmNamespace, vmName string, vmiUid 
 		if err != nil {
 			return err
 		}
-		if vmi.UID != vmiUid {
-			return fmt.Errorf("Shouldn't trigger VMI re-creation. Expected: %s, Got: %s", vmiUid, vmi.UID)
+		if vmi.UID != *vmiUid {
+			return fmt.Errorf("Shouldn't trigger VMI re-creation. Expected: %s, Got: %s", *vmiUid, vmi.UID)
 		}
 		return nil
 	}
