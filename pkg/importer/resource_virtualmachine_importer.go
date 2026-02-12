@@ -52,8 +52,29 @@ func (v *VMImporter) CPU() int {
 	return int(v.VirtualMachine.Spec.Template.Spec.Domain.CPU.Cores)
 }
 
+
 func (v *VMImporter) CPUModel() string {
 	return v.VirtualMachine.Spec.Template.Spec.Domain.CPU.Model
+}
+
+func (v *VMImporter) CPURequest() string {
+	req := v.VirtualMachine.Spec.Template.Spec.Domain.Resources.Requests
+	if req != nil {
+		if cpu, ok := req[corev1.ResourceCPU]; ok {
+			return cpu.String()
+		}
+	}
+	return ""
+}
+
+func (v *VMImporter) MemoryRequest() string {
+	req := v.VirtualMachine.Spec.Template.Spec.Domain.Resources.Requests
+	if req != nil {
+		if mem, ok := req[corev1.ResourceMemory]; ok {
+			return mem.String()
+		}
+	}
+	return ""
 }
 
 func (v *VMImporter) DedicatedCPUPlacement() bool {
@@ -396,6 +417,8 @@ func ResourceVirtualMachineStateGetter(vm *kubevirtv1.VirtualMachine, vmi *kubev
 			constants.FieldVirtualMachineCPU:                   vmImporter.CPU(),
 			constants.FieldVirtualMachineCPUModel:              vmImporter.CPUModel(),
 			constants.FieldVirtualMachineMemory:                vmImporter.Memory(),
+			constants.FieldVirtualMachineCPURequest:            vmImporter.CPURequest(),
+			constants.FieldVirtualMachineMemoryRequest:         vmImporter.MemoryRequest(),
 			constants.FieldVirtualMachineHostname:              vmImporter.HostName(),
 			constants.FieldVirtualMachineReservedMemory:        vmImporter.ReservedMemory(),
 			constants.FieldVirtualMachineMachineType:           vmImporter.MachineType(),

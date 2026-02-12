@@ -72,6 +72,32 @@ func (c *Constructor) Setup() util.Processors {
 			},
 		},
 		{
+			Field: constants.FieldVirtualMachineCPURequest,
+			Parser: func(i interface{}) error {
+				cpuRequest := i.(string)
+				if cpuRequest != "" {
+					if vmBuilder.VirtualMachine.Spec.Template.Spec.Domain.Resources.Requests == nil {
+						vmBuilder.VirtualMachine.Spec.Template.Spec.Domain.Resources.Requests = corev1.ResourceList{}
+					}
+					vmBuilder.VirtualMachine.Spec.Template.Spec.Domain.Resources.Requests[corev1.ResourceCPU] = resource.MustParse(cpuRequest)
+				}
+				return nil
+			},
+		},
+		{
+			Field: constants.FieldVirtualMachineMemoryRequest,
+			Parser: func(i interface{}) error {
+				memoryRequest := i.(string)
+				if memoryRequest != "" {
+					if vmBuilder.VirtualMachine.Spec.Template.Spec.Domain.Resources.Requests == nil {
+						vmBuilder.VirtualMachine.Spec.Template.Spec.Domain.Resources.Requests = corev1.ResourceList{}
+					}
+					vmBuilder.VirtualMachine.Spec.Template.Spec.Domain.Resources.Requests[corev1.ResourceMemory] = resource.MustParse(memoryRequest)
+				}
+				return nil
+			},
+		},
+		{
 			Field: constants.FieldVirtualMachineEFI,
 			Parser: func(i interface{}) error {
 				var firmware *kubevirtv1.Firmware
