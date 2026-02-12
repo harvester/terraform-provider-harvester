@@ -71,6 +71,18 @@ please use %s instead of this deprecated field:
 			Optional: true,
 			Default:  "1Gi",
 		},
+		constants.FieldVirtualMachineCPURequest: {
+			Type:        schema.TypeString,
+			Optional:    true,
+			Computed:    true,
+			Description: "CPU request as Kubernetes quantity (e.g. 1, 500m). Defaults to cpu value. Set lower for overcommit.",
+		},
+		constants.FieldVirtualMachineMemoryRequest: {
+			Type:        schema.TypeString,
+			Optional:    true,
+			Computed:    true,
+			Description: "Memory request as Kubernetes quantity (e.g. 512Mi, 1Gi). Defaults to memory value. Set lower for overcommit.",
+		},
 		constants.FieldVirtualMachineSSHKeys: {
 			Type:     schema.TypeList,
 			Optional: true,
