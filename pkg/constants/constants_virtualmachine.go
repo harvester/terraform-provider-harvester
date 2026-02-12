@@ -10,6 +10,7 @@ const (
 	FieldVirtualMachineStart                 = "start"
 	FieldVirtualMachineRunStrategy           = "run_strategy"
 	FieldVirtualMachineCPU                   = "cpu"
+	FieldVirtualMachineCPUModel              = "cpu_model"
 	FieldVirtualMachineMemory                = "memory"
 	FieldVirtualMachineSSHKeys               = "ssh_keys"
 	FieldVirtualMachineCloudInit             = "cloudinit"

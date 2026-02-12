@@ -197,6 +197,7 @@ resource "harvester_virtualmachine" "opensuse154" {
 
 - `cloudinit` (Block List, Max: 1) (see [below for nested schema](#nestedblock--cloudinit))
 - `cpu` (Number)
+- `cpu_model` (String) CPU model for the virtual machine
 - `cpu_pinning` (Boolean) To enable VM CPU pinning, ensure that at least one node has the CPU manager enabled
 - `description` (String) Any text you want that better describes this resource
 - `efi` (Boolean)

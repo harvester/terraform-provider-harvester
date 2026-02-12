@@ -39,6 +39,7 @@ data "harvester_virtualmachine" "opensuse154" {
 
 - `cloudinit` (List of Object) (see [below for nested schema](#nestedatt--cloudinit))
 - `cpu` (Number)
+- `cpu_model` (String) CPU model for the virtual machine
 - `cpu_pinning` (Boolean) To enable VM CPU pinning, ensure that at least one node has the CPU manager enabled
 - `description` (String) Any text you want that better describes this resource
 - `disk` (List of Object) (see [below for nested schema](#nestedatt--disk))

@@ -52,6 +52,10 @@ func (v *VMImporter) CPU() int {
 	return int(v.VirtualMachine.Spec.Template.Spec.Domain.CPU.Cores)
 }
 
+func (v *VMImporter) CPUModel() string {
+	return v.VirtualMachine.Spec.Template.Spec.Domain.CPU.Model
+}
+
 func (v *VMImporter) DedicatedCPUPlacement() bool {
 	return bool(v.VirtualMachine.Spec.Template.Spec.Domain.CPU.DedicatedCPUPlacement)
 }
@@ -386,6 +390,7 @@ func ResourceVirtualMachineStateGetter(vm *kubevirtv1.VirtualMachine, vmi *kubev
 			constants.FieldCommonLabels:                        GetLabels(vm.Labels),
 			constants.FieldCommonState:                         vmImporter.State(networkInterface, oldInstanceUID),
 			constants.FieldVirtualMachineCPU:                   vmImporter.CPU(),
+			constants.FieldVirtualMachineCPUModel:              vmImporter.CPUModel(),
 			constants.FieldVirtualMachineMemory:                vmImporter.Memory(),
 			constants.FieldVirtualMachineHostname:              vmImporter.HostName(),
 			constants.FieldVirtualMachineReservedMemory:        vmImporter.ReservedMemory(),

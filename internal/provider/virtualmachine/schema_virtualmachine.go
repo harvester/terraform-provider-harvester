@@ -61,6 +61,11 @@ please use %s instead of this deprecated field:
 			Optional: true,
 			Default:  1,
 		},
+		constants.FieldVirtualMachineCPUModel: {
+			Type:        schema.TypeString,
+			Optional:    true,
+			Description: "CPU model for the virtual machine",
+		},
 		constants.FieldVirtualMachineMemory: {
 			Type:     schema.TypeString,
 			Optional: true,
