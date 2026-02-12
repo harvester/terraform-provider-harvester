@@ -55,6 +55,16 @@ func (c *Constructor) Setup() util.Processors {
 			},
 		},
 		{
+			Field: constants.FieldVirtualMachineCPUModel,
+			Parser: func(i interface{}) error {
+				cpuModel := i.(string)
+				if cpuModel != "" {
+					vmBuilder.VirtualMachine.Spec.Template.Spec.Domain.CPU.Model = cpuModel
+				}
+				return nil
+			},
+		},
+		{
 			Field: constants.FieldVirtualMachineMemory,
 			Parser: func(i interface{}) error {
 				vmBuilder.Memory(i.(string))
