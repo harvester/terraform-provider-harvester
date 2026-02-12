@@ -99,6 +99,12 @@ func resourceDiskSchema() map[string]*schema.Schema {
 			Computed:     true,
 			ValidateFunc: util.IsValidName,
 		},
+		constants.FieldDiskEject: {
+			Type:        schema.TypeBool,
+			Optional:    true,
+			Default:     false,
+			Description: "Eject the CD-ROM disk by opening the tray. Only applies to cd-rom type disks.",
+		},
 	}
 	return s
 }

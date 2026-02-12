@@ -403,6 +403,7 @@ func TestNetworkInterface(t *testing.T) {
 	}
 }
 
+
 func TestCPU(t *testing.T) {
 	type testcase struct {
 		importer      *VMImporter
@@ -464,5 +465,112 @@ func TestCPU(t *testing.T) {
 		if model != tc.expectedModel {
 			t.Errorf("Test case %d: CPUModel() returned %q, expected %q", idx, model, tc.expectedModel)
 		}
+	}
+}
+
+func TestDiskEjectImport(t *testing.T) {
+	makeVM := func(disks []kubevirtv1.Disk, volumes []kubevirtv1.Volume) *VMImporter {
+		return &VMImporter{
+			VirtualMachine: &kubevirtv1.VirtualMachine{
+				Spec: kubevirtv1.VirtualMachineSpec{
+					Template: &kubevirtv1.VirtualMachineInstanceTemplateSpec{
+						Spec: kubevirtv1.VirtualMachineInstanceSpec{
+							Domain: kubevirtv1.DomainSpec{
+								Devices: kubevirtv1.Devices{
+									Disks: disks,
+								},
+							},
+							Volumes: volumes,
+						},
+					},
+				},
+			},
+		}
+	}
+
+	// CD-ROM with tray open (ejected)
+	imp := makeVM(
+		[]kubevirtv1.Disk{{
+			Name: "cdrom-disk",
+			DiskDevice: kubevirtv1.DiskDevice{
+				CDRom: &kubevirtv1.CDRomTarget{
+					Bus:  kubevirtv1.DiskBusSATA,
+					Tray: kubevirtv1.TrayStateOpen,
+				},
+			},
+		}},
+		[]kubevirtv1.Volume{{
+			Name: "cdrom-disk",
+			VolumeSource: kubevirtv1.VolumeSource{
+				ContainerDisk: &kubevirtv1.ContainerDiskSource{
+					Image: "test-image",
+				},
+			},
+		}},
+	)
+	diskStates, _, err := imp.Volume()
+	if err != nil {
+		t.Fatalf("Volume() error: %v", err)
+	}
+	if len(diskStates) != 1 {
+		t.Fatalf("expected 1 disk, got %d", len(diskStates))
+	}
+	if eject, ok := diskStates[0][constants.FieldDiskEject].(bool); !ok || !eject {
+		t.Errorf("CD-ROM with TrayStateOpen: eject = %v, want true", diskStates[0][constants.FieldDiskEject])
+	}
+
+	// CD-ROM with tray closed (not ejected)
+	imp2 := makeVM(
+		[]kubevirtv1.Disk{{
+			Name: "cdrom-disk",
+			DiskDevice: kubevirtv1.DiskDevice{
+				CDRom: &kubevirtv1.CDRomTarget{
+					Bus:  kubevirtv1.DiskBusSATA,
+					Tray: kubevirtv1.TrayStateClosed,
+				},
+			},
+		}},
+		[]kubevirtv1.Volume{{
+			Name: "cdrom-disk",
+			VolumeSource: kubevirtv1.VolumeSource{
+				ContainerDisk: &kubevirtv1.ContainerDiskSource{
+					Image: "test-image",
+				},
+			},
+		}},
+	)
+	diskStates2, _, err := imp2.Volume()
+	if err != nil {
+		t.Fatalf("Volume() error: %v", err)
+	}
+	if eject, ok := diskStates2[0][constants.FieldDiskEject].(bool); !ok || eject {
+		t.Errorf("CD-ROM with TrayStateClosed: eject = %v, want false", diskStates2[0][constants.FieldDiskEject])
+	}
+
+	// Regular disk (not CD-ROM) should have eject=false
+	imp3 := makeVM(
+		[]kubevirtv1.Disk{{
+			Name: "rootdisk",
+			DiskDevice: kubevirtv1.DiskDevice{
+				Disk: &kubevirtv1.DiskTarget{
+					Bus: kubevirtv1.DiskBusVirtio,
+				},
+			},
+		}},
+		[]kubevirtv1.Volume{{
+			Name: "rootdisk",
+			VolumeSource: kubevirtv1.VolumeSource{
+				ContainerDisk: &kubevirtv1.ContainerDiskSource{
+					Image: "test-image",
+				},
+			},
+		}},
+	)
+	diskStates3, _, err := imp3.Volume()
+	if err != nil {
+		t.Fatalf("Volume() error: %v", err)
+	}
+	if eject, ok := diskStates3[0][constants.FieldDiskEject].(bool); !ok || eject {
+		t.Errorf("Regular disk: eject = %v, want false", diskStates3[0][constants.FieldDiskEject])
 	}
 }
