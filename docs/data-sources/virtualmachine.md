@@ -41,6 +41,7 @@ data "harvester_virtualmachine" "opensuse154" {
 - `cpu` (Number)
 - `cpu_model` (String) CPU model for the virtual machine
 - `cpu_pinning` (Boolean) To enable VM CPU pinning, ensure that at least one node has the CPU manager enabled
+- `cpu_request` (String) CPU request as Kubernetes quantity (e.g. 1, 500m). Defaults to cpu value. Set lower for overcommit.
 - `create_initial_snapshot` (Boolean) Create an initial snapshot named {vm-name}-initial after the VM is created and ready
 - `description` (String) Any text you want that better describes this resource
 - `disk` (List of Object) (see [below for nested schema](#nestedatt--disk))
@@ -52,6 +53,7 @@ data "harvester_virtualmachine" "opensuse154" {
 - `labels` (Map of String)
 - `machine_type` (String)
 - `memory` (String)
+- `memory_request` (String) Memory request as Kubernetes quantity (e.g. 512Mi, 1Gi). Defaults to memory value. Set lower for overcommit.
 - `message` (String)
 - `network_interface` (List of Object) (see [below for nested schema](#nestedatt--network_interface))
 - `node_name` (String)
