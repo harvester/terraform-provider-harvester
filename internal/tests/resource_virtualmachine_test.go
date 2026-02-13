@@ -46,7 +46,7 @@ type VMResourceBuilder struct {
 	runStrategy                   string
 	machineType                   string
 	evictionStrategy              string
-	terminationGracePeriodSeconds int
+	terminationGracePeriodSeconds *int
 	osType                        string
 	networkConfig                 *NetworkConfig
 	diskConfig                    *DiskConfig
@@ -126,7 +126,7 @@ func (b *VMResourceBuilder) SetEvictionStrategy(strategy string) *VMResourceBuil
 }
 
 func (b *VMResourceBuilder) SetTerminationGracePeriodSeconds(seconds int) *VMResourceBuilder {
-	b.terminationGracePeriodSeconds = seconds
+	b.terminationGracePeriodSeconds = &seconds
 	return b
 }
 
@@ -172,8 +172,8 @@ func (b *VMResourceBuilder) Build() string {
 	if b.evictionStrategy != "" {
 		sb.WriteString(fmt.Sprintf("\t%s = \"%s\"\n", constants.FieldVirtualMachineEvictionStrategy, b.evictionStrategy))
 	}
-	if b.terminationGracePeriodSeconds > 0 {
-		sb.WriteString(fmt.Sprintf("\t%s = %d\n", constants.FieldVirtualMachineTerminationGracePeriodSeconds, b.terminationGracePeriodSeconds))
+	if b.terminationGracePeriodSeconds != nil {
+		sb.WriteString(fmt.Sprintf("\t%s = %d\n", constants.FieldVirtualMachineTerminationGracePeriodSeconds, *b.terminationGracePeriodSeconds))
 	}
 	if b.osType != "" {
 		sb.WriteString(fmt.Sprintf("\t%s = \"%s\"\n", constants.FieldVirtualMachineOSType, b.osType))
