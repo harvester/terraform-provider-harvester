@@ -77,8 +77,6 @@ The following arguments are supported:
 * `retain` - (Optional) Number of backups to retain. Older backups will be automatically deleted. Minimum: 1, Default: 5.
 * `enabled` - (Optional) Whether the backup schedule is enabled. Default: `true`.
 * `labels` - (Optional) Map of labels to apply to the ScheduleVMBackup resource.
-* `groups` - (Optional) List of groups for the backup job (currently unused, kept for API compatibility).
-* `concurrency` - (Optional) Number of concurrent backup jobs (currently unused by Harvester, kept for API compatibility). Default: 1, Range: 1-10.
 * `volume_name` - (Optional, Deprecated) The name of the volume to backup. **DEPRECATED**: Use `vm_name` instead for VM-level backups. This field is kept for backward compatibility only.
 
 ## Attributes Reference

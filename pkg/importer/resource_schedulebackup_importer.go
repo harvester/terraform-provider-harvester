@@ -26,9 +26,8 @@ func ResourceScheduleBackupStateGetter(obj *harvsterv1.ScheduleVMBackup) (*State
 		constants.FieldCommonName:                obj.Name,
 		constants.FieldScheduleBackupVMName:      helper.BuildNamespacedName(obj.Namespace, vmName),
 		constants.FieldScheduleBackupSchedule:    obj.Spec.Cron,
-		constants.FieldScheduleBackupRetain:      obj.Spec.Retain,
-		constants.FieldScheduleBackupConcurrency: 1, // Default value, not used by ScheduleVMBackup
-		constants.FieldScheduleBackupEnabled:     !obj.Spec.Suspend,
+		constants.FieldScheduleBackupRetain:  obj.Spec.Retain,
+		constants.FieldScheduleBackupEnabled: !obj.Spec.Suspend,
 	}
 
 	// Add labels if present
