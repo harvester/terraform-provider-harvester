@@ -32,6 +32,9 @@ const (
 
 	AnnotationOSType = "harvesterhci.io/os"
 
+	DefaultEvictionStrategy              = "LiveMigrateIfPossible"
+	DefaultTerminationGracePeriodSeconds = 30
+
 	StateVirtualMachineStarting = "Starting"
 	StateVirtualMachineRunning  = "Running"
 	StateVirtualMachineStopping = "Stopping"

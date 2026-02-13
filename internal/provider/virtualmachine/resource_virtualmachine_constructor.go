@@ -440,12 +440,9 @@ func (c *Constructor) Setup() util.Processors {
 					vmBuilder.Annotations(map[string]string{
 						constants.AnnotationOSType: osType,
 					})
-				} else {
-					delete(vmBuilder.VirtualMachine.Annotations, constants.AnnotationOSType)
 				}
 				return nil
 			},
-			Required: true,
 		},
 	}
 	return append(processors, customProcessors...)
