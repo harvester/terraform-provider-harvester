@@ -224,16 +224,16 @@ func resourceScheduleBackupCreate(ctx context.Context, d *schema.ResourceData, m
 	schedule := d.Get(constants.FieldScheduleBackupSchedule).(string)
 	retain := d.Get(constants.FieldScheduleBackupRetain).(int)
 	enabled := d.Get(constants.FieldScheduleBackupEnabled).(bool)
-	labels, _ := d.GetOk(constants.FieldScheduleBackupLabels)
-
-	// If backup is disabled, just set the ID and return
-	if !enabled {
-		d.SetId(fmt.Sprintf("%s/%s/%s", vmNamespace, vmName, name))
-		return resourceScheduleBackupRead(ctx, d, meta)
+	var labelMap map[string]interface{}
+	if labels, ok := d.GetOk(constants.FieldScheduleBackupLabels); ok {
+		labelMap = labels.(map[string]interface{})
 	}
 
 	// Build ScheduleVMBackup object
-	scheduleVMBackup := buildScheduleVMBackup(vmNamespace, vmName, name, schedule, retain, labels.(map[string]interface{}))
+	scheduleVMBackup := buildScheduleVMBackup(vmNamespace, vmName, name, schedule, retain, labelMap)
+	if !enabled {
+		scheduleVMBackup.Spec.Suspend = true
+	}
 
 	// Create or update ScheduleVMBackup
 	jobName, diags := createOrUpdateScheduleVMBackup(ctx, c, scheduleVMBackup, vmNamespace, vmName)
@@ -326,7 +326,7 @@ func resourceScheduleBackupUpdate(ctx context.Context, d *schema.ResourceData, m
 	}
 
 	// Add labels if specified
-	if labels := d.Get(constants.FieldScheduleBackupLabels); labels != nil {
+	if labels, ok := d.GetOk(constants.FieldScheduleBackupLabels); ok {
 		labelMap := make(map[string]string)
 		for k, v := range labels.(map[string]interface{}) {
 			labelMap[k] = v.(string)
