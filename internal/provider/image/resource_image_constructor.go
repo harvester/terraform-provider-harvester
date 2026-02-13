@@ -89,8 +89,12 @@ func (c *Constructor) Setup() util.Processors {
 					if filePath == "" {
 						return errors.New("must specify file_path when source_type is 'upload'")
 					}
-					if _, err := os.Stat(filePath); err != nil {
+					info, err := os.Stat(filePath)
+					if err != nil {
 						return fmt.Errorf("file_path %q is not accessible: %w", filePath, err)
+					}
+					if !info.Mode().IsRegular() {
+						return fmt.Errorf("file_path %q must be a regular file", filePath)
 					}
 				} else if filePath != "" {
 					return fmt.Errorf("file_path must not be set when source_type is %q", c.Image.Spec.SourceType)
