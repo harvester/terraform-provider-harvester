@@ -84,6 +84,13 @@ func (c *Constructor) Setup() util.Processors {
 						},
 					}
 				}
+				if oldFirmware := vmBuilder.VirtualMachine.Spec.Template.Spec.Domain.Firmware; oldFirmware != nil {
+					if firmware == nil {
+						firmware = &kubevirtv1.Firmware{}
+					}
+					firmware.UUID = oldFirmware.UUID
+					firmware.Serial = oldFirmware.Serial
+				}
 				vmBuilder.VirtualMachine.Spec.Template.Spec.Domain.Firmware = firmware
 				return nil
 			},
@@ -226,6 +233,8 @@ func (c *Constructor) Setup() util.Processors {
 					vmBuilder.ExistingPVCVolume(diskName, existingVolumeName, hotPlug)
 				} else if containerImageName != "" {
 					vmBuilder.ContainerDiskVolume(diskName, containerImageName, builder.DefaultImagePullPolicy)
+				} else if isCDRom && imageNamespacedName == "" {
+					// Empty CDRom: don't prepare volume
 				} else {
 					pvcOption := &builder.PersistentVolumeClaimOption{
 						VolumeMode: corev1.PersistentVolumeBlock,
