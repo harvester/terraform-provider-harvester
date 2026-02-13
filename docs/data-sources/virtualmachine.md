@@ -59,6 +59,7 @@ data "harvester_virtualmachine" "opensuse154" {
 - `node_selector` (Map of String) Node selector for scheduling the VM. The key is the label key and the value is the label value.
 - `pod_affinity` (List of Object) Pod affinity rules to co-locate VMs with matching pods (see [below for nested schema](#nestedatt--pod_affinity))
 - `pod_anti_affinity` (List of Object) Pod anti-affinity rules to separate VMs from matching pods (see [below for nested schema](#nestedatt--pod_anti_affinity))
+- `requests` (List of Object) Resource requests for the VM. When unset, Harvester's overcommit webhook manages these values. (see [below for nested schema](#nestedatt--requests))
 - `reserved_memory` (String)
 - `restart_after_update` (Boolean) restart vm after the vm is updated
 - `run_strategy` (String) more info: https://kubevirt.io/user-guide/virtual_machines/run_strategies/
@@ -450,6 +451,15 @@ Read-Only:
 
 
 
+
+
+<a id="nestedatt--requests"></a>
+### Nested Schema for `requests`
+
+Read-Only:
+
+- `cpu` (String)
+- `memory` (String)
 
 
 <a id="nestedatt--tpm"></a>
