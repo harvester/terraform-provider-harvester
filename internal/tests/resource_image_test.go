@@ -294,6 +294,64 @@ func testAccCryptoCreateSecret(t *testing.T) {
 	}
 }
 
+func TestAccImage_upload_no_filepath(t *testing.T) {
+	var (
+		ctx = context.Background()
+	)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckImageDestroy(ctx),
+		Steps: []resource.TestStep{
+			{
+				Config: fmt.Sprintf(`
+resource %s "test-upload-no-path" {
+	%s = "test-upload-no-path"
+	%s = "test-upload-no-path"
+	%s = "upload"
+}
+`, constants.ResourceTypeImage,
+					constants.FieldCommonName,
+					constants.FieldImageDisplayName,
+					constants.FieldImageSourceType),
+				ExpectError: regexp.MustCompile(`must specify file_path when source_type is 'upload'`),
+			},
+		},
+	})
+}
+
+func TestAccImage_upload_wrong_sourcetype(t *testing.T) {
+	var (
+		ctx = context.Background()
+	)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckImageDestroy(ctx),
+		Steps: []resource.TestStep{
+			{
+				Config: fmt.Sprintf(`
+resource %s "test-upload-wrong-type" {
+	%s = "test-upload-wrong-type"
+	%s = "test-upload-wrong-type"
+	%s = "download"
+	%s = "/tmp/some-file.qcow2"
+	%s = "https://example.com/image.qcow2"
+}
+`, constants.ResourceTypeImage,
+					constants.FieldCommonName,
+					constants.FieldImageDisplayName,
+					constants.FieldImageSourceType,
+					constants.FieldImageFilePath,
+					constants.FieldImageURL),
+				ExpectError: regexp.MustCompile(`file_path must not be set when source_type is`),
+			},
+		},
+	})
+}
+
 func TestAccImage_crypto_invalid(t *testing.T) {
 	var (
 		ctx = context.Background()
