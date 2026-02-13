@@ -289,9 +289,11 @@ func (v *VMImporter) Volume() ([]map[string]interface{}, []map[string]interface{
 		if disk.CDRom != nil {
 			diskType = builder.DiskTypeCDRom
 			diskBus = string(disk.CDRom.Bus)
+			diskState[constants.FieldDiskEject] = disk.CDRom.Tray == kubevirtv1.TrayStateOpen
 		} else if disk.Disk != nil {
 			diskType = builder.DiskTypeDisk
 			diskBus = string(disk.Disk.Bus)
+			diskState[constants.FieldDiskEject] = false
 		} else {
 			return nil, nil, fmt.Errorf("unsupported volume type found on volume %s. ", disk.Name)
 		}
