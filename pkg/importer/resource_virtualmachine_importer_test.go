@@ -519,11 +519,11 @@ func TestVMRuntimeImport(t *testing.T) {
 	}
 	importerNil := &VMImporter{VirtualMachine: vmNil}
 
-	if got := importerNil.EvictionStrategy(); got != "LiveMigrateIfPossible" {
-		t.Errorf("EvictionStrategy() nil = %q, want %q", got, "LiveMigrateIfPossible")
+	if got := importerNil.EvictionStrategy(); got != constants.DefaultEvictionStrategy {
+		t.Errorf("EvictionStrategy() nil = %q, want %q", got, constants.DefaultEvictionStrategy)
 	}
-	if got := importerNil.TerminationGracePeriodSeconds(); got != 30 {
-		t.Errorf("TerminationGracePeriodSeconds() nil = %d, want 30", got)
+	if got := importerNil.TerminationGracePeriodSeconds(); got != constants.DefaultTerminationGracePeriodSeconds {
+		t.Errorf("TerminationGracePeriodSeconds() nil = %d, want %d", got, constants.DefaultTerminationGracePeriodSeconds)
 	}
 	if got := importerNil.OSType(); got != "" {
 		t.Errorf("OSType() nil = %q, want %q", got, "")

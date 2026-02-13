@@ -75,14 +75,14 @@ func (v *VMImporter) SecureBoot() bool {
 
 func (v *VMImporter) EvictionStrategy() string {
 	if v.VirtualMachine.Spec.Template.Spec.EvictionStrategy == nil {
-		return "LiveMigrateIfPossible"
+		return constants.DefaultEvictionStrategy
 	}
 	return string(*v.VirtualMachine.Spec.Template.Spec.EvictionStrategy)
 }
 
 func (v *VMImporter) TerminationGracePeriodSeconds() int {
 	if v.VirtualMachine.Spec.Template.Spec.TerminationGracePeriodSeconds == nil {
-		return 30
+		return constants.DefaultTerminationGracePeriodSeconds
 	}
 	return int(*v.VirtualMachine.Spec.Template.Spec.TerminationGracePeriodSeconds)
 }
