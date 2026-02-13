@@ -45,6 +45,8 @@ type VMResourceBuilder struct {
 	isolateEmulatorThread bool
 	runStrategy           string
 	machineType           string
+	cpuSockets            int
+	cpuThreads            int
 	networkConfig         *NetworkConfig
 	diskConfig            *DiskConfig
 	inputConfig           *InputDeviceConfig
@@ -117,6 +119,16 @@ func (b *VMResourceBuilder) SetInputDeviceConfig(name, inputType, bus string) *V
 	return b
 }
 
+func (b *VMResourceBuilder) SetCPUSockets(sockets int) *VMResourceBuilder {
+	b.cpuSockets = sockets
+	return b
+}
+
+func (b *VMResourceBuilder) SetCPUThreads(threads int) *VMResourceBuilder {
+	b.cpuThreads = threads
+	return b
+}
+
 func (b *VMResourceBuilder) SetNetworkConfig(name string, bootOrder int) *VMResourceBuilder {
 	b.networkConfig = &NetworkConfig{
 		Name:      name,
@@ -151,6 +163,12 @@ func (b *VMResourceBuilder) Build() string {
 	sb.WriteString(fmt.Sprintf("\t%s = \"%s\"\n", constants.FieldVirtualMachineRunStrategy, b.runStrategy))
 	sb.WriteString(fmt.Sprintf("\t%s = \"%s\"\n", constants.FieldVirtualMachineMachineType, b.machineType))
 
+	if b.cpuSockets > 0 {
+		sb.WriteString(fmt.Sprintf("\t%s = %d\n", constants.FieldVirtualMachineCPUSockets, b.cpuSockets))
+	}
+	if b.cpuThreads > 0 {
+		sb.WriteString(fmt.Sprintf("\t%s = %d\n", constants.FieldVirtualMachineCPUThreads, b.cpuThreads))
+	}
 	if b.networkConfig != nil {
 		sb.WriteString(fmt.Sprintf("\t%s {\n", constants.FieldVirtualMachineNetworkInterface))
 		sb.WriteString(fmt.Sprintf("\t\t%s = \"%s\"\n", constants.FieldNetworkInterfaceName, b.networkConfig.Name))
@@ -654,6 +672,43 @@ resource "harvester_virtualmachine" "%s" {
 					testAccVirtualMachineExists(ctx, testAccVirtualMachineResourceName, vm),
 					testAccCheckCdRomSpec(ctx, testAccVirtualMachineNamespace, testAccVirtualMachineName, 2, 1),
 					testAccCheckVmiUid(ctx, testAccVirtualMachineNamespace, testAccVirtualMachineName, &vmiUid),
+				),
+			},
+		},
+	})
+}
+
+func TestAccVirtualMachine_cpu_topology(t *testing.T) {
+	var (
+		testAccVirtualMachineName         = "test-acc-cputopo-" + uuid.New().String()[:6]
+		testAccVirtualMachineResourceName = constants.ResourceTypeVirtualMachine + "." + testAccVirtualMachineName
+		vm                                = &kubevirtv1.VirtualMachine{}
+		ctx                               = context.Background()
+	)
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckVirtualMachineDestroy(ctx),
+		Steps: []resource.TestStep{
+			{
+				Config: NewVMResourceBuilder(testAccVirtualMachineName).
+					SetCPUSockets(2).
+					SetCPUThreads(2).
+					Build(),
+				Check: resource.ComposeTestCheckFunc(
+					testAccVirtualMachineExists(ctx, testAccVirtualMachineResourceName, vm),
+					resource.TestCheckResourceAttr(testAccVirtualMachineResourceName, constants.FieldVirtualMachineCPUSockets, "2"),
+					resource.TestCheckResourceAttr(testAccVirtualMachineResourceName, constants.FieldVirtualMachineCPUThreads, "2"),
+				),
+			},
+			{
+				Config: NewVMResourceBuilder(testAccVirtualMachineName).
+					SetCPUSockets(2).
+					SetCPUThreads(1).
+					Build(),
+				Check: resource.ComposeTestCheckFunc(
+					testAccVirtualMachineExists(ctx, testAccVirtualMachineResourceName, vm),
+					resource.TestCheckResourceAttr(testAccVirtualMachineResourceName, constants.FieldVirtualMachineCPUThreads, "1"),
 				),
 			},
 		},

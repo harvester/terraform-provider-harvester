@@ -25,6 +25,9 @@ const (
 	FieldVirtualMachineIsolateEmulatorThread = "isolate_emulator_thread"
 	FieldVirtualMachineNodeSelector          = "node_selector"
 
+	FieldVirtualMachineCPUSockets = "cpu_sockets"
+	FieldVirtualMachineCPUThreads = "cpu_threads"
+
 	StateVirtualMachineStarting = "Starting"
 	StateVirtualMachineRunning  = "Running"
 	StateVirtualMachineStopping = "Stopping"

@@ -199,6 +199,8 @@ resource "harvester_virtualmachine" "opensuse154" {
 - `cpu` (Number)
 - `cpu_model` (String) CPU model for the virtual machine
 - `cpu_pinning` (Boolean) To enable VM CPU pinning, ensure that at least one node has the CPU manager enabled
+- `cpu_sockets` (Number) Number of CPU sockets. Total vCPUs = cpu_sockets x cpu (cores) x cpu_threads.
+- `cpu_threads` (Number) Number of threads per core. Total vCPUs = cpu_sockets x cpu (cores) x cpu_threads.
 - `description` (String) Any text you want that better describes this resource
 - `efi` (Boolean)
 - `hostname` (String)
