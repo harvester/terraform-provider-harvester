@@ -160,13 +160,13 @@ please use %s instead of this deprecated field:
 		},
 		constants.FieldVirtualMachineCPUSockets: {
 			Type:        schema.TypeInt,
-			Description: "Number of CPU sockets",
+			Description: "Number of CPU sockets. Total vCPUs = cpu_sockets x cpu (cores) x cpu_threads.",
 			Optional:    true,
 			Default:     1,
 		},
 		constants.FieldVirtualMachineCPUThreads: {
 			Type:        schema.TypeInt,
-			Description: "Number of threads per core",
+			Description: "Number of threads per core. Total vCPUs = cpu_sockets x cpu (cores) x cpu_threads.",
 			Optional:    true,
 			Default:     1,
 		},
