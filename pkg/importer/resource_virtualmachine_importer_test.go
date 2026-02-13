@@ -3,6 +3,8 @@ package importer
 import (
 	"testing"
 
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	kubevirtv1 "kubevirt.io/api/core/v1"
 
@@ -403,6 +405,7 @@ func TestNetworkInterface(t *testing.T) {
 	}
 }
 
+
 func TestCPU(t *testing.T) {
 	type testcase struct {
 		importer      *VMImporter
@@ -464,5 +467,90 @@ func TestCPU(t *testing.T) {
 		if model != tc.expectedModel {
 			t.Errorf("Test case %d: CPUModel() returned %q, expected %q", idx, model, tc.expectedModel)
 		}
+	}
+}
+
+func TestResourceRequestsImport(t *testing.T) {
+	// Test with explicit requests
+	vm := &kubevirtv1.VirtualMachine{
+		Spec: kubevirtv1.VirtualMachineSpec{
+			Template: &kubevirtv1.VirtualMachineInstanceTemplateSpec{
+				Spec: kubevirtv1.VirtualMachineInstanceSpec{
+					Domain: kubevirtv1.DomainSpec{
+						Resources: kubevirtv1.ResourceRequirements{
+							Requests: corev1.ResourceList{
+								corev1.ResourceCPU:    resource.MustParse("500m"),
+								corev1.ResourceMemory: resource.MustParse("512Mi"),
+							},
+							Limits: corev1.ResourceList{
+								corev1.ResourceCPU:    resource.MustParse("2"),
+								corev1.ResourceMemory: resource.MustParse("4Gi"),
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+	importer := &VMImporter{VirtualMachine: vm}
+
+	if got := importer.CPURequest(); got != "500m" {
+		t.Errorf("CPURequest() = %q, want %q", got, "500m")
+	}
+	if got := importer.MemoryRequest(); got != "512Mi" {
+		t.Errorf("MemoryRequest() = %q, want %q", got, "512Mi")
+	}
+
+	// Test without requests (empty)
+	vmNoReq := &kubevirtv1.VirtualMachine{
+		Spec: kubevirtv1.VirtualMachineSpec{
+			Template: &kubevirtv1.VirtualMachineInstanceTemplateSpec{
+				Spec: kubevirtv1.VirtualMachineInstanceSpec{
+					Domain: kubevirtv1.DomainSpec{
+						Resources: kubevirtv1.ResourceRequirements{
+							Limits: corev1.ResourceList{
+								corev1.ResourceCPU:    resource.MustParse("2"),
+								corev1.ResourceMemory: resource.MustParse("4Gi"),
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+	importerNoReq := &VMImporter{VirtualMachine: vmNoReq}
+
+	if got := importerNoReq.CPURequest(); got != "" {
+		t.Errorf("CPURequest() no requests = %q, want empty", got)
+	}
+	if got := importerNoReq.MemoryRequest(); got != "" {
+		t.Errorf("MemoryRequest() no requests = %q, want empty", got)
+	}
+
+	// Test with nil Requests map
+	vmNilReq := &kubevirtv1.VirtualMachine{
+		Spec: kubevirtv1.VirtualMachineSpec{
+			Template: &kubevirtv1.VirtualMachineInstanceTemplateSpec{
+				Spec: kubevirtv1.VirtualMachineInstanceSpec{
+					Domain: kubevirtv1.DomainSpec{
+						Resources: kubevirtv1.ResourceRequirements{
+							Requests: nil,
+							Limits: corev1.ResourceList{
+								corev1.ResourceCPU:    resource.MustParse("2"),
+								corev1.ResourceMemory: resource.MustParse("4Gi"),
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+	importerNilReq := &VMImporter{VirtualMachine: vmNilReq}
+
+	if got := importerNilReq.CPURequest(); got != "" {
+		t.Errorf("CPURequest() nil requests = %q, want empty", got)
+	}
+	if got := importerNilReq.MemoryRequest(); got != "" {
+		t.Errorf("MemoryRequest() nil requests = %q, want empty", got)
 	}
 }
