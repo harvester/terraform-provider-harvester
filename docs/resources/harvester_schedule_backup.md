@@ -72,7 +72,7 @@ The following arguments are supported:
 
 * `name` - (Required) The name of the backup schedule resource.
 * `namespace` - (Required) The namespace where the resource will be created.
-* `vm_name` - (Required) The name of the VirtualMachine to backup. Format: `namespace/name` or just `name` (defaults to the same namespace). This creates a VM-level backup that includes all disks of the VM.
+* `vm_name` - (Optional) The name of the VirtualMachine to backup. Format: `namespace/name` or just `name` (defaults to the same namespace). This creates a VM-level backup that includes all disks of the VM. Conflicts with `volume_name`; at least one must be specified.
 * `schedule` - (Required) Cron schedule for the backup in UTC timezone. Format: `minute hour day-of-month month day-of-week` (e.g., `0 2 * * *` for daily at 2 AM UTC). **IMPORTANT**: Harvester uses UTC time, not local time. Adjust your schedule accordingly.
 * `retain` - (Optional) Number of backups to retain. Older backups will be automatically deleted. Minimum: 1, Default: 5.
 * `enabled` - (Optional) Whether the backup schedule is enabled. Default: `true`.
@@ -84,8 +84,6 @@ The following arguments are supported:
 In addition to the arguments above, the following attributes are exported:
 
 * `id` - The unique identifier for the resource. Format: `namespace/vmname/jobname`.
-* `message` - Status message from the ScheduleVMBackup (if available).
-* `state` - Current state of the backup schedule (if available).
 
 ## Notes
 
