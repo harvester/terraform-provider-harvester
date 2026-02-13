@@ -34,6 +34,10 @@ func resourceNodeSelectorRequirementSchema() map[string]*schema.Schema {
 			}, false),
 			Description: "Operator represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists, DoesNotExist, Gt, and Lt",
 		},
+		// Note: Operator-based validation (In/NotIn require non-empty values,
+		// Exists/DoesNotExist require empty values) is enforced by the Kubernetes
+		// API server. Adding client-side validation here would duplicate server
+		// logic and risk diverging from upstream behavior.
 		constants.FieldExpressionValues: {
 			Type:     schema.TypeList,
 			Optional: true,
@@ -45,7 +49,11 @@ func resourceNodeSelectorRequirementSchema() map[string]*schema.Schema {
 	}
 }
 
-// resourceNodeSelectorTermSchema returns the schema for a node selector term (match_expressions/match_fields)
+// resourceNodeSelectorTermSchema returns the schema for a node selector term (match_expressions/match_fields).
+// Note: At least one of match_expressions or match_fields should be specified. An empty
+// NodeSelectorTerm matches all nodes, which is likely unintended. The constructor
+// (parseNodeSelectorTerms) skips empty terms to prevent this. AtLeastOneOf cannot be
+// used here because Terraform SDK v2 does not support it within nested schema blocks.
 func resourceNodeSelectorTermSchema() map[string]*schema.Schema {
 	return map[string]*schema.Schema{
 		constants.FieldMatchExpressions: {
@@ -151,6 +159,9 @@ func resourceLabelSelectorSchema() map[string]*schema.Schema {
 						}, false),
 						Description: "Operator represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists and DoesNotExist",
 					},
+					// Note: Operator-based validation (In/NotIn require non-empty values,
+					// Exists/DoesNotExist require empty values) is enforced by the
+					// Kubernetes API server.
 					constants.FieldExpressionValues: {
 						Type:     schema.TypeList,
 						Optional: true,
