@@ -526,4 +526,31 @@ func TestResourceRequestsImport(t *testing.T) {
 	if got := importerNoReq.MemoryRequest(); got != "" {
 		t.Errorf("MemoryRequest() no requests = %q, want empty", got)
 	}
+
+	// Test with nil Requests map
+	vmNilReq := &kubevirtv1.VirtualMachine{
+		Spec: kubevirtv1.VirtualMachineSpec{
+			Template: &kubevirtv1.VirtualMachineInstanceTemplateSpec{
+				Spec: kubevirtv1.VirtualMachineInstanceSpec{
+					Domain: kubevirtv1.DomainSpec{
+						Resources: kubevirtv1.ResourceRequirements{
+							Requests: nil,
+							Limits: corev1.ResourceList{
+								corev1.ResourceCPU:    resource.MustParse("2"),
+								corev1.ResourceMemory: resource.MustParse("4Gi"),
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+	importerNilReq := &VMImporter{VirtualMachine: vmNilReq}
+
+	if got := importerNilReq.CPURequest(); got != "" {
+		t.Errorf("CPURequest() nil requests = %q, want empty", got)
+	}
+	if got := importerNilReq.MemoryRequest(); got != "" {
+		t.Errorf("MemoryRequest() nil requests = %q, want empty", got)
+	}
 }
