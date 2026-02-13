@@ -185,7 +185,7 @@ please use %s instead of this deprecated field:
 			Type:        schema.TypeString,
 			Description: "Eviction strategy for the VM (None, LiveMigrate, LiveMigrateIfPossible, External)",
 			Optional:    true,
-			Default:     "LiveMigrateIfPossible",
+			Default:     constants.DefaultEvictionStrategy,
 			ValidateFunc: validation.StringInSlice([]string{
 				"None",
 				"LiveMigrate",
@@ -197,7 +197,7 @@ please use %s instead of this deprecated field:
 			Type:         schema.TypeInt,
 			Description:  "Grace period in seconds before the VM is forcefully terminated",
 			Optional:     true,
-			Default:      30,
+			Default:      constants.DefaultTerminationGracePeriodSeconds,
 			ValidateFunc: validation.IntAtLeast(0),
 		},
 		constants.FieldVirtualMachineOSType: {
