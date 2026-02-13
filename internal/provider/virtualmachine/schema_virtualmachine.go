@@ -171,10 +171,11 @@ please use %s instead of this deprecated field:
 			}, false),
 		},
 		constants.FieldVirtualMachineTerminationGracePeriodSeconds: {
-			Type:        schema.TypeInt,
-			Description: "Grace period in seconds before the VM is forcefully terminated",
-			Optional:    true,
-			Default:     30,
+			Type:         schema.TypeInt,
+			Description:  "Grace period in seconds before the VM is forcefully terminated",
+			Optional:     true,
+			Default:      30,
+			ValidateFunc: validation.IntAtLeast(0),
 		},
 		constants.FieldVirtualMachineOSType: {
 			Type:        schema.TypeString,
