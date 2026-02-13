@@ -37,17 +37,20 @@ const (
 )
 
 type VMResourceBuilder struct {
-	name                  string
-	description           string
-	cpu                   int
-	memory                string // e.g. "1Gi"
-	cpuPinning            bool
-	isolateEmulatorThread bool
-	runStrategy           string
-	machineType           string
-	networkConfig         *NetworkConfig
-	diskConfig            *DiskConfig
-	inputConfig           *InputDeviceConfig
+	name                          string
+	description                   string
+	cpu                           int
+	memory                        string // e.g. "1Gi"
+	cpuPinning                    bool
+	isolateEmulatorThread         bool
+	runStrategy                   string
+	machineType                   string
+	evictionStrategy              string
+	terminationGracePeriodSeconds *int
+	osType                        string
+	networkConfig                 *NetworkConfig
+	diskConfig                    *DiskConfig
+	inputConfig                   *InputDeviceConfig
 }
 
 type DiskConfig struct {
@@ -117,6 +120,21 @@ func (b *VMResourceBuilder) SetInputDeviceConfig(name, inputType, bus string) *V
 	return b
 }
 
+func (b *VMResourceBuilder) SetEvictionStrategy(strategy string) *VMResourceBuilder {
+	b.evictionStrategy = strategy
+	return b
+}
+
+func (b *VMResourceBuilder) SetTerminationGracePeriodSeconds(seconds int) *VMResourceBuilder {
+	b.terminationGracePeriodSeconds = &seconds
+	return b
+}
+
+func (b *VMResourceBuilder) SetOSType(osType string) *VMResourceBuilder {
+	b.osType = osType
+	return b
+}
+
 func (b *VMResourceBuilder) SetNetworkConfig(name string, bootOrder int) *VMResourceBuilder {
 	b.networkConfig = &NetworkConfig{
 		Name:      name,
@@ -150,6 +168,16 @@ func (b *VMResourceBuilder) Build() string {
 	sb.WriteString(fmt.Sprintf("\t%s = %s\n", constants.FieldVirtualMachineIsolateEmulatorThread, strconv.FormatBool(b.isolateEmulatorThread)))
 	sb.WriteString(fmt.Sprintf("\t%s = \"%s\"\n", constants.FieldVirtualMachineRunStrategy, b.runStrategy))
 	sb.WriteString(fmt.Sprintf("\t%s = \"%s\"\n", constants.FieldVirtualMachineMachineType, b.machineType))
+
+	if b.evictionStrategy != "" {
+		sb.WriteString(fmt.Sprintf("\t%s = \"%s\"\n", constants.FieldVirtualMachineEvictionStrategy, b.evictionStrategy))
+	}
+	if b.terminationGracePeriodSeconds != nil {
+		sb.WriteString(fmt.Sprintf("\t%s = %d\n", constants.FieldVirtualMachineTerminationGracePeriodSeconds, *b.terminationGracePeriodSeconds))
+	}
+	if b.osType != "" {
+		sb.WriteString(fmt.Sprintf("\t%s = \"%s\"\n", constants.FieldVirtualMachineOSType, b.osType))
+	}
 
 	if b.networkConfig != nil {
 		sb.WriteString(fmt.Sprintf("\t%s {\n", constants.FieldVirtualMachineNetworkInterface))
@@ -654,6 +682,46 @@ resource "harvester_virtualmachine" "%s" {
 					testAccVirtualMachineExists(ctx, testAccVirtualMachineResourceName, vm),
 					testAccCheckCdRomSpec(ctx, testAccVirtualMachineNamespace, testAccVirtualMachineName, 2, 1),
 					testAccCheckVmiUid(ctx, testAccVirtualMachineNamespace, testAccVirtualMachineName, &vmiUid),
+				),
+			},
+		},
+	})
+}
+
+func TestAccVirtualMachine_runtime_options(t *testing.T) {
+	var (
+		testAccVirtualMachineName         = "test-acc-runtime-" + uuid.New().String()[:6]
+		testAccVirtualMachineResourceName = constants.ResourceTypeVirtualMachine + "." + testAccVirtualMachineName
+		vm                                = &kubevirtv1.VirtualMachine{}
+		ctx                               = context.Background()
+	)
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckVirtualMachineDestroy(ctx),
+		Steps: []resource.TestStep{
+			{
+				Config: NewVMResourceBuilder(testAccVirtualMachineName).
+					SetEvictionStrategy("LiveMigrateIfPossible").
+					SetTerminationGracePeriodSeconds(60).
+					SetOSType("linux").
+					Build(),
+				Check: resource.ComposeTestCheckFunc(
+					testAccVirtualMachineExists(ctx, testAccVirtualMachineResourceName, vm),
+					resource.TestCheckResourceAttr(testAccVirtualMachineResourceName, constants.FieldVirtualMachineEvictionStrategy, "LiveMigrateIfPossible"),
+					resource.TestCheckResourceAttr(testAccVirtualMachineResourceName, constants.FieldVirtualMachineTerminationGracePeriodSeconds, "60"),
+					resource.TestCheckResourceAttr(testAccVirtualMachineResourceName, constants.FieldVirtualMachineOSType, "linux"),
+				),
+			},
+			{
+				Config: NewVMResourceBuilder(testAccVirtualMachineName).
+					SetEvictionStrategy("None").
+					SetTerminationGracePeriodSeconds(60).
+					SetOSType("linux").
+					Build(),
+				Check: resource.ComposeTestCheckFunc(
+					testAccVirtualMachineExists(ctx, testAccVirtualMachineResourceName, vm),
+					resource.TestCheckResourceAttr(testAccVirtualMachineResourceName, constants.FieldVirtualMachineEvictionStrategy, "None"),
 				),
 			},
 		},
