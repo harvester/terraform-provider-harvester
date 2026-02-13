@@ -259,7 +259,7 @@ func resourceScheduleBackupUpdate(ctx context.Context, d *schema.ResourceData, m
 	// Parse ID: format is namespace/vmname/jobname
 	id := d.Id()
 	parts := strings.Split(id, "/")
-	if len(parts) < 3 {
+	if len(parts) != 3 {
 		return diag.Errorf("invalid resource ID format: %s (expected namespace/vmname/jobname)", id)
 	}
 
@@ -372,7 +372,7 @@ func resourceScheduleBackupRead(ctx context.Context, d *schema.ResourceData, met
 	// Parse resource ID: format is namespace/vmname/jobname
 	id := d.Id()
 	parts := strings.Split(id, "/")
-	if len(parts) < 3 {
+	if len(parts) != 3 {
 		return diag.Errorf("invalid resource ID format: %s (expected namespace/vmname/jobname)", id)
 	}
 
@@ -437,7 +437,7 @@ func resourceScheduleBackupDelete(ctx context.Context, d *schema.ResourceData, m
 	// Parse resource ID: format is namespace/vmname/jobname
 	id := d.Id()
 	parts := strings.Split(id, "/")
-	if len(parts) < 3 {
+	if len(parts) != 3 {
 		return diag.Errorf("invalid resource ID format: %s (expected namespace/vmname/jobname)", id)
 	}
 

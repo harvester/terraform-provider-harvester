@@ -11,14 +11,28 @@ import (
 func Schema() map[string]*schema.Schema {
 	s := map[string]*schema.Schema{
 		constants.FieldScheduleBackupVMName: {
-			Type:        schema.TypeString,
-			Required:    true,
+			Type:     schema.TypeString,
+			Optional: true,
+			AtLeastOneOf: []string{
+				constants.FieldScheduleBackupVMName,
+				constants.FieldScheduleBackupVolumeName,
+			},
+			ConflictsWith: []string{
+				constants.FieldScheduleBackupVolumeName,
+			},
 			Description: "The name of the virtual machine to backup. Format: 'namespace/name' or 'name' (if in default namespace).",
 		},
 		constants.FieldScheduleBackupVolumeName: {
 			Type:       schema.TypeString,
 			Optional:   true,
 			Deprecated: "Use vm_name instead.",
+			AtLeastOneOf: []string{
+				constants.FieldScheduleBackupVMName,
+				constants.FieldScheduleBackupVolumeName,
+			},
+			ConflictsWith: []string{
+				constants.FieldScheduleBackupVMName,
+			},
 		},
 		constants.FieldScheduleBackupSchedule: {
 			Type:        schema.TypeString,
