@@ -6,6 +6,7 @@ import (
 	"slices"
 
 	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	kubevirtv1 "kubevirt.io/api/core/v1"
 
 	"github.com/harvester/harvester/pkg/builder"
@@ -327,6 +328,201 @@ func (v *VMImporter) NodeName() string {
 	return v.VirtualMachineInstance.Status.NodeName
 }
 
+// exportLabelSelectorRequirements exports label selector requirements to Terraform state format
+func exportLabelSelectorRequirements(requirements []metav1.LabelSelectorRequirement) []map[string]interface{} {
+	result := make([]map[string]interface{}, 0, len(requirements))
+	for _, req := range requirements {
+		values := make([]interface{}, 0, len(req.Values))
+		for _, v := range req.Values {
+			values = append(values, v)
+		}
+		result = append(result, map[string]interface{}{
+			constants.FieldExpressionKey:      req.Key,
+			constants.FieldExpressionOperator: string(req.Operator),
+			constants.FieldExpressionValues:   values,
+		})
+	}
+	return result
+}
+
+// exportLabelSelector exports a label selector to Terraform state format
+func exportLabelSelector(selector *metav1.LabelSelector) []map[string]interface{} {
+	if selector == nil {
+		return nil
+	}
+	result := map[string]interface{}{}
+
+	if len(selector.MatchLabels) > 0 {
+		matchLabels := make(map[string]interface{})
+		for k, v := range selector.MatchLabels {
+			matchLabels[k] = v
+		}
+		result[constants.FieldMatchLabels] = matchLabels
+	}
+
+	if len(selector.MatchExpressions) > 0 {
+		result[constants.FieldMatchExpressions] = exportLabelSelectorRequirements(selector.MatchExpressions)
+	}
+
+	if len(result) == 0 {
+		return nil
+	}
+	return []map[string]interface{}{result}
+}
+
+// exportNodeSelectorRequirements exports node selector requirements to Terraform state format
+func exportNodeSelectorRequirements(requirements []corev1.NodeSelectorRequirement) []map[string]interface{} {
+	result := make([]map[string]interface{}, 0, len(requirements))
+	for _, req := range requirements {
+		values := make([]interface{}, 0, len(req.Values))
+		for _, v := range req.Values {
+			values = append(values, v)
+		}
+		result = append(result, map[string]interface{}{
+			constants.FieldExpressionKey:      req.Key,
+			constants.FieldExpressionOperator: string(req.Operator),
+			constants.FieldExpressionValues:   values,
+		})
+	}
+	return result
+}
+
+// exportNodeSelectorTerms exports node selector terms to Terraform state format
+func exportNodeSelectorTerms(terms []corev1.NodeSelectorTerm) []map[string]interface{} {
+	result := make([]map[string]interface{}, 0, len(terms))
+	for _, term := range terms {
+		termMap := map[string]interface{}{}
+		if len(term.MatchExpressions) > 0 {
+			termMap[constants.FieldMatchExpressions] = exportNodeSelectorRequirements(term.MatchExpressions)
+		}
+		if len(term.MatchFields) > 0 {
+			termMap[constants.FieldMatchFields] = exportNodeSelectorRequirements(term.MatchFields)
+		}
+		result = append(result, termMap)
+	}
+	return result
+}
+
+// exportPodAffinityTerms exports pod affinity terms to Terraform state format
+func exportPodAffinityTerms(terms []corev1.PodAffinityTerm) []map[string]interface{} {
+	result := make([]map[string]interface{}, 0, len(terms))
+	for _, term := range terms {
+		termMap := map[string]interface{}{
+			constants.FieldTopologyKey: term.TopologyKey,
+		}
+		if term.LabelSelector != nil {
+			termMap[constants.FieldLabelSelector] = exportLabelSelector(term.LabelSelector)
+		}
+		if len(term.Namespaces) > 0 {
+			namespaces := make([]interface{}, 0, len(term.Namespaces))
+			for _, ns := range term.Namespaces {
+				namespaces = append(namespaces, ns)
+			}
+			termMap[constants.FieldNamespaces] = namespaces
+		}
+		if term.NamespaceSelector != nil {
+			termMap[constants.FieldNamespaceSelector] = exportLabelSelector(term.NamespaceSelector)
+		}
+		result = append(result, termMap)
+	}
+	return result
+}
+
+// exportWeightedPodAffinityTerms exports weighted pod affinity terms to Terraform state format
+func exportWeightedPodAffinityTerms(terms []corev1.WeightedPodAffinityTerm) []map[string]interface{} {
+	result := make([]map[string]interface{}, 0, len(terms))
+	for _, term := range terms {
+		termMap := map[string]interface{}{
+			constants.FieldPreferredWeight: int(term.Weight),
+			constants.FieldPodAffinityTerm: exportPodAffinityTerms([]corev1.PodAffinityTerm{term.PodAffinityTerm}),
+		}
+		result = append(result, termMap)
+	}
+	return result
+}
+
+// NodeAffinity exports node affinity to Terraform state format
+func (v *VMImporter) NodeAffinity() []map[string]interface{} {
+	affinity := v.VirtualMachine.Spec.Template.Spec.Affinity
+	if affinity == nil || affinity.NodeAffinity == nil {
+		return nil
+	}
+	nodeAffinity := affinity.NodeAffinity
+	result := map[string]interface{}{}
+
+	if nodeAffinity.RequiredDuringSchedulingIgnoredDuringExecution != nil {
+		terms := exportNodeSelectorTerms(nodeAffinity.RequiredDuringSchedulingIgnoredDuringExecution.NodeSelectorTerms)
+		if len(terms) > 0 {
+			result[constants.FieldNodeAffinityRequired] = []map[string]interface{}{
+				{constants.FieldNodeSelectorTerm: terms},
+			}
+		}
+	}
+
+	if len(nodeAffinity.PreferredDuringSchedulingIgnoredDuringExecution) > 0 {
+		preferred := make([]map[string]interface{}, 0, len(nodeAffinity.PreferredDuringSchedulingIgnoredDuringExecution))
+		for _, pref := range nodeAffinity.PreferredDuringSchedulingIgnoredDuringExecution {
+			prefMap := map[string]interface{}{
+				constants.FieldPreferredWeight:     int(pref.Weight),
+				constants.FieldPreferredPreference: exportNodeSelectorTerms([]corev1.NodeSelectorTerm{pref.Preference}),
+			}
+			preferred = append(preferred, prefMap)
+		}
+		result[constants.FieldNodeAffinityPreferred] = preferred
+	}
+
+	if len(result) == 0 {
+		return nil
+	}
+	return []map[string]interface{}{result}
+}
+
+// PodAffinity exports pod affinity to Terraform state format
+func (v *VMImporter) PodAffinity() []map[string]interface{} {
+	affinity := v.VirtualMachine.Spec.Template.Spec.Affinity
+	if affinity == nil || affinity.PodAffinity == nil {
+		return nil
+	}
+	podAffinity := affinity.PodAffinity
+	result := map[string]interface{}{}
+
+	if len(podAffinity.RequiredDuringSchedulingIgnoredDuringExecution) > 0 {
+		result[constants.FieldPodAffinityRequired] = exportPodAffinityTerms(podAffinity.RequiredDuringSchedulingIgnoredDuringExecution)
+	}
+
+	if len(podAffinity.PreferredDuringSchedulingIgnoredDuringExecution) > 0 {
+		result[constants.FieldPodAffinityPreferred] = exportWeightedPodAffinityTerms(podAffinity.PreferredDuringSchedulingIgnoredDuringExecution)
+	}
+
+	if len(result) == 0 {
+		return nil
+	}
+	return []map[string]interface{}{result}
+}
+
+// PodAntiAffinity exports pod anti-affinity to Terraform state format
+func (v *VMImporter) PodAntiAffinity() []map[string]interface{} {
+	affinity := v.VirtualMachine.Spec.Template.Spec.Affinity
+	if affinity == nil || affinity.PodAntiAffinity == nil {
+		return nil
+	}
+	podAntiAffinity := affinity.PodAntiAffinity
+	result := map[string]interface{}{}
+
+	if len(podAntiAffinity.RequiredDuringSchedulingIgnoredDuringExecution) > 0 {
+		result[constants.FieldPodAffinityRequired] = exportPodAffinityTerms(podAntiAffinity.RequiredDuringSchedulingIgnoredDuringExecution)
+	}
+
+	if len(podAntiAffinity.PreferredDuringSchedulingIgnoredDuringExecution) > 0 {
+		result[constants.FieldPodAffinityPreferred] = exportWeightedPodAffinityTerms(podAntiAffinity.PreferredDuringSchedulingIgnoredDuringExecution)
+	}
+
+	if len(result) == 0 {
+		return nil
+	}
+	return []map[string]interface{}{result}
+}
+
 func (v *VMImporter) State(networkInterfaces []map[string]interface{}, oldInstanceUID string) string {
 	if v.VirtualMachineInstance == nil {
 		return constants.StateVirtualMachineStopped
@@ -412,6 +608,9 @@ func ResourceVirtualMachineStateGetter(vm *kubevirtv1.VirtualMachine, vmi *kubev
 			constants.FieldVirtualMachineCPUPinning:            vmImporter.DedicatedCPUPlacement(),
 			constants.FieldVirtualMachineIsolateEmulatorThread: vmImporter.IsolateEmulatorThread(),
 			constants.FieldVirtualMachineNodeSelector:          vm.Spec.Template.Spec.NodeSelector,
+			constants.FieldVirtualMachineNodeAffinity:          vmImporter.NodeAffinity(),
+			constants.FieldVirtualMachinePodAffinity:           vmImporter.PodAffinity(),
+			constants.FieldVirtualMachinePodAntiAffinity:       vmImporter.PodAntiAffinity(),
 		},
 	}, nil
 }

@@ -152,6 +152,33 @@ please use %s instead of this deprecated field:
 			Description: "Node selector for scheduling the VM. The key is the label key and the value is the label value.",
 			Optional:    true,
 		},
+		constants.FieldVirtualMachineNodeAffinity: {
+			Type:        schema.TypeList,
+			Optional:    true,
+			MaxItems:    1,
+			Description: "Node affinity rules for scheduling VMs based on node labels",
+			Elem: &schema.Resource{
+				Schema: resourceNodeAffinitySchema(),
+			},
+		},
+		constants.FieldVirtualMachinePodAffinity: {
+			Type:        schema.TypeList,
+			Optional:    true,
+			MaxItems:    1,
+			Description: "Pod affinity rules to co-locate VMs with matching pods",
+			Elem: &schema.Resource{
+				Schema: resourcePodAffinitySchema(),
+			},
+		},
+		constants.FieldVirtualMachinePodAntiAffinity: {
+			Type:        schema.TypeList,
+			Optional:    true,
+			MaxItems:    1,
+			Description: "Pod anti-affinity rules to separate VMs from matching pods",
+			Elem: &schema.Resource{
+				Schema: resourcePodAffinitySchema(),
+			},
+		},
 	}
 	util.NamespacedSchemaWrap(s, false)
 	s[constants.FieldCommonTags].Description = "The tag is reflected as label on the VM.\n" +
