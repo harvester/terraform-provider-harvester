@@ -228,8 +228,13 @@ func (c *Constructor) Setup() util.Processors {
 					}
 				}
 
+				eject := r[constants.FieldDiskEject].(bool)
+				if eject && !isCDRom {
+					return fmt.Errorf("eject can only be set on cd-rom type disks, but disk %q has type %q", diskName, diskType)
+				}
+
 				vmBuilder.Disk(diskName, diskBus, isCDRom, uint(bootOrder)) // nolint: gosec
-				if eject := r[constants.FieldDiskEject].(bool); eject && isCDRom {
+				if eject && isCDRom {
 					disks := vmBuilder.VirtualMachine.Spec.Template.Spec.Domain.Devices.Disks
 					for idx, d := range disks {
 						if d.Name == diskName && d.CDRom != nil {

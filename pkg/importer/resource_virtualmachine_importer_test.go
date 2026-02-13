@@ -573,4 +573,31 @@ func TestDiskEjectImport(t *testing.T) {
 	if eject, ok := diskStates3[0][constants.FieldDiskEject].(bool); !ok || eject {
 		t.Errorf("Regular disk: eject = %v, want false", diskStates3[0][constants.FieldDiskEject])
 	}
+
+	// CD-ROM with no Tray field set should default to eject=false
+	imp4 := makeVM(
+		[]kubevirtv1.Disk{{
+			Name: "cdrom-no-tray",
+			DiskDevice: kubevirtv1.DiskDevice{
+				CDRom: &kubevirtv1.CDRomTarget{
+					Bus: kubevirtv1.DiskBusSATA,
+				},
+			},
+		}},
+		[]kubevirtv1.Volume{{
+			Name: "cdrom-no-tray",
+			VolumeSource: kubevirtv1.VolumeSource{
+				ContainerDisk: &kubevirtv1.ContainerDiskSource{
+					Image: "test-image",
+				},
+			},
+		}},
+	)
+	diskStates4, _, err := imp4.Volume()
+	if err != nil {
+		t.Fatalf("Volume() error: %v", err)
+	}
+	if eject, ok := diskStates4[0][constants.FieldDiskEject].(bool); !ok || eject {
+		t.Errorf("CD-ROM with no Tray set: eject = %v, want false", diskStates4[0][constants.FieldDiskEject])
+	}
 }
