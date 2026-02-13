@@ -152,6 +152,17 @@ please use %s instead of this deprecated field:
 			Description: "Node selector for scheduling the VM. The key is the label key and the value is the label value.",
 			Optional:    true,
 		},
+		constants.FieldVirtualMachineHugepages: {
+			Type:        schema.TypeString,
+			Description: "Hugepages size for memory performance (2Mi or 1Gi)",
+			Optional:    true,
+			Default:     "",
+			ValidateFunc: validation.StringInSlice([]string{
+				"",
+				"2Mi",
+				"1Gi",
+			}, false),
+		},
 	}
 	util.NamespacedSchemaWrap(s, false)
 	s[constants.FieldCommonTags].Description = "The tag is reflected as label on the VM.\n" +
