@@ -94,6 +94,12 @@ func Schema() map[string]*schema.Schema {
 			ForceNew:    true,
 			Description: "SHA-512 checksum of the image",
 		},
+		constants.FieldImageFilePath: {
+			Type:        schema.TypeString,
+			Optional:    true,
+			ForceNew:    true,
+			Description: "Local file path to upload (ISO, raw, or qcow2). Required when source_type is 'upload'.",
+		},
 	}
 	util.NamespacedSchemaWrap(s, false)
 	return s

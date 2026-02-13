@@ -19,6 +19,7 @@ const (
 	FieldImageSourceImageName        = "source_image_name"
 	FieldImageSourceImageNamespace   = "source_image_namespace"
 	FieldImageChecksum               = "checksum"
+	FieldImageFilePath               = "file_path"
 
 	StateImageUploading    = "Uploading"
 	StateImageDownloading  = "Downloading"

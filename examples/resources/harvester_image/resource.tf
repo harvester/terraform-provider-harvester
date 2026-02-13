@@ -36,6 +36,15 @@ resource "harvester_image" "opensuse154" {
   url          = "https://downloadcontent-us1.opensuse.org/repositories/Cloud:/Images:/Leap_15.4/images/openSUSE-Leap-15.4.x86_64-NoCloud.qcow2"
 }
 
+resource "harvester_image" "opensuse156" {
+  name      = "opensuse156"
+  namespace = "default"
+
+  display_name = "openSUSE Leap 15.6"
+  source_type  = "upload"
+  file_path    = "/path/to/openSUSE-Leap-15.6.x86_64-NoCloud.qcow2"
+}
+
 resource "harvester_image" "opensuse154-ssd-3" {
   name      = "opensuse154-ssd-3"
   namespace = "harvester-public"
