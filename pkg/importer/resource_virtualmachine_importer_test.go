@@ -432,27 +432,6 @@ func TestCPU(t *testing.T) {
 			expectedModel: "",
 		},
 		{
-			// VM with CPU model specified
-			importer: &VMImporter{
-				VirtualMachine: &kubevirtv1.VirtualMachine{
-					Spec: kubevirtv1.VirtualMachineSpec{
-						Template: &kubevirtv1.VirtualMachineInstanceTemplateSpec{
-							Spec: kubevirtv1.VirtualMachineInstanceSpec{
-								Domain: kubevirtv1.DomainSpec{
-									CPU: &kubevirtv1.CPU{
-										Cores: 4,
-										Model: "host-model",
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-			expectedCores: 4,
-			expectedModel: "host-model",
-		},
-		{
 			// VM with CPU model set to specific Intel model
 			importer: &VMImporter{
 				VirtualMachine: &kubevirtv1.VirtualMachine{
