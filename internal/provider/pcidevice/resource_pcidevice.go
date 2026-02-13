@@ -1,6 +1,3 @@
-// Package pcidevice provides the Terraform resource for managing Harvester PCI device passthrough.
-// This resource creates and manages PCIDeviceClaim CRDs which enable PCI device passthrough
-// to VirtualMachines in Harvester.
 package pcidevice
 
 import (
@@ -85,18 +82,8 @@ func resourcePCIDeviceCreate(ctx context.Context, d *schema.ResourceData, meta i
 		return diag.FromErr(err)
 	}
 
-	// Get node name (required)
 	nodeName := d.Get(constants.FieldPCIDeviceNodeName).(string)
-	if nodeName == "" {
-		return diag.Errorf("node_name is required to ensure the VM runs on the correct node where PCI devices are available")
-	}
-
-	// Get PCI addresses (required)
 	pciAddressesRaw := d.Get(constants.FieldPCIDevicePCIAddresses).([]interface{})
-	if len(pciAddressesRaw) == 0 {
-		return diag.Errorf("at least one PCI address must be specified")
-	}
-
 	pciAddresses := make([]string, len(pciAddressesRaw))
 	for i, addr := range pciAddressesRaw {
 		pciAddresses[i] = addr.(string)
@@ -104,7 +91,7 @@ func resourcePCIDeviceCreate(ctx context.Context, d *schema.ResourceData, meta i
 
 	// Get labels (optional)
 	labels := make(map[string]string)
-	if labelsRaw, ok := d.GetOk(constants.FieldPCIDeviceLabels); ok {
+	if labelsRaw, ok := d.GetOk(constants.FieldCommonLabels); ok {
 		for k, v := range labelsRaw.(map[string]interface{}) {
 			labels[k] = v.(string)
 		}
@@ -146,14 +133,6 @@ func resourcePCIDeviceCreate(ctx context.Context, d *schema.ResourceData, meta i
 		}
 
 		// Create the PCIDeviceClaim (cluster-scoped, no namespace)
-		// First, try to get the resource to check if API is accessible
-		_, getErr := dynamicClient.Resource(pcideviceClaimGVR).Get(ctx, claimName, metav1.GetOptions{})
-		if getErr == nil {
-			// Claim already exists, use existing one
-			createdClaimNames = append(createdClaimNames, claimName)
-			continue
-		}
-
 		created, err := dynamicClient.Resource(pcideviceClaimGVR).Create(ctx, pcideviceClaim, metav1.CreateOptions{})
 		if err != nil {
 			if apierrors.IsAlreadyExists(err) {
@@ -231,7 +210,7 @@ func setPCIDeviceResourceData(d *schema.ResourceData, claim *unstructured.Unstru
 
 	// Add labels if present
 	if labels := extractLabelsFromUnstructured(claim); labels != nil {
-		states[constants.FieldPCIDeviceLabels] = labels
+		states[constants.FieldCommonLabels] = labels
 	}
 
 	// Set all states
@@ -289,7 +268,7 @@ func resourcePCIDeviceUpdate(ctx context.Context, d *schema.ResourceData, meta i
 	}
 
 	labels := make(map[string]string)
-	if labelsRaw, ok := d.GetOk(constants.FieldPCIDeviceLabels); ok {
+	if labelsRaw, ok := d.GetOk(constants.FieldCommonLabels); ok {
 		for k, v := range labelsRaw.(map[string]interface{}) {
 			labels[k] = v.(string)
 		}
@@ -345,22 +324,21 @@ func resourcePCIDeviceDelete(ctx context.Context, d *schema.ResourceData, meta i
 		return diag.FromErr(err)
 	}
 
-	// Parse ID using helper
-	_, _, claimName, err := helper.PCIDeviceIDParts(d.Id())
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
-	// Delete the PCIDeviceClaim
 	dynamicClient, err := getDynamicClient(c)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("failed to create dynamic client: %w", err))
 	}
 
-	// PCIDeviceClaim is cluster-scoped, not namespaced
-	err = dynamicClient.Resource(pcideviceClaimGVR).Delete(ctx, claimName, metav1.DeleteOptions{})
-	if err != nil && !apierrors.IsNotFound(err) {
-		return diag.FromErr(fmt.Errorf("failed to delete PCIDeviceClaim: %w", err))
+	// Delete all PCIDeviceClaims for this resource
+	nodeName := d.Get(constants.FieldPCIDeviceNodeName).(string)
+	pciAddressesRaw := d.Get(constants.FieldPCIDevicePCIAddresses).([]interface{})
+	for _, addr := range pciAddressesRaw {
+		addressPart := strings.ReplaceAll(strings.ReplaceAll(addr.(string), ":", ""), ".", "")
+		claimName := fmt.Sprintf("%s-%s", nodeName, addressPart)
+		err = dynamicClient.Resource(pcideviceClaimGVR).Delete(ctx, claimName, metav1.DeleteOptions{})
+		if err != nil && !apierrors.IsNotFound(err) {
+			return diag.FromErr(fmt.Errorf("failed to delete PCIDeviceClaim %s: %w", claimName, err))
+		}
 	}
 
 	d.SetId("")

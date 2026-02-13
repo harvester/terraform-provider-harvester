@@ -72,7 +72,7 @@ func RebuildNamespacedName(namespacedName string, defaultNamespace string) (stri
 // PCIDeviceIDParts parses a PCI device resource ID (namespace/vmname/claimname)
 func PCIDeviceIDParts(id string) (vmNamespace, vmName, claimName string, err error) {
 	parts := strings.Split(id, IDSep)
-	if len(parts) < 3 {
+	if len(parts) != 3 {
 		return "", "", "", fmt.Errorf("invalid PCI device ID format: %s (expected namespace/vmname/claimname)", id)
 	}
 	return parts[0], parts[1], parts[2], nil
