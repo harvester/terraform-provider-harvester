@@ -199,7 +199,7 @@ resource "harvester_virtualmachine" "opensuse154" {
 - `cpu` (Number)
 - `cpu_model` (String) CPU model for the virtual machine
 - `cpu_pinning` (Boolean) To enable VM CPU pinning, ensure that at least one node has the CPU manager enabled
-- `cpu_request` (String) CPU request as Kubernetes quantity (e.g. 1, 500m). Defaults to cpu value. Set lower for overcommit.
+- `cpu_request` (String) CPU request as Kubernetes quantity (e.g. 1, 500m). When unset, Harvester's overcommit webhook manages this value. Set explicitly for per-VM overcommit control.
 - `create_initial_snapshot` (Boolean) Create an initial snapshot named {vm-name}-initial after the VM is created and ready
 - `description` (String) Any text you want that better describes this resource
 - `efi` (Boolean)
@@ -209,7 +209,7 @@ resource "harvester_virtualmachine" "opensuse154" {
 - `labels` (Map of String)
 - `machine_type` (String)
 - `memory` (String)
-- `memory_request` (String) Memory request as Kubernetes quantity (e.g. 512Mi, 1Gi). Defaults to memory value. Set lower for overcommit.
+- `memory_request` (String) Memory request as Kubernetes quantity (e.g. 512Mi, 1Gi). When unset, Harvester's overcommit webhook manages this value. Set explicitly for per-VM overcommit control.
 - `namespace` (String)
 - `node_selector` (Map of String) Node selector for scheduling the VM. The key is the label key and the value is the label value.
 - `reserved_memory` (String)

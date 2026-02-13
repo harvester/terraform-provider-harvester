@@ -75,13 +75,13 @@ please use %s instead of this deprecated field:
 			Type:        schema.TypeString,
 			Optional:    true,
 			Computed:    true,
-			Description: "CPU request as Kubernetes quantity (e.g. 1, 500m). Defaults to cpu value. Set lower for overcommit.",
+			Description: "CPU request as Kubernetes quantity (e.g. 1, 500m). When unset, Harvester's overcommit webhook manages this value. Set explicitly for per-VM overcommit control.",
 		},
 		constants.FieldVirtualMachineMemoryRequest: {
 			Type:        schema.TypeString,
 			Optional:    true,
 			Computed:    true,
-			Description: "Memory request as Kubernetes quantity (e.g. 512Mi, 1Gi). Defaults to memory value. Set lower for overcommit.",
+			Description: "Memory request as Kubernetes quantity (e.g. 512Mi, 1Gi). When unset, Harvester's overcommit webhook manages this value. Set explicitly for per-VM overcommit control.",
 		},
 		constants.FieldVirtualMachineSSHKeys: {
 			Type:     schema.TypeList,
