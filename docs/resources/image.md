@@ -51,6 +51,15 @@ resource "harvester_image" "opensuse154" {
   url          = "https://downloadcontent-us1.opensuse.org/repositories/Cloud:/Images:/Leap_15.4/images/openSUSE-Leap-15.4.x86_64-NoCloud.qcow2"
 }
 
+resource "harvester_image" "opensuse156" {
+  name      = "opensuse156"
+  namespace = "default"
+
+  display_name = "openSUSE Leap 15.6"
+  source_type  = "upload"
+  file_path    = "/path/to/openSUSE-Leap-15.6.x86_64-NoCloud.qcow2"
+}
+
 resource "harvester_image" "opensuse154-ssd-3" {
   name      = "opensuse154-ssd-3"
   namespace = "harvester-public"
@@ -140,6 +149,7 @@ resource "harvester_image" "decrypted_image" {
 - `backend` (String) The backend type of the image, either 'backing-image' or 'cdi'.
 - `checksum` (String) SHA-512 checksum of the image
 - `description` (String) Any text you want that better describes this resource
+- `file_path` (String) Local file path to upload (ISO, raw, or qcow2). Required when source_type is 'upload'.
 - `labels` (Map of String)
 - `namespace` (String)
 - `pvc_name` (String)
