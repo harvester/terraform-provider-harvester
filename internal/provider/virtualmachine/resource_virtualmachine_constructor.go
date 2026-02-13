@@ -66,6 +66,11 @@ func parseLabelSelector(data []interface{}) *metav1.LabelSelector {
 		selector.MatchExpressions = parseLabelSelectorRequirements(matchExprs)
 	}
 
+	// Return nil for empty selector to avoid matching all objects
+	if len(selector.MatchLabels) == 0 && len(selector.MatchExpressions) == 0 {
+		return nil
+	}
+
 	return selector
 }
 
@@ -88,7 +93,7 @@ func parseNodeSelectorRequirements(data []interface{}) []corev1.NodeSelectorRequ
 	return requirements
 }
 
-// parseNodeSelectorTerms parses node selector terms
+// parseNodeSelectorTerms parses node selector terms, skipping empty terms
 func parseNodeSelectorTerms(data []interface{}) []corev1.NodeSelectorTerm {
 	terms := make([]corev1.NodeSelectorTerm, 0, len(data))
 	for _, item := range data {
@@ -99,6 +104,10 @@ func parseNodeSelectorTerms(data []interface{}) []corev1.NodeSelectorTerm {
 		}
 		if matchFields, ok := r[constants.FieldMatchFields].([]interface{}); ok && len(matchFields) > 0 {
 			term.MatchFields = parseNodeSelectorRequirements(matchFields)
+		}
+		// Skip empty terms to avoid unintentionally matching all nodes
+		if len(term.MatchExpressions) == 0 && len(term.MatchFields) == 0 {
+			continue
 		}
 		terms = append(terms, term)
 	}
@@ -129,21 +138,23 @@ func parsePodAffinityTerms(data []interface{}) []corev1.PodAffinityTerm {
 	return terms
 }
 
-// parseWeightedPodAffinityTerms parses weighted pod affinity terms
+// parseWeightedPodAffinityTerms parses weighted pod affinity terms, skipping invalid ones
 func parseWeightedPodAffinityTerms(data []interface{}) []corev1.WeightedPodAffinityTerm {
 	terms := make([]corev1.WeightedPodAffinityTerm, 0, len(data))
 	for _, item := range data {
 		r := item.(map[string]interface{})
-		term := corev1.WeightedPodAffinityTerm{
-			Weight: int32(r[constants.FieldPreferredWeight].(int)), //nolint:gosec // weight is validated 1-100 by schema
+		podAffinityTerm, ok := r[constants.FieldPodAffinityTerm].([]interface{})
+		if !ok || len(podAffinityTerm) == 0 {
+			continue
 		}
-		if podAffinityTerm, ok := r[constants.FieldPodAffinityTerm].([]interface{}); ok && len(podAffinityTerm) > 0 {
-			parsed := parsePodAffinityTerms(podAffinityTerm)
-			if len(parsed) > 0 {
-				term.PodAffinityTerm = parsed[0]
-			}
+		parsed := parsePodAffinityTerms(podAffinityTerm)
+		if len(parsed) == 0 || parsed[0].TopologyKey == "" {
+			continue
 		}
-		terms = append(terms, term)
+		terms = append(terms, corev1.WeightedPodAffinityTerm{
+			Weight:          int32(r[constants.FieldPreferredWeight].(int)), //nolint:gosec // weight is validated 1-100 by schema
+			PodAffinityTerm: parsed[0],
+		})
 	}
 	return terms
 }
