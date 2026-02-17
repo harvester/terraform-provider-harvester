@@ -402,3 +402,67 @@ func TestNetworkInterface(t *testing.T) {
 		}
 	}
 }
+
+func TestCPU(t *testing.T) {
+	type testcase struct {
+		importer      *VMImporter
+		expectedCores int
+		expectedModel string
+	}
+
+	testcases := []testcase{
+		{
+			// VM with basic CPU configuration (no model specified)
+			importer: &VMImporter{
+				VirtualMachine: &kubevirtv1.VirtualMachine{
+					Spec: kubevirtv1.VirtualMachineSpec{
+						Template: &kubevirtv1.VirtualMachineInstanceTemplateSpec{
+							Spec: kubevirtv1.VirtualMachineInstanceSpec{
+								Domain: kubevirtv1.DomainSpec{
+									CPU: &kubevirtv1.CPU{
+										Cores: 2,
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			expectedCores: 2,
+			expectedModel: "",
+		},
+		{
+			// VM with CPU model set to specific Intel model
+			importer: &VMImporter{
+				VirtualMachine: &kubevirtv1.VirtualMachine{
+					Spec: kubevirtv1.VirtualMachineSpec{
+						Template: &kubevirtv1.VirtualMachineInstanceTemplateSpec{
+							Spec: kubevirtv1.VirtualMachineInstanceSpec{
+								Domain: kubevirtv1.DomainSpec{
+									CPU: &kubevirtv1.CPU{
+										Cores: 8,
+										Model: "Skylake-Client-IBRS",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			expectedCores: 8,
+			expectedModel: "Skylake-Client-IBRS",
+		},
+	}
+
+	for idx, tc := range testcases {
+		cores := tc.importer.CPU()
+		if cores != tc.expectedCores {
+			t.Errorf("Test case %d: CPU() returned %d, expected %d", idx, cores, tc.expectedCores)
+		}
+
+		model := tc.importer.CPUModel()
+		if model != tc.expectedModel {
+			t.Errorf("Test case %d: CPUModel() returned %q, expected %q", idx, model, tc.expectedModel)
+		}
+	}
+}
