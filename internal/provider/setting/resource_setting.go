@@ -8,6 +8,7 @@ import (
 	"time"
 
 	harvsterv1 "github.com/harvester/harvester/pkg/apis/harvesterhci.io/v1beta1"
+	"github.com/harvester/harvester/pkg/containerd"
 	harvclient "github.com/harvester/harvester/pkg/generated/clientset/versioned"
 	"github.com/harvester/harvester/pkg/settings"
 	"github.com/harvester/harvester/pkg/util/network"
@@ -99,6 +100,8 @@ func resourceSettingRead(ctx context.Context, d *schema.ResourceData, meta inter
 	// The settings get API may return exclude networks in a different order than the user configured.
 	// This ensures Terraform state matches user's configuration when functionally equivalent.
 	handleStorageNetworkSetting(obj, d.Get(constants.FieldSettingValue).(string))
+	handleContainerdRegistrySetting(obj, d.Get(constants.FieldSettingValue).(string))
+
 	return diag.FromErr(resourceSettingImport(d, obj))
 }
 
@@ -186,6 +189,8 @@ func updateSetting(ctx context.Context, harvesterClient *harvclient.Clientset, d
 	newValue := newSetting.Value
 	handleStorageNetworkSetting(newSetting, oldValue)
 
+	handleContainerdRegistrySetting(newSetting, oldValue)
+
 	newSetting, err = harvesterClient.HarvesterhciV1beta1().Settings().Update(ctx, newSetting, metav1.UpdateOptions{})
 	if err != nil {
 		return diag.FromErr(err)
@@ -196,4 +201,76 @@ func updateSetting(ctx context.Context, harvesterClient *harvclient.Clientset, d
 	// causing an infinite update loop.
 	newSetting.Value = newValue
 	return diag.FromErr(resourceSettingImport(d, newSetting))
+}
+
+func handleContainerdRegistrySetting(newSetting *harvsterv1.Setting, oldValue string) {
+
+	if newSetting.Name != settings.ContainerdRegistrySettingName {
+		return
+	}
+
+	if oldValue == "" || newSetting.Value == "" {
+		return
+	}
+
+	var oldRegistry containerd.Registry
+	var newRegistry containerd.Registry
+
+	if err := json.Unmarshal([]byte(oldValue), &oldRegistry); err != nil {
+		logrus.WithError(err).Warn("Failed to unmarshal old containerd-registry")
+		return
+	}
+
+	if err := json.Unmarshal([]byte(newSetting.Value), &newRegistry); err != nil {
+		logrus.WithError(err).Warn("Failed to unmarshal new containerd-registry")
+		return
+	}
+
+	normalizeContainerdRegistry(&oldRegistry)
+	normalizeContainerdRegistry(&newRegistry)
+
+	if reflect.DeepEqual(oldRegistry, newRegistry) {
+
+		logrus.Debug("containerd-registry equivalent, restoring oldValue")
+
+		newSetting.Value = oldValue
+	}
+}
+
+func normalizeContainerdRegistry(reg *containerd.Registry) {
+
+	if reg == nil {
+		return
+	}
+
+	if reg.Mirrors != nil {
+
+		for k, mirror := range reg.Mirrors {
+
+			slices.Sort(mirror.Endpoints)
+
+			if len(mirror.Rewrites) == 0 {
+				mirror.Rewrites = nil
+			}
+
+			reg.Mirrors[k] = mirror
+		}
+	}
+
+	if reg.Configs != nil {
+
+		for k, cfg := range reg.Configs {
+
+			if cfg.Auth != nil &&
+				cfg.Auth.Username == "" &&
+				cfg.Auth.Password == "" &&
+				cfg.Auth.Auth == "" &&
+				cfg.Auth.IdentityToken == "" {
+
+				cfg.Auth = nil
+			}
+
+			reg.Configs[k] = cfg
+		}
+	}
 }
