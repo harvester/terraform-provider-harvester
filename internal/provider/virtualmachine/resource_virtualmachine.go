@@ -2,19 +2,24 @@ package virtualmachine
 
 import (
 	"context"
+	"fmt"
 	"strings"
 	"time"
 
+	harvsterv1 "github.com/harvester/harvester/pkg/apis/harvesterhci.io/v1beta1"
 	harvesterutil "github.com/harvester/harvester/pkg/util"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/utils/ptr"
 	kubevirtv1 "kubevirt.io/api/core/v1"
 
 	"github.com/harvester/terraform-provider-harvester/internal/config"
 	"github.com/harvester/terraform-provider-harvester/internal/util"
+	"github.com/harvester/terraform-provider-harvester/pkg/client"
 	"github.com/harvester/terraform-provider-harvester/pkg/constants"
 	"github.com/harvester/terraform-provider-harvester/pkg/helper"
 	"github.com/harvester/terraform-provider-harvester/pkg/importer"
@@ -56,14 +61,32 @@ func resourceVirtualMachineCreate(ctx context.Context, d *schema.ResourceData, m
 		return diag.FromErr(err)
 	}
 	d.SetId(helper.BuildID(namespace, name))
-	if err = updateLocalFields(d, constants.FieldVirtualMachineRestartAfterUpdate); err != nil {
+	if err = updateLocalFields(d, constants.FieldVirtualMachineRestartAfterUpdate, constants.FieldVirtualMachineCreateInitialSnapshot); err != nil {
 		return diag.FromErr(err)
 	}
 	runStrategy, err := vm.RunStrategy()
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	return diag.FromErr(resourceVirtualMachineWaitForState(ctx, d, meta, runStrategy, namespace, name, schema.TimeoutCreate, ""))
+	err = resourceVirtualMachineWaitForState(ctx, d, meta, runStrategy, namespace, name, schema.TimeoutCreate, "")
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	// Create initial snapshot if requested
+	if d.Get(constants.FieldVirtualMachineCreateInitialSnapshot).(bool) {
+		if err := createInitialSnapshot(ctx, c, namespace, name); err != nil {
+			return diag.Diagnostics{
+				diag.Diagnostic{
+					Severity: diag.Warning,
+					Summary:  "Failed to create initial snapshot",
+					Detail:   fmt.Sprintf("VM created successfully but initial snapshot failed: %v", err),
+				},
+			}
+		}
+	}
+
+	return nil
 }
 
 func resourceVirtualMachineUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -297,4 +320,30 @@ func getRemovedPVCs(d *schema.ResourceData, vm *kubevirtv1.VirtualMachine) []str
 		removedPVCs = append(removedPVCs, volume.PersistentVolumeClaim.ClaimName)
 	}
 	return removedPVCs
+}
+
+func createInitialSnapshot(ctx context.Context, c *client.Client, namespace, vmName string) error {
+	snapshotName := fmt.Sprintf("%s-initial", vmName)
+
+	vmBackup := &harvsterv1.VirtualMachineBackup{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      snapshotName,
+			Namespace: namespace,
+		},
+		Spec: harvsterv1.VirtualMachineBackupSpec{
+			Source: corev1.TypedLocalObjectReference{
+				APIGroup: ptr.To(kubevirtv1.SchemeGroupVersion.Group),
+				Kind:     kubevirtv1.VirtualMachineGroupVersionKind.Kind,
+				Name:     vmName,
+			},
+			Type: harvsterv1.Snapshot,
+		},
+	}
+
+	_, err := c.HarvesterClient.HarvesterhciV1beta1().VirtualMachineBackups(namespace).Create(ctx, vmBackup, metav1.CreateOptions{})
+	if err != nil {
+		return fmt.Errorf("failed to create snapshot: %w", err)
+	}
+
+	return nil
 }
