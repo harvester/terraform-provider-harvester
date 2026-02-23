@@ -2,6 +2,8 @@ package image
 
 import (
 	"errors"
+	"fmt"
+	"os"
 
 	harvsterv1 "github.com/harvester/harvester/pkg/apis/harvesterhci.io/v1beta1"
 	harvsterutil "github.com/harvester/harvester/pkg/util"
@@ -78,6 +80,28 @@ func (c *Constructor) Setup() util.Processors {
 				c.Image.Spec.Checksum = checksum
 				return nil
 			},
+		},
+		{
+			Field: constants.FieldImageFilePath,
+			Parser: func(i interface{}) error {
+				filePath := i.(string)
+				if c.Image.Spec.SourceType == harvsterv1.VirtualMachineImageSourceTypeUpload {
+					if filePath == "" {
+						return errors.New("must specify file_path when source_type is 'upload'")
+					}
+					info, err := os.Stat(filePath)
+					if err != nil {
+						return fmt.Errorf("file_path %q is not accessible: %w", filePath, err)
+					}
+					if !info.Mode().IsRegular() {
+						return fmt.Errorf("file_path %q must be a regular file", filePath)
+					}
+				} else if filePath != "" {
+					return fmt.Errorf("file_path must not be set when source_type is %q", c.Image.Spec.SourceType)
+				}
+				return nil
+			},
+			Required: true,
 		},
 		{
 			Field: constants.FieldImageStorageClassName,
