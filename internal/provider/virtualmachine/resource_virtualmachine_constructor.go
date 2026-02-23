@@ -416,6 +416,20 @@ func (c *Constructor) Setup() util.Processors {
 				return nil
 			},
 		},
+		{
+			Field: constants.FieldVirtualMachineCPUSockets,
+			Parser: func(i interface{}) error {
+				vmBuilder.VirtualMachine.Spec.Template.Spec.Domain.CPU.Sockets = uint32(i.(int)) //nolint:gosec
+				return nil
+			},
+		},
+		{
+			Field: constants.FieldVirtualMachineCPUThreads,
+			Parser: func(i interface{}) error {
+				vmBuilder.VirtualMachine.Spec.Template.Spec.Domain.CPU.Threads = uint32(i.(int)) //nolint:gosec
+				return nil
+			},
+		},
 	}
 	return append(processors, customProcessors...)
 }

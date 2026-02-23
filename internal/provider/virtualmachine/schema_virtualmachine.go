@@ -158,6 +158,18 @@ please use %s instead of this deprecated field:
 			Default:     false,
 			Description: "Create an initial snapshot named {vm-name}-initial after the VM is created and ready",
 		},
+		constants.FieldVirtualMachineCPUSockets: {
+			Type:        schema.TypeInt,
+			Description: "Number of CPU sockets. Total vCPUs = cpu_sockets x cpu (cores) x cpu_threads.",
+			Optional:    true,
+			Default:     1,
+		},
+		constants.FieldVirtualMachineCPUThreads: {
+			Type:        schema.TypeInt,
+			Description: "Number of threads per core. Total vCPUs = cpu_sockets x cpu (cores) x cpu_threads.",
+			Optional:    true,
+			Default:     1,
+		},
 	}
 	util.NamespacedSchemaWrap(s, false)
 	s[constants.FieldCommonTags].Description = "The tag is reflected as label on the VM.\n" +
