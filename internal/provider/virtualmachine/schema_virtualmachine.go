@@ -158,6 +158,33 @@ please use %s instead of this deprecated field:
 			Default:     false,
 			Description: "Create an initial snapshot named {vm-name}-initial after the VM is created and ready",
 		},
+		constants.FieldVirtualMachineNodeAffinity: {
+			Type:        schema.TypeList,
+			Optional:    true,
+			MaxItems:    1,
+			Description: "Node affinity rules for scheduling VMs based on node labels",
+			Elem: &schema.Resource{
+				Schema: resourceNodeAffinitySchema(),
+			},
+		},
+		constants.FieldVirtualMachinePodAffinity: {
+			Type:        schema.TypeList,
+			Optional:    true,
+			MaxItems:    1,
+			Description: "Pod affinity rules to co-locate VMs with matching pods",
+			Elem: &schema.Resource{
+				Schema: resourcePodAffinitySchema(),
+			},
+		},
+		constants.FieldVirtualMachinePodAntiAffinity: {
+			Type:        schema.TypeList,
+			Optional:    true,
+			MaxItems:    1,
+			Description: "Pod anti-affinity rules to separate VMs from matching pods",
+			Elem: &schema.Resource{
+				Schema: resourcePodAffinitySchema(),
+			},
+		},
 	}
 	util.NamespacedSchemaWrap(s, false)
 	s[constants.FieldCommonTags].Description = "The tag is reflected as label on the VM.\n" +

@@ -24,7 +24,33 @@ const (
 	FieldVirtualMachineCPUPinning            = "cpu_pinning"
 	FieldVirtualMachineIsolateEmulatorThread = "isolate_emulator_thread"
 	FieldVirtualMachineNodeSelector          = "node_selector"
-	FieldVirtualMachineCreateInitialSnapshot = "create_initial_snapshot"
+
+	// Node Affinity - Controls VM scheduling based on node labels
+	// Reference: https://docs.harvesterhci.io/v1.7/vm/index/#node-scheduling
+	FieldVirtualMachineNodeAffinity = "node_affinity"
+	FieldNodeAffinityRequired       = "required"  // requiredDuringSchedulingIgnoredDuringExecution
+	FieldNodeAffinityPreferred      = "preferred" // preferredDuringSchedulingIgnoredDuringExecution
+	FieldNodeSelectorTerm           = "node_selector_term"
+	FieldMatchExpressions           = "match_expressions" // Match by node labels
+	FieldMatchFields                = "match_fields"      // Match by node fields
+	FieldExpressionKey              = "key"
+	FieldExpressionOperator         = "operator" // In, NotIn, Exists, DoesNotExist, Gt, Lt
+	FieldExpressionValues           = "values"
+	FieldPreferredWeight            = "weight"     // 1-100, higher means more preferred
+	FieldPreferredPreference        = "preference" // Node selector term for preferred scheduling
+
+	// Pod Affinity/Anti-Affinity - Controls VM co-location with other pods
+	// Reference: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#inter-pod-affinity-and-anti-affinity
+	FieldVirtualMachinePodAffinity     = "pod_affinity"      // Co-locate VMs with matching pods
+	FieldVirtualMachinePodAntiAffinity = "pod_anti_affinity" // Separate VMs from matching pods
+	FieldPodAffinityRequired           = "required"          // requiredDuringSchedulingIgnoredDuringExecution
+	FieldPodAffinityPreferred          = "preferred"         // preferredDuringSchedulingIgnoredDuringExecution
+	FieldLabelSelector                 = "label_selector"    // Select pods by labels
+	FieldMatchLabels                   = "match_labels"      // Exact label matching
+	FieldNamespaces                    = "namespaces"        // Limit to specific namespaces
+	FieldNamespaceSelector             = "namespace_selector"
+	FieldTopologyKey                   = "topology_key" // e.g., kubernetes.io/hostname
+	FieldPodAffinityTerm               = "pod_affinity_term"
 
 	StateVirtualMachineStarting = "Starting"
 	StateVirtualMachineRunning  = "Running"

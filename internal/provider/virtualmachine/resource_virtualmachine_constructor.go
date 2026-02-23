@@ -21,6 +21,144 @@ import (
 	"github.com/harvester/terraform-provider-harvester/pkg/helper"
 )
 
+// ensureAffinity initializes the Affinity struct if nil
+func ensureAffinity(vmBuilder *builder.VMBuilder) {
+	if vmBuilder.VirtualMachine.Spec.Template.Spec.Affinity == nil {
+		vmBuilder.VirtualMachine.Spec.Template.Spec.Affinity = &corev1.Affinity{}
+	}
+}
+
+// parseLabelSelectorRequirements parses a list of label selector requirements
+func parseLabelSelectorRequirements(data []interface{}) []metav1.LabelSelectorRequirement {
+	requirements := make([]metav1.LabelSelectorRequirement, 0, len(data))
+	for _, item := range data {
+		r := item.(map[string]interface{})
+		req := metav1.LabelSelectorRequirement{
+			Key:      r[constants.FieldExpressionKey].(string),
+			Operator: metav1.LabelSelectorOperator(r[constants.FieldExpressionOperator].(string)),
+		}
+		if values, ok := r[constants.FieldExpressionValues].([]interface{}); ok {
+			for _, v := range values {
+				req.Values = append(req.Values, v.(string))
+			}
+		}
+		requirements = append(requirements, req)
+	}
+	return requirements
+}
+
+// parseLabelSelector parses a label selector from Terraform state
+func parseLabelSelector(data []interface{}) *metav1.LabelSelector {
+	if len(data) == 0 {
+		return nil
+	}
+	r := data[0].(map[string]interface{})
+	selector := &metav1.LabelSelector{}
+
+	if matchLabels, ok := r[constants.FieldMatchLabels].(map[string]interface{}); ok && len(matchLabels) > 0 {
+		selector.MatchLabels = make(map[string]string)
+		for k, v := range matchLabels {
+			selector.MatchLabels[k] = v.(string)
+		}
+	}
+
+	if matchExprs, ok := r[constants.FieldMatchExpressions].([]interface{}); ok && len(matchExprs) > 0 {
+		selector.MatchExpressions = parseLabelSelectorRequirements(matchExprs)
+	}
+
+	// Return nil for empty selector to avoid matching all objects
+	if len(selector.MatchLabels) == 0 && len(selector.MatchExpressions) == 0 {
+		return nil
+	}
+
+	return selector
+}
+
+// parseNodeSelectorRequirements parses node selector requirements
+func parseNodeSelectorRequirements(data []interface{}) []corev1.NodeSelectorRequirement {
+	requirements := make([]corev1.NodeSelectorRequirement, 0, len(data))
+	for _, item := range data {
+		r := item.(map[string]interface{})
+		req := corev1.NodeSelectorRequirement{
+			Key:      r[constants.FieldExpressionKey].(string),
+			Operator: corev1.NodeSelectorOperator(r[constants.FieldExpressionOperator].(string)),
+		}
+		if values, ok := r[constants.FieldExpressionValues].([]interface{}); ok {
+			for _, v := range values {
+				req.Values = append(req.Values, v.(string))
+			}
+		}
+		requirements = append(requirements, req)
+	}
+	return requirements
+}
+
+// parseNodeSelectorTerms parses node selector terms, skipping empty terms
+func parseNodeSelectorTerms(data []interface{}) []corev1.NodeSelectorTerm {
+	terms := make([]corev1.NodeSelectorTerm, 0, len(data))
+	for _, item := range data {
+		r := item.(map[string]interface{})
+		term := corev1.NodeSelectorTerm{}
+		if matchExprs, ok := r[constants.FieldMatchExpressions].([]interface{}); ok && len(matchExprs) > 0 {
+			term.MatchExpressions = parseNodeSelectorRequirements(matchExprs)
+		}
+		if matchFields, ok := r[constants.FieldMatchFields].([]interface{}); ok && len(matchFields) > 0 {
+			term.MatchFields = parseNodeSelectorRequirements(matchFields)
+		}
+		// Skip empty terms to avoid unintentionally matching all nodes
+		if len(term.MatchExpressions) == 0 && len(term.MatchFields) == 0 {
+			continue
+		}
+		terms = append(terms, term)
+	}
+	return terms
+}
+
+// parsePodAffinityTerms parses pod affinity terms
+func parsePodAffinityTerms(data []interface{}) []corev1.PodAffinityTerm {
+	terms := make([]corev1.PodAffinityTerm, 0, len(data))
+	for _, item := range data {
+		r := item.(map[string]interface{})
+		term := corev1.PodAffinityTerm{
+			TopologyKey: r[constants.FieldTopologyKey].(string),
+		}
+		if labelSelector, ok := r[constants.FieldLabelSelector].([]interface{}); ok && len(labelSelector) > 0 {
+			term.LabelSelector = parseLabelSelector(labelSelector)
+		}
+		if namespaces, ok := r[constants.FieldNamespaces].([]interface{}); ok && len(namespaces) > 0 {
+			for _, ns := range namespaces {
+				term.Namespaces = append(term.Namespaces, ns.(string))
+			}
+		}
+		if nsSelector, ok := r[constants.FieldNamespaceSelector].([]interface{}); ok && len(nsSelector) > 0 {
+			term.NamespaceSelector = parseLabelSelector(nsSelector)
+		}
+		terms = append(terms, term)
+	}
+	return terms
+}
+
+// parseWeightedPodAffinityTerms parses weighted pod affinity terms, skipping invalid ones
+func parseWeightedPodAffinityTerms(data []interface{}) []corev1.WeightedPodAffinityTerm {
+	terms := make([]corev1.WeightedPodAffinityTerm, 0, len(data))
+	for _, item := range data {
+		r := item.(map[string]interface{})
+		podAffinityTerm, ok := r[constants.FieldPodAffinityTerm].([]interface{})
+		if !ok || len(podAffinityTerm) == 0 {
+			continue
+		}
+		parsed := parsePodAffinityTerms(podAffinityTerm)
+		if len(parsed) == 0 || parsed[0].TopologyKey == "" {
+			continue
+		}
+		terms = append(terms, corev1.WeightedPodAffinityTerm{
+			Weight:          int32(r[constants.FieldPreferredWeight].(int)), //nolint:gosec // weight is validated 1-100 by schema
+			PodAffinityTerm: parsed[0],
+		})
+	}
+	return terms
+}
+
 const (
 	vmCreator = "terraform-provider-harvester"
 )
@@ -416,6 +554,81 @@ func (c *Constructor) Setup() util.Processors {
 				return nil
 			},
 		},
+		{
+			Field: constants.FieldVirtualMachineNodeAffinity,
+			Parser: func(i interface{}) error {
+				r := i.(map[string]interface{})
+				ensureAffinity(vmBuilder)
+				nodeAffinity := &corev1.NodeAffinity{}
+
+				if required, ok := r[constants.FieldNodeAffinityRequired].([]interface{}); ok && len(required) > 0 {
+					reqData := required[0].(map[string]interface{})
+					if terms, ok := reqData[constants.FieldNodeSelectorTerm].([]interface{}); ok && len(terms) > 0 {
+						nodeAffinity.RequiredDuringSchedulingIgnoredDuringExecution = &corev1.NodeSelector{
+							NodeSelectorTerms: parseNodeSelectorTerms(terms),
+						}
+					}
+				}
+
+				if preferred, ok := r[constants.FieldNodeAffinityPreferred].([]interface{}); ok && len(preferred) > 0 {
+					for _, item := range preferred {
+						p := item.(map[string]interface{})
+						prefTerm := corev1.PreferredSchedulingTerm{
+							Weight: int32(p[constants.FieldPreferredWeight].(int)), //nolint:gosec // weight is validated 1-100 by schema
+						}
+						if pref, ok := p[constants.FieldPreferredPreference].([]interface{}); ok && len(pref) > 0 {
+							terms := parseNodeSelectorTerms(pref)
+							if len(terms) > 0 {
+								prefTerm.Preference = terms[0]
+							}
+						}
+						nodeAffinity.PreferredDuringSchedulingIgnoredDuringExecution = append(
+							nodeAffinity.PreferredDuringSchedulingIgnoredDuringExecution, prefTerm)
+					}
+				}
+
+				vmBuilder.VirtualMachine.Spec.Template.Spec.Affinity.NodeAffinity = nodeAffinity
+				return nil
+			},
+		},
+		{
+			Field: constants.FieldVirtualMachinePodAffinity,
+			Parser: func(i interface{}) error {
+				r := i.(map[string]interface{})
+				ensureAffinity(vmBuilder)
+				podAffinity := &corev1.PodAffinity{}
+
+				if required, ok := r[constants.FieldPodAffinityRequired].([]interface{}); ok && len(required) > 0 {
+					podAffinity.RequiredDuringSchedulingIgnoredDuringExecution = parsePodAffinityTerms(required)
+				}
+
+				if preferred, ok := r[constants.FieldPodAffinityPreferred].([]interface{}); ok && len(preferred) > 0 {
+					podAffinity.PreferredDuringSchedulingIgnoredDuringExecution = parseWeightedPodAffinityTerms(preferred)
+				}
+
+				vmBuilder.VirtualMachine.Spec.Template.Spec.Affinity.PodAffinity = podAffinity
+				return nil
+			},
+		},
+		{
+			Field: constants.FieldVirtualMachinePodAntiAffinity,
+			Parser: func(i interface{}) error {
+				r := i.(map[string]interface{})
+				ensureAffinity(vmBuilder)
+				podAntiAffinity := &corev1.PodAntiAffinity{}
+
+				if required, ok := r[constants.FieldPodAffinityRequired].([]interface{}); ok && len(required) > 0 {
+					podAntiAffinity.RequiredDuringSchedulingIgnoredDuringExecution = parsePodAffinityTerms(required)
+				}
+
+				if preferred, ok := r[constants.FieldPodAffinityPreferred].([]interface{}); ok && len(preferred) > 0 {
+					podAntiAffinity.PreferredDuringSchedulingIgnoredDuringExecution = parseWeightedPodAffinityTerms(preferred)
+				}
+
+				vmBuilder.VirtualMachine.Spec.Template.Spec.Affinity.PodAntiAffinity = podAntiAffinity
+				return nil
+			},
+		},
 	}
 	return append(processors, customProcessors...)
 }
@@ -459,6 +672,7 @@ func Updater(c *client.Client, ctx context.Context, vm *kubevirtv1.VirtualMachin
 	vm.Spec.Template.Spec.Domain.Devices.Disks = []kubevirtv1.Disk{}
 	vm.Spec.Template.Spec.Domain.Devices.Inputs = []kubevirtv1.Input{}
 	vm.Spec.Template.Spec.Volumes = []kubevirtv1.Volume{}
+	vm.Spec.Template.Spec.Affinity = nil // Clear affinity to allow complete replacement
 	vm.Annotations[harvesterutil.AnnotationVolumeClaimTemplates] = "[]"
 	return newVMConstructor(c, ctx, &builder.VMBuilder{
 		VirtualMachine: vm,
