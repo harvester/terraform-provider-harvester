@@ -158,6 +158,31 @@ please use %s instead of this deprecated field:
 			Default:     false,
 			Description: "Create an initial snapshot named {vm-name}-initial after the VM is created and ready",
 		},
+		constants.FieldVirtualMachineEvictionStrategy: {
+			Type:        schema.TypeString,
+			Description: "Eviction strategy for the VM (None, LiveMigrate, LiveMigrateIfPossible, External)",
+			Optional:    true,
+			Default:     constants.DefaultEvictionStrategy,
+			ValidateFunc: validation.StringInSlice([]string{
+				"None",
+				"LiveMigrate",
+				"LiveMigrateIfPossible",
+				"External",
+			}, false),
+		},
+		constants.FieldVirtualMachineTerminationGracePeriodSeconds: {
+			Type:         schema.TypeInt,
+			Description:  "Grace period in seconds before the VM is forcefully terminated",
+			Optional:     true,
+			Default:      constants.DefaultTerminationGracePeriodSeconds,
+			ValidateFunc: validation.IntAtLeast(0),
+		},
+		constants.FieldVirtualMachineOSType: {
+			Type:        schema.TypeString,
+			Description: "OS type annotation for KVM guest optimizations (e.g. linux, windows)",
+			Optional:    true,
+			Computed:    true,
+		},
 	}
 	util.NamespacedSchemaWrap(s, false)
 	s[constants.FieldCommonTags].Description = "The tag is reflected as label on the VM.\n" +

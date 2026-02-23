@@ -416,6 +416,34 @@ func (c *Constructor) Setup() util.Processors {
 				return nil
 			},
 		},
+		{
+			Field: constants.FieldVirtualMachineEvictionStrategy,
+			Parser: func(i interface{}) error {
+				strategy := kubevirtv1.EvictionStrategy(i.(string))
+				vmBuilder.VirtualMachine.Spec.Template.Spec.EvictionStrategy = &strategy
+				return nil
+			},
+		},
+		{
+			Field: constants.FieldVirtualMachineTerminationGracePeriodSeconds,
+			Parser: func(i interface{}) error {
+				seconds := int64(i.(int))
+				vmBuilder.VirtualMachine.Spec.Template.Spec.TerminationGracePeriodSeconds = &seconds
+				return nil
+			},
+		},
+		{
+			Field: constants.FieldVirtualMachineOSType,
+			Parser: func(i interface{}) error {
+				osType := i.(string)
+				if osType != "" {
+					vmBuilder.Annotations(map[string]string{
+						constants.AnnotationOSType: osType,
+					})
+				}
+				return nil
+			},
+		},
 	}
 	return append(processors, customProcessors...)
 }
@@ -447,7 +475,6 @@ func newVMConstructor(c *client.Client, ctx context.Context, vmBuilder *builder.
 func Creator(c *client.Client, ctx context.Context, namespace, name string) util.Constructor {
 	vmBuilder := builder.NewVMBuilder(vmCreator).
 		Namespace(namespace).Name(name).
-		EvictionStrategy(true).
 		DefaultPodAntiAffinity()
 	return newVMConstructor(c, ctx, vmBuilder)
 }

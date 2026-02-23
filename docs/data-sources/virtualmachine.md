@@ -45,6 +45,7 @@ data "harvester_virtualmachine" "opensuse154" {
 - `description` (String) Any text you want that better describes this resource
 - `disk` (List of Object) (see [below for nested schema](#nestedatt--disk))
 - `efi` (Boolean)
+- `eviction_strategy` (String) Eviction strategy for the VM (None, LiveMigrate, LiveMigrateIfPossible, External)
 - `hostname` (String)
 - `id` (String) The ID of this resource.
 - `input` (List of Object) (see [below for nested schema](#nestedatt--input))
@@ -56,10 +57,12 @@ data "harvester_virtualmachine" "opensuse154" {
 - `network_interface` (List of Object) (see [below for nested schema](#nestedatt--network_interface))
 - `node_name` (String)
 - `node_selector` (Map of String) Node selector for scheduling the VM. The key is the label key and the value is the label value.
+- `os_type` (String) OS type annotation for KVM guest optimizations (e.g. linux, windows)
 - `reserved_memory` (String)
 - `restart_after_update` (Boolean) restart vm after the vm is updated
 - `run_strategy` (String) more info: https://kubevirt.io/user-guide/virtual_machines/run_strategies/
 - `secure_boot` (Boolean) EFI must be enabled to use this feature
+- `termination_grace_period_seconds` (Number) Grace period in seconds before the VM is forcefully terminated
 - `ssh_keys` (List of String) The `ssh_keys` are added to `cloudinit.user_data` if:
 1. Both `cloudinit.user_data_base64` and `cloudinit.user_data_secret_name` are empty.
 2. There is no `ssh_authorized_keys` field in `cloudinit.user_data`.
