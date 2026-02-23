@@ -403,6 +403,7 @@ func TestNetworkInterface(t *testing.T) {
 	}
 }
 
+
 func TestCPU(t *testing.T) {
 	type testcase struct {
 		importer      *VMImporter
@@ -464,5 +465,58 @@ func TestCPU(t *testing.T) {
 		if model != tc.expectedModel {
 			t.Errorf("Test case %d: CPUModel() returned %q, expected %q", idx, model, tc.expectedModel)
 		}
+	}
+}
+
+func TestHugepagesImport(t *testing.T) {
+	// Test with hugepages set
+	vm := &kubevirtv1.VirtualMachine{
+		Spec: kubevirtv1.VirtualMachineSpec{
+			Template: &kubevirtv1.VirtualMachineInstanceTemplateSpec{
+				Spec: kubevirtv1.VirtualMachineInstanceSpec{
+					Domain: kubevirtv1.DomainSpec{
+						Memory: &kubevirtv1.Memory{
+							Hugepages: &kubevirtv1.Hugepages{PageSize: "2Mi"},
+						},
+					},
+				},
+			},
+		},
+	}
+	importer := &VMImporter{VirtualMachine: vm}
+	if got := importer.HugepagesSize(); got != "2Mi" {
+		t.Errorf("HugepagesSize() = %q, want %q", got, "2Mi")
+	}
+
+	// Test with nil memory
+	vmNilMem := &kubevirtv1.VirtualMachine{
+		Spec: kubevirtv1.VirtualMachineSpec{
+			Template: &kubevirtv1.VirtualMachineInstanceTemplateSpec{
+				Spec: kubevirtv1.VirtualMachineInstanceSpec{
+					Domain: kubevirtv1.DomainSpec{},
+				},
+			},
+		},
+	}
+	importerNilMem := &VMImporter{VirtualMachine: vmNilMem}
+	if got := importerNilMem.HugepagesSize(); got != "" {
+		t.Errorf("HugepagesSize() nil memory = %q, want %q", got, "")
+	}
+
+	// Test with nil hugepages
+	vmNilHuge := &kubevirtv1.VirtualMachine{
+		Spec: kubevirtv1.VirtualMachineSpec{
+			Template: &kubevirtv1.VirtualMachineInstanceTemplateSpec{
+				Spec: kubevirtv1.VirtualMachineInstanceSpec{
+					Domain: kubevirtv1.DomainSpec{
+						Memory: &kubevirtv1.Memory{},
+					},
+				},
+			},
+		},
+	}
+	importerNilHuge := &VMImporter{VirtualMachine: vmNilHuge}
+	if got := importerNilHuge.HugepagesSize(); got != "" {
+		t.Errorf("HugepagesSize() nil hugepages = %q, want %q", got, "")
 	}
 }

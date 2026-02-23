@@ -45,6 +45,7 @@ type VMResourceBuilder struct {
 	isolateEmulatorThread bool
 	runStrategy           string
 	machineType           string
+	hugepages             string
 	networkConfig         *NetworkConfig
 	diskConfig            *DiskConfig
 	inputConfig           *InputDeviceConfig
@@ -117,6 +118,11 @@ func (b *VMResourceBuilder) SetInputDeviceConfig(name, inputType, bus string) *V
 	return b
 }
 
+func (b *VMResourceBuilder) SetHugepages(hugepages string) *VMResourceBuilder {
+	b.hugepages = hugepages
+	return b
+}
+
 func (b *VMResourceBuilder) SetNetworkConfig(name string, bootOrder int) *VMResourceBuilder {
 	b.networkConfig = &NetworkConfig{
 		Name:      name,
@@ -150,6 +156,10 @@ func (b *VMResourceBuilder) Build() string {
 	sb.WriteString(fmt.Sprintf("\t%s = %s\n", constants.FieldVirtualMachineIsolateEmulatorThread, strconv.FormatBool(b.isolateEmulatorThread)))
 	sb.WriteString(fmt.Sprintf("\t%s = \"%s\"\n", constants.FieldVirtualMachineRunStrategy, b.runStrategy))
 	sb.WriteString(fmt.Sprintf("\t%s = \"%s\"\n", constants.FieldVirtualMachineMachineType, b.machineType))
+
+	if b.hugepages != "" {
+		sb.WriteString(fmt.Sprintf("\t%s = \"%s\"\n", constants.FieldVirtualMachineHugepages, b.hugepages))
+	}
 
 	if b.networkConfig != nil {
 		sb.WriteString(fmt.Sprintf("\t%s {\n", constants.FieldVirtualMachineNetworkInterface))
@@ -654,6 +664,31 @@ resource "harvester_virtualmachine" "%s" {
 					testAccVirtualMachineExists(ctx, testAccVirtualMachineResourceName, vm),
 					testAccCheckCdRomSpec(ctx, testAccVirtualMachineNamespace, testAccVirtualMachineName, 2, 1),
 					testAccCheckVmiUid(ctx, testAccVirtualMachineNamespace, testAccVirtualMachineName, &vmiUid),
+				),
+			},
+		},
+	})
+}
+
+func TestAccVirtualMachine_hugepages(t *testing.T) {
+	var (
+		testAccVirtualMachineName         = "test-acc-hugepg-" + uuid.New().String()[:6]
+		testAccVirtualMachineResourceName = constants.ResourceTypeVirtualMachine + "." + testAccVirtualMachineName
+		vm                                = &kubevirtv1.VirtualMachine{}
+		ctx                               = context.Background()
+	)
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckVirtualMachineDestroy(ctx),
+		Steps: []resource.TestStep{
+			{
+				Config: NewVMResourceBuilder(testAccVirtualMachineName).
+					SetHugepages("2Mi").
+					Build(),
+				Check: resource.ComposeTestCheckFunc(
+					testAccVirtualMachineExists(ctx, testAccVirtualMachineResourceName, vm),
+					resource.TestCheckResourceAttr(testAccVirtualMachineResourceName, constants.FieldVirtualMachineHugepages, "2Mi"),
 				),
 			},
 		},
