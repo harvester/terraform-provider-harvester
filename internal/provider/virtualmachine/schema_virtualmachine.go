@@ -61,6 +61,11 @@ please use %s instead of this deprecated field:
 			Optional: true,
 			Default:  1,
 		},
+		constants.FieldVirtualMachineCPUModel: {
+			Type:        schema.TypeString,
+			Optional:    true,
+			Description: "CPU model for the virtual machine",
+		},
 		constants.FieldVirtualMachineMemory: {
 			Type:     schema.TypeString,
 			Optional: true,
@@ -146,6 +151,12 @@ please use %s instead of this deprecated field:
 			Type:        schema.TypeMap,
 			Description: "Node selector for scheduling the VM. The key is the label key and the value is the label value.",
 			Optional:    true,
+		},
+		constants.FieldVirtualMachineCreateInitialSnapshot: {
+			Type:        schema.TypeBool,
+			Optional:    true,
+			Default:     false,
+			Description: "Create an initial snapshot named {vm-name}-initial after the VM is created and ready",
 		},
 	}
 	util.NamespacedSchemaWrap(s, false)
