@@ -77,7 +77,8 @@ func resourceLoadBalancerWaitIPAddress(ctx context.Context, meta interface{}, na
 	}
 
 	for i := 0; i < constants.LoadBalancerRetryAttempts; i++ {
-		loadbalancer, err := c.HarvesterLoadbalancerClient.
+		var err error
+		loadbalancer, err = c.HarvesterLoadbalancerClient.
 			LoadbalancerV1beta1().
 			LoadBalancers(namespace).
 			Get(ctx, name, metav1.GetOptions{})
