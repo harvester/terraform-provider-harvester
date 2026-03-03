@@ -228,17 +228,13 @@ func uploadImageFile(ctx context.Context, c *client.Client, namespace, name, fil
 // waitForUploadAction polls the upload endpoint until the action becomes available.
 // The Harvester controller must initialize the image before the Steve API
 // exposes the upload action (condition Initialized=False required).
+// The timeout is controlled by ctx, which inherits the Terraform resource timeout
+// (default 5 minutes, customizable via the timeouts block).
 func waitForUploadAction(ctx context.Context, httpClient *http.Client, uploadURL string) error {
-	var lastErr error
-	for i := 0; i < 30; i++ {
-		if i > 0 {
-			select {
-			case <-ctx.Done():
-				return ctx.Err()
-			case <-time.After(2 * time.Second):
-			}
-		}
+	ticker := time.NewTicker(2 * time.Second)
+	defer ticker.Stop()
 
+	for {
 		probeReq, err := http.NewRequestWithContext(ctx, http.MethodPost, uploadURL, http.NoBody)
 		if err != nil {
 			return fmt.Errorf("failed to create probe request: %w", err)
@@ -249,13 +245,16 @@ func waitForUploadAction(ctx context.Context, httpClient *http.Client, uploadURL
 		}
 		probeResp.Body.Close()
 
-		if probeResp.StatusCode == http.StatusForbidden || probeResp.StatusCode == http.StatusNotFound {
-			lastErr = fmt.Errorf("upload action not yet available (HTTP %d)", probeResp.StatusCode)
-			continue
+		if probeResp.StatusCode != http.StatusForbidden && probeResp.StatusCode != http.StatusNotFound {
+			return nil
 		}
-		return nil
+
+		select {
+		case <-ctx.Done():
+			return fmt.Errorf("upload action not available after waiting: %w", ctx.Err())
+		case <-ticker.C:
+		}
 	}
-	return fmt.Errorf("upload action not available after waiting: %w", lastErr)
 }
 
 // doUpload streams the file to the Harvester upload endpoint as multipart/form-data.
