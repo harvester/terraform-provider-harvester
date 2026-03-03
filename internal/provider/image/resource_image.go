@@ -3,6 +3,7 @@ package image
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	harvsterv1 "github.com/harvester/harvester/pkg/apis/harvesterhci.io/v1beta1"
@@ -30,10 +31,10 @@ func ResourceImage() *schema.Resource {
 		},
 		Schema: Schema(),
 		Timeouts: &schema.ResourceTimeout{
-			Create:  schema.DefaultTimeout(5 * time.Minute),
+			Create:  schema.DefaultTimeout(60 * time.Minute),
 			Read:    schema.DefaultTimeout(2 * time.Minute),
-			Update:  schema.DefaultTimeout(5 * time.Minute),
-			Delete:  schema.DefaultTimeout(2 * time.Minute),
+			Update:  schema.DefaultTimeout(30 * time.Minute),
+			Delete:  schema.DefaultTimeout(10 * time.Minute),
 			Default: schema.DefaultTimeout(2 * time.Minute),
 		},
 	}
@@ -146,16 +147,51 @@ func resourceImageImport(d *schema.ResourceData, obj *harvsterv1.VirtualMachineI
 }
 
 func resourceImageWaitForState(ctx context.Context, d *schema.ResourceData, meta interface{}, timeOutKey string) error {
-	stateConf := &retry.StateChangeConf{
-		Pending:    []string{constants.StateImageInitializing, constants.StateImageDownloading, constants.StateImageUploading, constants.StateImageExporting},
-		Target:     []string{constants.StateCommonActive},
-		Refresh:    resourceImageRefresh(ctx, d, meta),
-		Timeout:    d.Timeout(timeOutKey),
-		Delay:      1 * time.Second,
-		MinTimeout: 3 * time.Second,
+	lastProgress := -1
+	lastProgressTime := time.Now()
+
+	staleTimeout := 5 * time.Minute
+	hardTimeout := 2 * time.Hour
+	startTime := time.Now()
+
+	for {
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		default:
+		}
+
+		if time.Since(startTime) > hardTimeout {
+			return errors.New("hard timeout reached during image creation")
+		}
+
+		refresh := resourceImageRefresh(ctx, d, meta)
+		_, state, err := refresh()
+		if err != nil {
+			return err
+		}
+
+		if state == constants.StateCommonActive {
+			return nil
+		}
+
+		// Fail early if state is Error or Failed
+		if state == constants.StateCommonError || state == constants.StateCommonFailed {
+			message := d.Get(constants.FieldCommonMessage).(string)
+			return errors.New(message)
+		}
+
+		// Check progress
+		progress := d.Get(constants.FieldImageProgress).(int)
+		if progress > lastProgress {
+			lastProgress = progress
+			lastProgressTime = time.Now()
+		} else if time.Since(lastProgressTime) > staleTimeout {
+			return fmt.Errorf("image creation stalled at %d%% for more than %v", progress, staleTimeout)
+		}
+
+		time.Sleep(15 * time.Second)
 	}
-	_, err := stateConf.WaitForStateContext(ctx)
-	return err
 }
 
 func resourceImageRefresh(ctx context.Context, d *schema.ResourceData, meta interface{}) retry.StateRefreshFunc {
