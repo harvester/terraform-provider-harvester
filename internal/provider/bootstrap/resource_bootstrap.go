@@ -26,7 +26,7 @@ const (
 
 type loginRequestPayload struct {
 	Username     string `json:"username"`
-	Password     string `json:"password"`
+	Password     string `json:"password"` //nolint:gosec
 	ResponseType string `json:"responseType"`
 	TTL          int    `json:"ttl"`
 	Description  string `json:"description"`
@@ -35,7 +35,7 @@ type loginRequestPayload struct {
 type loginResponsePayload struct {
 	ID    string `json:"id"`
 	Type  string `json:"type"`
-	Token string `json:"token"`
+	Token string `json:"token"` //nolint:gosec
 	Code  string `json:"code"`
 }
 
