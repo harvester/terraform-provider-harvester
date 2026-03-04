@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	harvsterv1 "github.com/harvester/harvester/pkg/apis/harvesterhci.io/v1beta1"
@@ -222,7 +223,25 @@ func uploadImageFile(ctx context.Context, c *client.Client, namespace, name, fil
 	if err := waitForUploadAction(ctx, transport, uploadURL); err != nil {
 		return err
 	}
-	return doUpload(ctx, transport, uploadURL, filePath)
+
+	// Retry upload on "already exists" errors (HTTP 400) which can occur when
+	// a previously deleted image's backing volume hasn't been fully cleaned up yet.
+	ticker := time.NewTicker(5 * time.Second)
+	defer ticker.Stop()
+	for {
+		err = doUpload(ctx, transport, uploadURL, filePath)
+		if err == nil {
+			return nil
+		}
+		if !strings.Contains(err.Error(), "already exists") {
+			return err
+		}
+		select {
+		case <-ctx.Done():
+			return fmt.Errorf("upload failed, backing volume still exists: %w", err)
+		case <-ticker.C:
+		}
+	}
 }
 
 // waitForUploadAction polls the upload endpoint until the action becomes available.
