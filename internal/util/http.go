@@ -2,10 +2,12 @@ package util
 
 import (
 	"bytes"
+	"context"
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/base64"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"time"
@@ -114,4 +116,22 @@ func DoGet(url, username, password, token, cacert string, insecure bool) (*http.
 	log.Println("Time to get req: ", float64((time.Since(start))/time.Millisecond), " ms")
 
 	return client.Do(req) //nolint:gosec
+}
+
+// DoPostWithTransport sends a context-aware POST request using the given transport.
+// Use this for requests that need a pre-configured transport (e.g. from rest.TransportFor)
+// which handles TLS, proxy, and authentication settings.
+func DoPostWithTransport(ctx context.Context, url string, body io.Reader, contentType string, transport http.RoundTripper) (*http.Response, error) {
+	if url == "" {
+		return nil, fmt.Errorf("doing post: URL is nil")
+	}
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, body)
+	if err != nil {
+		return nil, err
+	}
+	if contentType != "" {
+		req.Header.Set("Content-Type", contentType)
+	}
+	client := &http.Client{Transport: transport}
+	return client.Do(req) //nolint:gosec // G107: URL comes from trusted provider configuration
 }
