@@ -239,11 +239,11 @@ func waitForUploadAction(ctx context.Context, httpClient *http.Client, uploadURL
 		if err != nil {
 			return fmt.Errorf("failed to create probe request: %w", err)
 		}
-		probeResp, err := httpClient.Do(probeReq)
+		probeResp, err := httpClient.Do(probeReq) //nolint:gosec // URL is constructed from trusted Kubernetes API config
 		if err != nil {
 			return fmt.Errorf("probe request failed: %w", err)
 		}
-		probeResp.Body.Close()
+		_ = probeResp.Body.Close()
 
 		if probeResp.StatusCode != http.StatusForbidden && probeResp.StatusCode != http.StatusNotFound {
 			return nil
@@ -259,7 +259,7 @@ func waitForUploadAction(ctx context.Context, httpClient *http.Client, uploadURL
 
 // doUpload streams the file to the Harvester upload endpoint as multipart/form-data.
 func doUpload(ctx context.Context, httpClient *http.Client, uploadURL, filePath string) error {
-	file, err := os.Open(filePath)
+	file, err := os.Open(filePath) //nolint:gosec // filePath is user-provided via Terraform configuration
 	if err != nil {
 		return fmt.Errorf("failed to open file %s: %w", filePath, err)
 	}
@@ -271,11 +271,11 @@ func doUpload(ctx context.Context, httpClient *http.Client, uploadURL, filePath 
 		part, err := writer.CreateFormFile("chunk", filepath.Base(filePath))
 		if err != nil {
 			pw.CloseWithError(err)
-			file.Close()
+			_ = file.Close()
 			return
 		}
 		_, err = io.Copy(part, file)
-		file.Close()
+		_ = file.Close()
 		if err != nil {
 			pw.CloseWithError(err)
 			return
@@ -285,7 +285,7 @@ func doUpload(ctx context.Context, httpClient *http.Client, uploadURL, filePath 
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, uploadURL, pr)
 	if err != nil {
-		pr.Close()
+		_ = pr.Close()
 		return fmt.Errorf("failed to create upload request: %w", err)
 	}
 	req.Header.Set("Content-Type", writer.FormDataContentType())
@@ -294,7 +294,7 @@ func doUpload(ctx context.Context, httpClient *http.Client, uploadURL, filePath 
 	if err != nil {
 		return fmt.Errorf("upload request failed: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode < http.StatusBadRequest {
 		return nil
