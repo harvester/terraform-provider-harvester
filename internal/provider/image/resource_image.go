@@ -16,6 +16,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/rest"
@@ -209,6 +210,12 @@ func uploadImageFile(ctx context.Context, c *client.Client, namespace, name, fil
 		return fmt.Errorf("failed to stat file %s: %w", filePath, err)
 	}
 
+	// Wait for the Harvester controller to initialize the image before uploading.
+	// The upload action is only available after Initialized=True on the VMI.
+	if err := waitForImageInitialized(ctx, c, namespace, name); err != nil {
+		return err
+	}
+
 	// The upload action is served by the Harvester Steve API server (harvester-system/harvester:8443),
 	// NOT by the standard Kubernetes API. We route through the K8s API service proxy to reach it.
 	uploadURL := fmt.Sprintf("%s/api/v1/namespaces/harvester-system/services/https:harvester:8443/proxy/v1/harvesterhci.io.virtualmachineimages/%s/%s?action=upload&size=%d",
@@ -220,12 +227,9 @@ func uploadImageFile(ctx context.Context, c *client.Client, namespace, name, fil
 		return fmt.Errorf("failed to create transport: %w", err)
 	}
 
-	if err := waitForUploadAction(ctx, transport, uploadURL); err != nil {
-		return err
-	}
-
-	// Retry upload on "already exists" errors (HTTP 400) which can occur when
-	// a previously deleted image's backing volume hasn't been fully cleaned up yet.
+	// Retry upload on transient errors: "already exists" (HTTP 400) can occur when a previously
+	// deleted image's backing volume hasn't been fully cleaned up yet, and "timeout waiting"
+	// (HTTP 500) can occur when the backing image data source pod needs more time to start.
 	ticker := time.NewTicker(5 * time.Second)
 	defer ticker.Stop()
 	for {
@@ -233,40 +237,37 @@ func uploadImageFile(ctx context.Context, c *client.Client, namespace, name, fil
 		if err == nil {
 			return nil
 		}
-		if !strings.Contains(err.Error(), "already exists") {
+		if !strings.Contains(err.Error(), "already exists") && !strings.Contains(err.Error(), "timeout waiting") {
 			return err
 		}
 		select {
 		case <-ctx.Done():
-			return fmt.Errorf("upload failed, backing volume still exists: %w", err)
+			return fmt.Errorf("upload failed: %w", err)
 		case <-ticker.C:
 		}
 	}
 }
 
-// waitForUploadAction polls the upload endpoint until the action becomes available.
-// The Harvester controller must initialize the image before the Steve API
-// exposes the upload action (condition Initialized=False required).
-// The timeout is controlled by ctx, which inherits the Terraform resource timeout
-// (default 5 minutes, customizable via the timeouts block).
-func waitForUploadAction(ctx context.Context, transport http.RoundTripper, uploadURL string) error {
+// waitForImageInitialized polls the VirtualMachineImage status until the Initialized
+// condition is True. The Harvester controller must initialize the image (create the
+// backing image and data source) before the Steve API exposes the upload action.
+func waitForImageInitialized(ctx context.Context, c *client.Client, namespace, name string) error {
 	ticker := time.NewTicker(2 * time.Second)
 	defer ticker.Stop()
 
 	for {
-		probeResp, err := util.DoPostWithTransport(ctx, uploadURL, http.NoBody, "", transport)
+		obj, err := c.HarvesterClient.HarvesterhciV1beta1().VirtualMachineImages(namespace).Get(ctx, name, metav1.GetOptions{})
 		if err != nil {
-			return fmt.Errorf("probe request failed: %w", err)
+			return fmt.Errorf("failed to check image status: %w", err)
 		}
-		_ = probeResp.Body.Close()
-
-		if probeResp.StatusCode != http.StatusForbidden && probeResp.StatusCode != http.StatusNotFound {
-			return nil
+		for _, cond := range obj.Status.Conditions {
+			if cond.Type == harvsterv1.ImageInitialized && string(cond.Status) == string(corev1.ConditionTrue) {
+				return nil
+			}
 		}
-
 		select {
 		case <-ctx.Done():
-			return fmt.Errorf("upload action not available after waiting: %w", ctx.Err())
+			return fmt.Errorf("image not initialized after waiting: %w", ctx.Err())
 		case <-ticker.C:
 		}
 	}
