@@ -213,16 +213,16 @@ func uploadImageFile(ctx context.Context, c *client.Client, namespace, name, fil
 	uploadURL := fmt.Sprintf("%s/api/v1/namespaces/harvester-system/services/https:harvester:8443/proxy/v1/harvesterhci.io.virtualmachineimages/%s/%s?action=upload&size=%d",
 		c.RestConfig.Host, namespace, name, stat.Size())
 
+	// Use rest.TransportFor to get a transport pre-configured with TLS, proxy, and auth from kubeconfig.
 	transport, err := rest.TransportFor(c.RestConfig)
 	if err != nil {
 		return fmt.Errorf("failed to create transport: %w", err)
 	}
-	httpClient := &http.Client{Transport: transport}
 
-	if err := waitForUploadAction(ctx, httpClient, uploadURL); err != nil {
+	if err := waitForUploadAction(ctx, transport, uploadURL); err != nil {
 		return err
 	}
-	return doUpload(ctx, httpClient, uploadURL, filePath)
+	return doUpload(ctx, transport, uploadURL, filePath)
 }
 
 // waitForUploadAction polls the upload endpoint until the action becomes available.
@@ -230,16 +230,12 @@ func uploadImageFile(ctx context.Context, c *client.Client, namespace, name, fil
 // exposes the upload action (condition Initialized=False required).
 // The timeout is controlled by ctx, which inherits the Terraform resource timeout
 // (default 5 minutes, customizable via the timeouts block).
-func waitForUploadAction(ctx context.Context, httpClient *http.Client, uploadURL string) error {
+func waitForUploadAction(ctx context.Context, transport http.RoundTripper, uploadURL string) error {
 	ticker := time.NewTicker(2 * time.Second)
 	defer ticker.Stop()
 
 	for {
-		probeReq, err := http.NewRequestWithContext(ctx, http.MethodPost, uploadURL, http.NoBody)
-		if err != nil {
-			return fmt.Errorf("failed to create probe request: %w", err)
-		}
-		probeResp, err := httpClient.Do(probeReq) //nolint:gosec // URL is constructed from trusted Kubernetes API config
+		probeResp, err := util.DoPostWithTransport(ctx, uploadURL, http.NoBody, "", transport)
 		if err != nil {
 			return fmt.Errorf("probe request failed: %w", err)
 		}
@@ -258,8 +254,8 @@ func waitForUploadAction(ctx context.Context, httpClient *http.Client, uploadURL
 }
 
 // doUpload streams the file to the Harvester upload endpoint as multipart/form-data.
-func doUpload(ctx context.Context, httpClient *http.Client, uploadURL, filePath string) error {
-	file, err := os.Open(filePath) //nolint:gosec // filePath is user-provided via Terraform configuration
+func doUpload(ctx context.Context, transport http.RoundTripper, uploadURL, filePath string) error {
+	file, err := os.Open(filePath) //nolint:gosec // G304: filePath is user-provided via Terraform configuration
 	if err != nil {
 		return fmt.Errorf("failed to open file %s: %w", filePath, err)
 	}
@@ -283,15 +279,9 @@ func doUpload(ctx context.Context, httpClient *http.Client, uploadURL, filePath 
 		pw.CloseWithError(writer.Close())
 	}()
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, uploadURL, pr)
+	resp, err := util.DoPostWithTransport(ctx, uploadURL, pr, writer.FormDataContentType(), transport)
 	if err != nil {
 		_ = pr.Close()
-		return fmt.Errorf("failed to create upload request: %w", err)
-	}
-	req.Header.Set("Content-Type", writer.FormDataContentType())
-
-	resp, err := httpClient.Do(req)
-	if err != nil {
 		return fmt.Errorf("upload request failed: %w", err)
 	}
 	defer func() { _ = resp.Body.Close() }()
