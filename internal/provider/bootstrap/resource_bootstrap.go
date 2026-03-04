@@ -26,7 +26,7 @@ const (
 
 type loginRequestPayload struct {
 	Username     string `json:"username"`
-	Password     string `json:"password"`
+	Password     string `json:"password"` //nolint:gosec // G101: struct field for Rancher API login payload, not a hardcoded credential
 	ResponseType string `json:"responseType"`
 	TTL          int    `json:"ttl"`
 	Description  string `json:"description"`

@@ -53,7 +53,7 @@ func DoPost(url, data, cacert string, insecure bool, headers map[string]string) 
 
 	client.Transport = transport
 
-	return client.Do(req)
+	return client.Do(req) //nolint:gosec // G107: URL comes from trusted provider configuration
 }
 
 func DoGet(url, username, password, token, cacert string, insecure bool) (*http.Response, error) {
@@ -113,5 +113,5 @@ func DoGet(url, username, password, token, cacert string, insecure bool) (*http.
 	// Timings recorded as part of internal metrics
 	log.Println("Time to get req: ", float64((time.Since(start))/time.Millisecond), " ms")
 
-	return client.Do(req)
+	return client.Do(req) //nolint:gosec // G107: URL comes from trusted provider configuration
 }

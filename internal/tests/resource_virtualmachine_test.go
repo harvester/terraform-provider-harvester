@@ -139,40 +139,40 @@ func (b *VMResourceBuilder) SetDiskConfig(name, bus, image string, bootOrder int
 // Build generates the terraform resource string.
 func (b *VMResourceBuilder) Build() string {
 	var sb strings.Builder
-	sb.WriteString(fmt.Sprintf("resource %s \"%s\" {\n", constants.ResourceTypeVirtualMachine, b.name))
+	fmt.Fprintf(&sb, "resource %s \"%s\" {\n", constants.ResourceTypeVirtualMachine, b.name)
 
-	sb.WriteString(fmt.Sprintf("\t%s = \"%s\"\n", constants.FieldCommonName, b.name))
-	sb.WriteString(fmt.Sprintf("\t%s = \"%s\"\n", constants.FieldCommonDescription, b.description))
+	fmt.Fprintf(&sb, "\t%s = \"%s\"\n", constants.FieldCommonName, b.name)
+	fmt.Fprintf(&sb, "\t%s = \"%s\"\n", constants.FieldCommonDescription, b.description)
 
-	sb.WriteString(fmt.Sprintf("\t%s = %d\n", constants.FieldVirtualMachineCPU, b.cpu))
-	sb.WriteString(fmt.Sprintf("\t%s = \"%s\"\n", constants.FieldVirtualMachineMemory, b.memory))
-	sb.WriteString(fmt.Sprintf("\t%s = %s\n", constants.FieldVirtualMachineCPUPinning, strconv.FormatBool(b.cpuPinning)))
-	sb.WriteString(fmt.Sprintf("\t%s = %s\n", constants.FieldVirtualMachineIsolateEmulatorThread, strconv.FormatBool(b.isolateEmulatorThread)))
-	sb.WriteString(fmt.Sprintf("\t%s = \"%s\"\n", constants.FieldVirtualMachineRunStrategy, b.runStrategy))
-	sb.WriteString(fmt.Sprintf("\t%s = \"%s\"\n", constants.FieldVirtualMachineMachineType, b.machineType))
+	fmt.Fprintf(&sb, "\t%s = %d\n", constants.FieldVirtualMachineCPU, b.cpu)
+	fmt.Fprintf(&sb, "\t%s = \"%s\"\n", constants.FieldVirtualMachineMemory, b.memory)
+	fmt.Fprintf(&sb, "\t%s = %s\n", constants.FieldVirtualMachineCPUPinning, strconv.FormatBool(b.cpuPinning))
+	fmt.Fprintf(&sb, "\t%s = %s\n", constants.FieldVirtualMachineIsolateEmulatorThread, strconv.FormatBool(b.isolateEmulatorThread))
+	fmt.Fprintf(&sb, "\t%s = \"%s\"\n", constants.FieldVirtualMachineRunStrategy, b.runStrategy)
+	fmt.Fprintf(&sb, "\t%s = \"%s\"\n", constants.FieldVirtualMachineMachineType, b.machineType)
 
 	if b.networkConfig != nil {
-		sb.WriteString(fmt.Sprintf("\t%s {\n", constants.FieldVirtualMachineNetworkInterface))
-		sb.WriteString(fmt.Sprintf("\t\t%s = \"%s\"\n", constants.FieldNetworkInterfaceName, b.networkConfig.Name))
-		sb.WriteString(fmt.Sprintf("\t\t%s = %d\n", constants.FieldNetworkInterfaceBootOrder, b.networkConfig.BootOrder))
+		fmt.Fprintf(&sb, "\t%s {\n", constants.FieldVirtualMachineNetworkInterface)
+		fmt.Fprintf(&sb, "\t\t%s = \"%s\"\n", constants.FieldNetworkInterfaceName, b.networkConfig.Name)
+		fmt.Fprintf(&sb, "\t\t%s = %d\n", constants.FieldNetworkInterfaceBootOrder, b.networkConfig.BootOrder)
 		sb.WriteString("\t}\n")
 	}
 
 	if b.diskConfig != nil {
-		sb.WriteString(fmt.Sprintf("\t%s {\n", constants.FieldVirtualMachineDisk))
-		sb.WriteString(fmt.Sprintf("\t\t%s = \"%s\"\n", constants.FieldDiskName, b.diskConfig.Name))
-		sb.WriteString(fmt.Sprintf("\t\t%s = \"%s\"\n", constants.FieldDiskType, b.diskConfig.Type))
-		sb.WriteString(fmt.Sprintf("\t\t%s = \"%s\"\n", constants.FieldDiskBus, b.diskConfig.Bus))
-		sb.WriteString(fmt.Sprintf("\t\t%s = %d\n", constants.FieldDiskBootOrder, b.diskConfig.BootOrder))
-		sb.WriteString(fmt.Sprintf("\t\t%s = \"%s\"\n", constants.FieldDiskContainerImageName, b.diskConfig.ContainerImageName))
+		fmt.Fprintf(&sb, "\t%s {\n", constants.FieldVirtualMachineDisk)
+		fmt.Fprintf(&sb, "\t\t%s = \"%s\"\n", constants.FieldDiskName, b.diskConfig.Name)
+		fmt.Fprintf(&sb, "\t\t%s = \"%s\"\n", constants.FieldDiskType, b.diskConfig.Type)
+		fmt.Fprintf(&sb, "\t\t%s = \"%s\"\n", constants.FieldDiskBus, b.diskConfig.Bus)
+		fmt.Fprintf(&sb, "\t\t%s = %d\n", constants.FieldDiskBootOrder, b.diskConfig.BootOrder)
+		fmt.Fprintf(&sb, "\t\t%s = \"%s\"\n", constants.FieldDiskContainerImageName, b.diskConfig.ContainerImageName)
 		sb.WriteString("\t}\n")
 	}
 
 	if b.inputConfig != nil {
-		sb.WriteString(fmt.Sprintf("\t%s {\n", constants.FieldVirtualMachineInput))
-		sb.WriteString(fmt.Sprintf("\t\t%s = \"%s\"\n", constants.FieldInputName, b.inputConfig.Name))
-		sb.WriteString(fmt.Sprintf("\t\t%s = \"%s\"\n", constants.FieldInputType, b.inputConfig.Type))
-		sb.WriteString(fmt.Sprintf("\t\t%s = \"%s\"\n", constants.FieldInputBus, b.inputConfig.Bus))
+		fmt.Fprintf(&sb, "\t%s {\n", constants.FieldVirtualMachineInput)
+		fmt.Fprintf(&sb, "\t\t%s = \"%s\"\n", constants.FieldInputName, b.inputConfig.Name)
+		fmt.Fprintf(&sb, "\t\t%s = \"%s\"\n", constants.FieldInputType, b.inputConfig.Type)
+		fmt.Fprintf(&sb, "\t\t%s = \"%s\"\n", constants.FieldInputBus, b.inputConfig.Bus)
 		sb.WriteString("\t}\n")
 	}
 
