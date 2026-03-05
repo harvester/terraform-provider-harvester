@@ -405,7 +405,6 @@ func TestNetworkInterface(t *testing.T) {
 	}
 }
 
-
 func TestCPU(t *testing.T) {
 	type testcase struct {
 		importer      *VMImporter
