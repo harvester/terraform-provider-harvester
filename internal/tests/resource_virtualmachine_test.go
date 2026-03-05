@@ -170,13 +170,13 @@ func (b *VMResourceBuilder) Build() string {
 	fmt.Fprintf(&sb, "\t%s = \"%s\"\n", constants.FieldVirtualMachineMachineType, b.machineType)
 
 	if b.evictionStrategy != "" {
-		sb.WriteString(fmt.Sprintf("\t%s = \"%s\"\n", constants.FieldVirtualMachineEvictionStrategy, b.evictionStrategy))
+		fmt.Fprintf(&sb, "\t%s = \"%s\"\n", constants.FieldVirtualMachineEvictionStrategy, b.evictionStrategy)
 	}
 	if b.terminationGracePeriodSeconds != nil {
-		sb.WriteString(fmt.Sprintf("\t%s = %d\n", constants.FieldVirtualMachineTerminationGracePeriodSeconds, *b.terminationGracePeriodSeconds))
+		fmt.Fprintf(&sb, "\t%s = %d\n", constants.FieldVirtualMachineTerminationGracePeriodSeconds, *b.terminationGracePeriodSeconds)
 	}
 	if b.osType != "" {
-		sb.WriteString(fmt.Sprintf("\t%s = \"%s\"\n", constants.FieldVirtualMachineOSType, b.osType))
+		fmt.Fprintf(&sb, "\t%s = \"%s\"\n", constants.FieldVirtualMachineOSType, b.osType)
 	}
 
 	if b.networkConfig != nil {
