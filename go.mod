@@ -120,6 +120,7 @@ require (
 	github.com/k8snetworkplumbingwg/whereabouts v0.8.0 // indirect
 	github.com/kube-logging/logging-operator v0.0.0-20250424202944-7e1f9aad6e21 // indirect
 	github.com/kube-logging/logging-operator/pkg/sdk v0.12.0 // indirect
+	github.com/kubeovn/kube-ovn v1.13.0 // indirect
 	github.com/kubereboot/kured v1.13.1 // indirect
 	github.com/kubernetes-csi/external-snapshotter/client/v4 v4.2.0 // indirect
 	github.com/longhorn/go-common-libs v0.0.0-20250510103049-801acb30430c // indirect
@@ -142,6 +143,7 @@ require (
 	github.com/openshift/api v0.0.0 // indirect
 	github.com/openshift/client-go v3.9.0+incompatible // indirect
 	github.com/openshift/custom-resource-status v1.1.2 // indirect
+	github.com/ovn-org/libovsdb v0.7.0 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/posener/complete v1.2.3 // indirect
 	github.com/power-devops/perfstat v0.0.0-20240221224432-82ca36839d55 // indirect

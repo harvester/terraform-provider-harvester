@@ -15,6 +15,9 @@ import (
 	"github.com/harvester/terraform-provider-harvester/internal/provider/image"
 	"github.com/harvester/terraform-provider-harvester/internal/provider/ippool"
 	"github.com/harvester/terraform-provider-harvester/internal/provider/keypair"
+	kubeovnip "github.com/harvester/terraform-provider-harvester/internal/provider/kubeovn_ip"
+	kubeovnsubnet "github.com/harvester/terraform-provider-harvester/internal/provider/kubeovn_subnet"
+	kubeovnvpc "github.com/harvester/terraform-provider-harvester/internal/provider/kubeovn_vpc"
 	"github.com/harvester/terraform-provider-harvester/internal/provider/loadbalancer"
 	"github.com/harvester/terraform-provider-harvester/internal/provider/network"
 	"github.com/harvester/terraform-provider-harvester/internal/provider/setting"
@@ -53,6 +56,9 @@ func Provider() *schema.Provider {
 			constants.ResourceTypeIPPool:          ippool.DataSourceIPPool(),
 			constants.ResourceTypeImage:           image.DataSourceImage(),
 			constants.ResourceTypeKeyPair:         keypair.DataSourceKeypair(),
+			constants.ResourceTypeKubeOVNIP:       kubeovnip.DataSourceKubeOVNIP(),
+			constants.ResourceTypeKubeOVNSubnet:   kubeovnsubnet.DataSourceKubeOVNSubnet(),
+			constants.ResourceTypeKubeOVNVpc:      kubeovnvpc.DataSourceKubeOVNVpc(),
 			constants.ResourceTypeLoadBalancer:    loadbalancer.DataSourceLoadBalancer(),
 			constants.ResourceTypeNetwork:         network.DataSourceNetwork(),
 			constants.ResourceTypeSetting:         setting.DataSourceSetting(),
@@ -68,6 +74,8 @@ func Provider() *schema.Provider {
 			constants.ResourceTypeIPPool:          ippool.ResourceIPPool(),
 			constants.ResourceTypeImage:           image.ResourceImage(),
 			constants.ResourceTypeKeyPair:         keypair.ResourceKeypair(),
+			constants.ResourceTypeKubeOVNSubnet:   kubeovnsubnet.ResourceKubeOVNSubnet(),
+			constants.ResourceTypeKubeOVNVpc:      kubeovnvpc.ResourceKubeOVNVpc(),
 			constants.ResourceTypeLoadBalancer:    loadbalancer.ResourceLoadBalancer(),
 			constants.ResourceTypeNetwork:         network.ResourceNetwork(),
 			constants.ResourceTypeSetting:         setting.ResourceSetting(),
