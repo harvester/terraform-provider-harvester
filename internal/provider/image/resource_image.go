@@ -216,9 +216,8 @@ func uploadImageFile(ctx context.Context, c *client.Client, namespace, name, fil
 		return err
 	}
 
-	// The upload action is served by the Harvester Steve API server (harvester-system/harvester:8443),
-	// NOT by the standard Kubernetes API. We route through the K8s API service proxy to reach it.
-	uploadURL := fmt.Sprintf("%s/api/v1/namespaces/harvester-system/services/https:harvester:8443/proxy/v1/harvesterhci.io.virtualmachineimages/%s/%s?action=upload&size=%d",
+	// The upload action is served by Harvester's Steve API, exposed directly at /v1/harvester/.
+	uploadURL := fmt.Sprintf("%s/v1/harvester/harvesterhci.io.virtualmachineimages/%s/%s?action=upload&size=%d",
 		c.RestConfig.Host, namespace, name, stat.Size())
 
 	// Use rest.TransportFor to get a transport pre-configured with TLS, proxy, and auth from kubeconfig.
