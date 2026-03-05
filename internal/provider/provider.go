@@ -59,6 +59,7 @@ func Provider() *schema.Provider {
 			constants.ResourceTypeVLANConfig:      vlanconfig.DataSourceVLANConfig(),
 			constants.ResourceTypeVirtualMachine:  virtualmachine.DataSourceVirtualMachine(),
 			constants.ResourceTypeVolume:          volume.DataSourceVolume(),
+			constants.ResourceTypeScheduleBackup:  schedulebackup.DataSourceScheduleBackup(),
 		},
 		ResourcesMap: map[string]*schema.Resource{
 			constants.ResourceTypeCloudInitSecret: cloudinitsecret.ResourceCloudInitSecret(),
