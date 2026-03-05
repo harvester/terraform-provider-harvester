@@ -9,7 +9,7 @@ const (
 	FieldKubeOVNSubnetExcludeIPs     = "exclude_ips"
 	FieldKubeOVNSubnetProtocol       = "protocol"
 	FieldKubeOVNSubnetVlan           = "vlan"
-	FieldKubeOVNSubnetProvider       = "provider"
+	FieldKubeOVNSubnetProvider       = "network_provider"
 	FieldKubeOVNSubnetNamespaces     = "namespaces"
 	FieldKubeOVNSubnetEnableDHCP     = "enable_dhcp"
 	FieldKubeOVNSubnetDHCPv4Options  = "dhcp_v4_options"
