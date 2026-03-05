@@ -164,10 +164,10 @@ func (b *VMResourceBuilder) Build() string {
 	fmt.Fprintf(&sb, "\t%s = \"%s\"\n", constants.FieldVirtualMachineMachineType, b.machineType)
 
 	if b.cpuSockets > 0 {
-		sb.WriteString(fmt.Sprintf("\t%s = %d\n", constants.FieldVirtualMachineCPUSockets, b.cpuSockets))
+		fmt.Fprintf(&sb, "\t%s = %d\n", constants.FieldVirtualMachineCPUSockets, b.cpuSockets)
 	}
 	if b.cpuThreads > 0 {
-		sb.WriteString(fmt.Sprintf("\t%s = %d\n", constants.FieldVirtualMachineCPUThreads, b.cpuThreads))
+		fmt.Fprintf(&sb, "\t%s = %d\n", constants.FieldVirtualMachineCPUThreads, b.cpuThreads)
 	}
 	if b.networkConfig != nil {
 		fmt.Fprintf(&sb, "\t%s {\n", constants.FieldVirtualMachineNetworkInterface)
