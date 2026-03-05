@@ -25,6 +25,7 @@ const (
 	FieldVirtualMachineIsolateEmulatorThread = "isolate_emulator_thread"
 	FieldVirtualMachineNodeSelector          = "node_selector"
 	FieldVirtualMachineCreateInitialSnapshot = "create_initial_snapshot"
+	FieldVirtualMachineInstallGuestAgent     = "install_guest_agent"
 
 	StateVirtualMachineStarting = "Starting"
 	StateVirtualMachineRunning  = "Running"

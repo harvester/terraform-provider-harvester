@@ -48,6 +48,7 @@ data "harvester_virtualmachine" "opensuse154" {
 - `hostname` (String)
 - `id` (String) The ID of this resource.
 - `input` (List of Object) (see [below for nested schema](#nestedatt--input))
+- `install_guest_agent` (Boolean) Install qemu-guest-agent via cloud-init. The agent is injected into cloudinit.user_data when user_data_base64 and user_data_secret_name are not set.
 - `isolate_emulator_thread` (Boolean) To enable isolate emulator thread, ensure that at least one node has the CPU manager enabled, also VM CPU pinning must be enabled. Note that enable option will allocate an additional dedicated CPU.
 - `labels` (Map of String)
 - `machine_type` (String)

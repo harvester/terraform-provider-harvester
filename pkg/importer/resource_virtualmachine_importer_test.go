@@ -403,6 +403,111 @@ func TestNetworkInterface(t *testing.T) {
 	}
 }
 
+func TestInstallGuestAgent(t *testing.T) {
+	type testcase struct {
+		name     string
+		importer *VMImporter
+		expected bool
+	}
+
+	testcases := []testcase{
+		{
+			name: "no cloud-init volumes returns false",
+			importer: &VMImporter{
+				VirtualMachine: &kubevirtv1.VirtualMachine{
+					Spec: kubevirtv1.VirtualMachineSpec{
+						Template: &kubevirtv1.VirtualMachineInstanceTemplateSpec{
+							Spec: kubevirtv1.VirtualMachineInstanceSpec{},
+						},
+					},
+				},
+			},
+			expected: false,
+		},
+		{
+			name: "cloud-init with guest agent snippet returns true",
+			importer: &VMImporter{
+				VirtualMachine: &kubevirtv1.VirtualMachine{
+					Spec: kubevirtv1.VirtualMachineSpec{
+						Template: &kubevirtv1.VirtualMachineInstanceTemplateSpec{
+							Spec: kubevirtv1.VirtualMachineInstanceSpec{
+								Volumes: []kubevirtv1.Volume{
+									{
+										Name: "cloudinitdisk",
+										VolumeSource: kubevirtv1.VolumeSource{
+											CloudInitNoCloud: &kubevirtv1.CloudInitNoCloudSource{
+												UserData: "#cloud-config\npackage_update: true\npackages:\n  - qemu-guest-agent\nruncmd:\n  - - systemctl\n    - enable\n    - '--now'\n    - qemu-ga",
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			expected: true,
+		},
+		{
+			name: "cloud-init without guest agent returns false",
+			importer: &VMImporter{
+				VirtualMachine: &kubevirtv1.VirtualMachine{
+					Spec: kubevirtv1.VirtualMachineSpec{
+						Template: &kubevirtv1.VirtualMachineInstanceTemplateSpec{
+							Spec: kubevirtv1.VirtualMachineInstanceSpec{
+								Volumes: []kubevirtv1.Volume{
+									{
+										Name: "cloudinitdisk",
+										VolumeSource: kubevirtv1.VolumeSource{
+											CloudInitNoCloud: &kubevirtv1.CloudInitNoCloudSource{
+												UserData: "#cloud-config\nuser: sles\n",
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			expected: false,
+		},
+		{
+			name: "base64 user data returns false",
+			importer: &VMImporter{
+				VirtualMachine: &kubevirtv1.VirtualMachine{
+					Spec: kubevirtv1.VirtualMachineSpec{
+						Template: &kubevirtv1.VirtualMachineInstanceTemplateSpec{
+							Spec: kubevirtv1.VirtualMachineInstanceSpec{
+								Volumes: []kubevirtv1.Volume{
+									{
+										Name: "cloudinitdisk",
+										VolumeSource: kubevirtv1.VolumeSource{
+											CloudInitNoCloud: &kubevirtv1.CloudInitNoCloudSource{
+												UserDataBase64: "I2Nsb3VkLWNvbmZpZwpwYWNrYWdlczoKICAtIHFlbXUtZ3Vlc3QtYWdlbnQ=",
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			expected: false,
+		},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			result := tc.importer.InstallGuestAgent()
+			if result != tc.expected {
+				t.Errorf("InstallGuestAgent() = %v, expected %v", result, tc.expected)
+			}
+		})
+	}
+}
+
 func TestCPU(t *testing.T) {
 	type testcase struct {
 		importer      *VMImporter
