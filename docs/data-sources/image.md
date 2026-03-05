@@ -38,6 +38,7 @@ data "harvester_image" "opensuse154" {
 - `backend` (String) The backend type of the image, either 'backing-image' or 'cdi'.
 - `checksum` (String) SHA-512 checksum of the image
 - `description` (String) Any text you want that better describes this resource
+- `file_path` (String) Local file path to upload (ISO, raw, or qcow2). Required when source_type is 'upload'.
 - `id` (String) The ID of this resource.
 - `labels` (Map of String)
 - `message` (String)
