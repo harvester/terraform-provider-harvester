@@ -212,11 +212,11 @@ resource "harvester_virtualmachine" "opensuse154" {
 - `namespace` (String)
 - `node_selector` (Map of String) Node selector for scheduling the VM. The key is the label key and the value is the label value.
 - `os_type` (String) OS type annotation for KVM guest optimizations (e.g. linux, windows)
+- `requests` (Block List, Max: 1) Resource requests for the VM. When unset, Harvester's overcommit webhook manages these values. (see [below for nested schema](#nestedblock--requests))
 - `reserved_memory` (String)
 - `restart_after_update` (Boolean) restart vm after the vm is updated
 - `run_strategy` (String) more info: https://kubevirt.io/user-guide/virtual_machines/run_strategies/
 - `secure_boot` (Boolean) EFI must be enabled to use this feature
-- `termination_grace_period_seconds` (Number) Grace period in seconds before the VM is forcefully terminated
 - `ssh_keys` (List of String) The `ssh_keys` are added to `cloudinit.user_data` if:
 1. Both `cloudinit.user_data_base64` and `cloudinit.user_data_secret_name` are empty.
 2. There is no `ssh_authorized_keys` field in `cloudinit.user_data`.
@@ -226,6 +226,7 @@ For example: `sample-tag = sample` adds label `tag.harvesterhci.io/sample-tag: s
 For `ssh-user` tag, the value is added to `cloudinit.user_data` if:
 1. Both `cloudinit.user_data_base64` and `cloudinit.user_data_secret_name` are empty.
 2. There is no `user` field in `cloudinit.user_data`.
+- `termination_grace_period_seconds` (Number) Grace period in seconds before the VM is forcefully terminated
 - `timeouts` (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))
 - `tpm` (Block List, Max: 1) (see [below for nested schema](#nestedblock--tpm))
 
@@ -307,6 +308,15 @@ Optional:
 
 - `bus` (String)
 - `type` (String)
+
+
+<a id="nestedblock--requests"></a>
+### Nested Schema for `requests`
+
+Optional:
+
+- `cpu` (String) CPU request as Kubernetes quantity (e.g. 1, 500m).
+- `memory` (String) Memory request as Kubernetes quantity (e.g. 512Mi, 1Gi).
 
 
 <a id="nestedblock--timeouts"></a>
