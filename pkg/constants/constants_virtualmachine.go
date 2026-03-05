@@ -29,6 +29,7 @@ const (
 	FieldVirtualMachineNodeSelector          = "node_selector"
 	FieldVirtualMachineCreateInitialSnapshot = "create_initial_snapshot"
 	FieldVirtualMachineHostDevice            = "host_device"
+	FieldVirtualMachineInstallGuestAgent     = "install_guest_agent"
 
 	StateVirtualMachineStarting = "Starting"
 	StateVirtualMachineRunning  = "Running"
