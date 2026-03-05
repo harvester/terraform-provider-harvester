@@ -405,7 +405,6 @@ func TestNetworkInterface(t *testing.T) {
 	}
 }
 
-
 func TestCPU(t *testing.T) {
 	type testcase struct {
 		importer      *VMImporter
@@ -494,11 +493,15 @@ func TestResourceRequestsImport(t *testing.T) {
 	}
 	importer := &VMImporter{VirtualMachine: vm}
 
-	if got := importer.CPURequest(); got != "500m" {
-		t.Errorf("CPURequest() = %q, want %q", got, "500m")
+	reqs := importer.Requests()
+	if len(reqs) != 1 {
+		t.Fatalf("Requests() returned %d entries, want 1", len(reqs))
 	}
-	if got := importer.MemoryRequest(); got != "512Mi" {
-		t.Errorf("MemoryRequest() = %q, want %q", got, "512Mi")
+	if got := reqs[0][constants.FieldRequestsCPU]; got != "500m" {
+		t.Errorf("Requests() cpu = %q, want %q", got, "500m")
+	}
+	if got := reqs[0][constants.FieldRequestsMemory]; got != "512Mi" {
+		t.Errorf("Requests() memory = %q, want %q", got, "512Mi")
 	}
 
 	// Test without requests (empty)
@@ -520,11 +523,15 @@ func TestResourceRequestsImport(t *testing.T) {
 	}
 	importerNoReq := &VMImporter{VirtualMachine: vmNoReq}
 
-	if got := importerNoReq.CPURequest(); got != "" {
-		t.Errorf("CPURequest() no requests = %q, want empty", got)
+	reqsNoReq := importerNoReq.Requests()
+	if len(reqsNoReq) != 1 {
+		t.Fatalf("Requests() no requests returned %d entries, want 1", len(reqsNoReq))
 	}
-	if got := importerNoReq.MemoryRequest(); got != "" {
-		t.Errorf("MemoryRequest() no requests = %q, want empty", got)
+	if got := reqsNoReq[0][constants.FieldRequestsCPU]; got != "" {
+		t.Errorf("Requests() no requests cpu = %q, want empty", got)
+	}
+	if got := reqsNoReq[0][constants.FieldRequestsMemory]; got != "" {
+		t.Errorf("Requests() no requests memory = %q, want empty", got)
 	}
 
 	// Test with nil Requests map
@@ -547,10 +554,14 @@ func TestResourceRequestsImport(t *testing.T) {
 	}
 	importerNilReq := &VMImporter{VirtualMachine: vmNilReq}
 
-	if got := importerNilReq.CPURequest(); got != "" {
-		t.Errorf("CPURequest() nil requests = %q, want empty", got)
+	reqsNil := importerNilReq.Requests()
+	if len(reqsNil) != 1 {
+		t.Fatalf("Requests() nil returned %d entries, want 1", len(reqsNil))
 	}
-	if got := importerNilReq.MemoryRequest(); got != "" {
-		t.Errorf("MemoryRequest() nil requests = %q, want empty", got)
+	if got := reqsNil[0][constants.FieldRequestsCPU]; got != "" {
+		t.Errorf("Requests() nil cpu = %q, want empty", got)
+	}
+	if got := reqsNil[0][constants.FieldRequestsMemory]; got != "" {
+		t.Errorf("Requests() nil memory = %q, want empty", got)
 	}
 }
