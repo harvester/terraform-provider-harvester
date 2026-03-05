@@ -158,7 +158,7 @@ func (b *VMResourceBuilder) Build() string {
 	fmt.Fprintf(&sb, "\t%s = \"%s\"\n", constants.FieldVirtualMachineMachineType, b.machineType)
 
 	if b.hugepages != "" {
-		sb.WriteString(fmt.Sprintf("\t%s = \"%s\"\n", constants.FieldVirtualMachineHugepages, b.hugepages))
+		fmt.Fprintf(&sb, "\t%s = \"%s\"\n", constants.FieldVirtualMachineHugepages, b.hugepages)
 	}
 
 	if b.networkConfig != nil {
