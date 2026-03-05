@@ -71,17 +71,28 @@ please use %s instead of this deprecated field:
 			Optional: true,
 			Default:  "1Gi",
 		},
-		constants.FieldVirtualMachineCPURequest: {
-			Type:        schema.TypeString,
+		constants.FieldVirtualMachineRequests: {
+			Type:        schema.TypeList,
 			Optional:    true,
 			Computed:    true,
-			Description: "CPU request as Kubernetes quantity (e.g. 1, 500m). When unset, Harvester's overcommit webhook manages this value. Set explicitly for per-VM overcommit control.",
-		},
-		constants.FieldVirtualMachineMemoryRequest: {
-			Type:        schema.TypeString,
-			Optional:    true,
-			Computed:    true,
-			Description: "Memory request as Kubernetes quantity (e.g. 512Mi, 1Gi). When unset, Harvester's overcommit webhook manages this value. Set explicitly for per-VM overcommit control.",
+			MaxItems:    1,
+			Description: "Resource requests for the VM. When unset, Harvester's overcommit webhook manages these values.",
+			Elem: &schema.Resource{
+				Schema: map[string]*schema.Schema{
+					constants.FieldRequestsCPU: {
+						Type:        schema.TypeString,
+						Optional:    true,
+						Computed:    true,
+						Description: "CPU request as Kubernetes quantity (e.g. 1, 500m).",
+					},
+					constants.FieldRequestsMemory: {
+						Type:        schema.TypeString,
+						Optional:    true,
+						Computed:    true,
+						Description: "Memory request as Kubernetes quantity (e.g. 512Mi, 1Gi).",
+					},
+				},
+			},
 		},
 		constants.FieldVirtualMachineSSHKeys: {
 			Type:     schema.TypeList,

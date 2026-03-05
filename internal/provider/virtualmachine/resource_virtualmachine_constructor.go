@@ -72,35 +72,26 @@ func (c *Constructor) Setup() util.Processors {
 			},
 		},
 		{
-			Field: constants.FieldVirtualMachineCPURequest,
+			Field: constants.FieldVirtualMachineRequests,
 			Parser: func(i interface{}) error {
-				cpuRequest := i.(string)
-				if cpuRequest != "" {
-					quantity, err := resource.ParseQuantity(cpuRequest)
+				r := i.(map[string]interface{})
+				requests := corev1.ResourceList{}
+				if cpuStr, ok := r[constants.FieldRequestsCPU].(string); ok && cpuStr != "" {
+					quantity, err := resource.ParseQuantity(cpuStr)
 					if err != nil {
-						return fmt.Errorf("invalid cpu_request %q: %w", cpuRequest, err)
+						return fmt.Errorf("invalid requests cpu %q: %w", cpuStr, err)
 					}
-					if vmBuilder.VirtualMachine.Spec.Template.Spec.Domain.Resources.Requests == nil {
-						vmBuilder.VirtualMachine.Spec.Template.Spec.Domain.Resources.Requests = corev1.ResourceList{}
-					}
-					vmBuilder.VirtualMachine.Spec.Template.Spec.Domain.Resources.Requests[corev1.ResourceCPU] = quantity
+					requests[corev1.ResourceCPU] = quantity
 				}
-				return nil
-			},
-		},
-		{
-			Field: constants.FieldVirtualMachineMemoryRequest,
-			Parser: func(i interface{}) error {
-				memoryRequest := i.(string)
-				if memoryRequest != "" {
-					quantity, err := resource.ParseQuantity(memoryRequest)
+				if memStr, ok := r[constants.FieldRequestsMemory].(string); ok && memStr != "" {
+					quantity, err := resource.ParseQuantity(memStr)
 					if err != nil {
-						return fmt.Errorf("invalid memory_request %q: %w", memoryRequest, err)
+						return fmt.Errorf("invalid requests memory %q: %w", memStr, err)
 					}
-					if vmBuilder.VirtualMachine.Spec.Template.Spec.Domain.Resources.Requests == nil {
-						vmBuilder.VirtualMachine.Spec.Template.Spec.Domain.Resources.Requests = corev1.ResourceList{}
-					}
-					vmBuilder.VirtualMachine.Spec.Template.Spec.Domain.Resources.Requests[corev1.ResourceMemory] = quantity
+					requests[corev1.ResourceMemory] = quantity
+				}
+				if len(requests) > 0 {
+					vmBuilder.VirtualMachine.Spec.Template.Spec.Domain.Resources.Requests = requests
 				}
 				return nil
 			},
