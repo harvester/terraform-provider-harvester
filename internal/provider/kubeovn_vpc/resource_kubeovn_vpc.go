@@ -112,12 +112,23 @@ func resourceKubeOVNVpcDelete(ctx context.Context, d *schema.ResourceData, meta 
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	err = c.KubeOVNClient.KubeovnV1().Vpcs().Delete(ctx, name, metav1.DeleteOptions{})
-	if err != nil && !apierrors.IsNotFound(err) {
-		return diag.FromErr(err)
+	// Retry delete to handle the case where subnets are still being cleaned up
+	// by KubeOVN controller (webhook rejects VPC deletion while subnets exist).
+	deadline := time.After(d.Timeout(schema.TimeoutDelete))
+	for {
+		err = c.KubeOVNClient.KubeovnV1().Vpcs().Delete(ctx, name, metav1.DeleteOptions{})
+		if err == nil || apierrors.IsNotFound(err) {
+			d.SetId("")
+			return nil
+		}
+		select {
+		case <-deadline:
+			return diag.FromErr(err)
+		case <-ctx.Done():
+			return diag.FromErr(ctx.Err())
+		case <-time.After(5 * time.Second):
+		}
 	}
-	d.SetId("")
-	return nil
 }
 
 func resourceKubeOVNVpcImport(d *schema.ResourceData, obj *kubeovnv1.Vpc) error {
