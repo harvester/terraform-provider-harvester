@@ -29,6 +29,7 @@ require (
 	github.com/hashicorp/terraform-plugin-log v0.9.0
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.37.0
 	github.com/k8snetworkplumbingwg/network-attachment-definition-client v1.7.6
+	github.com/kubeovn/kube-ovn v1.14.10
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/rancher/wrangler/v3 v3.2.3-rc.3
 	github.com/sirupsen/logrus v1.9.3
@@ -115,7 +116,6 @@ require (
 	github.com/k8snetworkplumbingwg/whereabouts v0.9.2 // indirect
 	github.com/kube-logging/logging-operator v0.0.0-20250424202944-7e1f9aad6e21 // indirect
 	github.com/kube-logging/logging-operator/pkg/sdk v0.12.0 // indirect
-	github.com/kubeovn/kube-ovn v1.14.10 // indirect
 	github.com/kubereboot/kured v1.13.1 // indirect
 	github.com/kubernetes-csi/external-snapshotter/client/v4 v4.2.0 // indirect
 	github.com/longhorn/go-common-libs v0.0.0-20250215052214-151615b29f8e // indirect
