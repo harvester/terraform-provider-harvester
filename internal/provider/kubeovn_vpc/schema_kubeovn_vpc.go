@@ -23,8 +23,8 @@ func Schema() map[string]*schema.Schema {
 					constants.FieldKubeOVNStaticRoutePolicy: {
 						Type:         schema.TypeString,
 						Optional:     true,
-						Default:      "",
-						ValidateFunc: validation.StringInSlice([]string{"", "policySrc"}, false),
+						Computed:     true,
+						ValidateFunc: validation.StringInSlice([]string{"", "policySrc", "policyDst"}, false),
 					},
 					constants.FieldKubeOVNStaticRouteCIDR: {
 						Type:     schema.TypeString,
