@@ -21,12 +21,19 @@ import (
 	kubeovneip "github.com/harvester/terraform-provider-harvester/internal/provider/kubeovn_iptables_eip"
 	kubeovnfip "github.com/harvester/terraform-provider-harvester/internal/provider/kubeovn_iptables_fip_rule"
 	kubeovnsnat "github.com/harvester/terraform-provider-harvester/internal/provider/kubeovn_iptables_snat_rule"
+	kubeovnovndnat "github.com/harvester/terraform-provider-harvester/internal/provider/kubeovn_ovn_dnat_rule"
+	kubeovnovneip "github.com/harvester/terraform-provider-harvester/internal/provider/kubeovn_ovn_eip"
+	kubeovnovnfip "github.com/harvester/terraform-provider-harvester/internal/provider/kubeovn_ovn_fip"
+	kubeovnovnsnat "github.com/harvester/terraform-provider-harvester/internal/provider/kubeovn_ovn_snat_rule"
 	kubeovnprovnet "github.com/harvester/terraform-provider-harvester/internal/provider/kubeovn_provider_network"
 	kubeovnqos "github.com/harvester/terraform-provider-harvester/internal/provider/kubeovn_qos_policy"
 	kubeovnsg "github.com/harvester/terraform-provider-harvester/internal/provider/kubeovn_security_group"
 	kubeovnsubnet "github.com/harvester/terraform-provider-harvester/internal/provider/kubeovn_subnet"
+	kubeovnslr "github.com/harvester/terraform-provider-harvester/internal/provider/kubeovn_switch_lb_rule"
+	kubeovnvip "github.com/harvester/terraform-provider-harvester/internal/provider/kubeovn_vip"
 	kubeovnvlan "github.com/harvester/terraform-provider-harvester/internal/provider/kubeovn_vlan"
 	kubeovnvpc "github.com/harvester/terraform-provider-harvester/internal/provider/kubeovn_vpc"
+	kubeovnvpcdns "github.com/harvester/terraform-provider-harvester/internal/provider/kubeovn_vpc_dns"
 	kubeovnnatgw "github.com/harvester/terraform-provider-harvester/internal/provider/kubeovn_vpc_nat_gateway"
 	"github.com/harvester/terraform-provider-harvester/internal/provider/loadbalancer"
 	"github.com/harvester/terraform-provider-harvester/internal/provider/network"
@@ -79,6 +86,13 @@ func Provider() *schema.Provider {
 			constants.ResourceTypeKubeOVNSubnet:           kubeovnsubnet.DataSourceKubeOVNSubnet(),
 			constants.ResourceTypeKubeOVNVlan:             kubeovnvlan.DataSourceKubeOVNVlan(),
 			constants.ResourceTypeKubeOVNVpc:              kubeovnvpc.DataSourceKubeOVNVpc(),
+			constants.ResourceTypeKubeOVNOvnDnatRule:      kubeovnovndnat.DataSourceKubeOVNOvnDnatRule(),
+			constants.ResourceTypeKubeOVNOvnEip:           kubeovnovneip.DataSourceKubeOVNOvnEip(),
+			constants.ResourceTypeKubeOVNOvnFip:           kubeovnovnfip.DataSourceKubeOVNOvnFip(),
+			constants.ResourceTypeKubeOVNOvnSnatRule:      kubeovnovnsnat.DataSourceKubeOVNOvnSnatRule(),
+			constants.ResourceTypeKubeOVNSwitchLBRule:     kubeovnslr.DataSourceKubeOVNSwitchLBRule(),
+			constants.ResourceTypeKubeOVNVip:              kubeovnvip.DataSourceKubeOVNVip(),
+			constants.ResourceTypeKubeOVNVpcDns:           kubeovnvpcdns.DataSourceKubeOVNVpcDns(),
 			constants.ResourceTypeKubeOVNVpcNatGateway:    kubeovnnatgw.DataSourceKubeOVNVpcNatGateway(),
 			constants.ResourceTypeLoadBalancer:            loadbalancer.DataSourceLoadBalancer(),
 			constants.ResourceTypeNetwork:                 network.DataSourceNetwork(),
@@ -107,6 +121,13 @@ func Provider() *schema.Provider {
 			constants.ResourceTypeKubeOVNSubnet:           kubeovnsubnet.ResourceKubeOVNSubnet(),
 			constants.ResourceTypeKubeOVNVlan:             kubeovnvlan.ResourceKubeOVNVlan(),
 			constants.ResourceTypeKubeOVNVpc:              kubeovnvpc.ResourceKubeOVNVpc(),
+			constants.ResourceTypeKubeOVNOvnDnatRule:      kubeovnovndnat.ResourceKubeOVNOvnDnatRule(),
+			constants.ResourceTypeKubeOVNOvnEip:           kubeovnovneip.ResourceKubeOVNOvnEip(),
+			constants.ResourceTypeKubeOVNOvnFip:           kubeovnovnfip.ResourceKubeOVNOvnFip(),
+			constants.ResourceTypeKubeOVNOvnSnatRule:      kubeovnovnsnat.ResourceKubeOVNOvnSnatRule(),
+			constants.ResourceTypeKubeOVNSwitchLBRule:     kubeovnslr.ResourceKubeOVNSwitchLBRule(),
+			constants.ResourceTypeKubeOVNVip:              kubeovnvip.ResourceKubeOVNVip(),
+			constants.ResourceTypeKubeOVNVpcDns:           kubeovnvpcdns.ResourceKubeOVNVpcDns(),
 			constants.ResourceTypeKubeOVNVpcNatGateway:    kubeovnnatgw.ResourceKubeOVNVpcNatGateway(),
 			constants.ResourceTypeLoadBalancer:            loadbalancer.ResourceLoadBalancer(),
 			constants.ResourceTypeNetwork:                 network.ResourceNetwork(),
