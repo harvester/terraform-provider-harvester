@@ -20,7 +20,7 @@ func flattenEgressPolicies(policies []kubeovnv1.VpcEgressGatewayPolicy) []map[st
 }
 
 func flattenBFDConfig(bfd kubeovnv1.VpcEgressGatewayBFDConfig) []map[string]interface{} {
-	if !bfd.Enabled && bfd.MinRX == 0 && bfd.MinTX == 0 && bfd.Multiplier == 0 {
+	if !bfd.Enabled {
 		return nil
 	}
 	return []map[string]interface{}{

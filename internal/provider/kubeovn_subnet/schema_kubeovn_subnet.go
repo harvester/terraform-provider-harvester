@@ -28,6 +28,7 @@ func Schema() map[string]*schema.Schema {
 		constants.FieldKubeOVNSubnetExcludeIPs: {
 			Type:     schema.TypeList,
 			Optional: true,
+			Computed: true,
 			Elem:     &schema.Schema{Type: schema.TypeString},
 		},
 		constants.FieldKubeOVNSubnetProtocol: {
