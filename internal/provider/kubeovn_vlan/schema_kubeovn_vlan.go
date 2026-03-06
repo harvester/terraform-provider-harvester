@@ -18,7 +18,7 @@ func Schema() map[string]*schema.Schema {
 		},
 		constants.FieldKubeOVNVlanProvider: {
 			Type:     schema.TypeString,
-			Optional: true,
+			Required: true,
 		},
 		constants.FieldKubeOVNVlanStatusSubnets: {
 			Type:     schema.TypeList,
