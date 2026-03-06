@@ -7,7 +7,7 @@ import (
 	"github.com/harvester/terraform-provider-harvester/pkg/helper"
 )
 
-func flattenSlrPorts(ports []kubeovnv1.SlrPort) []map[string]interface{} {
+func flattenSlrPorts(ports []kubeovnv1.SwitchLBRulePort) []map[string]interface{} {
 	result := make([]map[string]interface{}, 0, len(ports))
 	for _, port := range ports {
 		result = append(result, map[string]interface{}{

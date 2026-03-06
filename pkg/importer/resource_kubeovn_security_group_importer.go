@@ -7,7 +7,7 @@ import (
 	"github.com/harvester/terraform-provider-harvester/pkg/helper"
 )
 
-func flattenSgRules(rules []*kubeovnv1.SgRule) []map[string]interface{} {
+func flattenSgRules(rules []kubeovnv1.SecurityGroupRule) []map[string]interface{} {
 	result := make([]map[string]interface{}, 0, len(rules))
 	for _, rule := range rules {
 		result = append(result, map[string]interface{}{

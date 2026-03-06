@@ -32,7 +32,7 @@ func (c *Constructor) Setup() util.Processors {
 			Field: constants.FieldKubeOVNQoSBandwidthLimitRules,
 			Parser: func(i interface{}) error {
 				r := i.(map[string]interface{})
-				c.QoS.Spec.BandwidthLimitRules = append(c.QoS.Spec.BandwidthLimitRules, &kubeovnv1.QoSPolicyBandwidthLimitRule{
+				c.QoS.Spec.BandwidthLimitRules = append(c.QoS.Spec.BandwidthLimitRules, kubeovnv1.QoSPolicyBandwidthLimitRule{
 					Name:       r[constants.FieldKubeOVNQoSRuleName].(string),
 					Interface:  r[constants.FieldKubeOVNQoSRuleInterface].(string),
 					RateMax:    r[constants.FieldKubeOVNQoSRuleRateMax].(string),
