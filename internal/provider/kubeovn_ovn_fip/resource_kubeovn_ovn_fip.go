@@ -1,0 +1,129 @@
+package kubeovn_ovn_fip
+
+import (
+	"context"
+	"time"
+
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	kubeovnv1 "github.com/kubeovn/kube-ovn/pkg/apis/kubeovn/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/harvester/terraform-provider-harvester/internal/config"
+	"github.com/harvester/terraform-provider-harvester/internal/util"
+	"github.com/harvester/terraform-provider-harvester/pkg/constants"
+	"github.com/harvester/terraform-provider-harvester/pkg/helper"
+	"github.com/harvester/terraform-provider-harvester/pkg/importer"
+)
+
+func ResourceKubeOVNOvnFip() *schema.Resource {
+	return &schema.Resource{
+		CreateContext: resourceKubeOVNOvnFipCreate,
+		ReadContext:   resourceKubeOVNOvnFipRead,
+		UpdateContext: resourceKubeOVNOvnFipUpdate,
+		DeleteContext: resourceKubeOVNOvnFipDelete,
+		Importer: &schema.ResourceImporter{
+			StateContext: schema.ImportStatePassthroughContext,
+		},
+		Schema: Schema(),
+		Timeouts: &schema.ResourceTimeout{
+			Create:  schema.DefaultTimeout(2 * time.Minute),
+			Read:    schema.DefaultTimeout(2 * time.Minute),
+			Update:  schema.DefaultTimeout(2 * time.Minute),
+			Delete:  schema.DefaultTimeout(2 * time.Minute),
+			Default: schema.DefaultTimeout(2 * time.Minute),
+		},
+	}
+}
+
+func resourceKubeOVNOvnFipCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	c, err := meta.(*config.Config).K8sClient()
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	name := d.Get(constants.FieldCommonName).(string)
+	toCreate, err := util.ResourceConstruct(d, Creator(name))
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	obj, err := c.KubeOVNClient.KubeovnV1().OvnFips().Create(ctx, toCreate.(*kubeovnv1.OvnFip), metav1.CreateOptions{})
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	d.SetId(helper.BuildID("", name))
+	return diag.FromErr(resourceKubeOVNOvnFipImport(d, obj))
+}
+
+func resourceKubeOVNOvnFipRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	c, err := meta.(*config.Config).K8sClient()
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	_, name, err := helper.IDParts(d.Id())
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	obj, err := c.KubeOVNClient.KubeovnV1().OvnFips().Get(ctx, name, metav1.GetOptions{})
+	if err != nil {
+		if apierrors.IsNotFound(err) {
+			d.SetId("")
+			return nil
+		}
+		return diag.FromErr(err)
+	}
+	return diag.FromErr(resourceKubeOVNOvnFipImport(d, obj))
+}
+
+func resourceKubeOVNOvnFipUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	c, err := meta.(*config.Config).K8sClient()
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	_, name, err := helper.IDParts(d.Id())
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	obj, err := c.KubeOVNClient.KubeovnV1().OvnFips().Get(ctx, name, metav1.GetOptions{})
+	if err != nil {
+		if apierrors.IsNotFound(err) {
+			d.SetId("")
+			return nil
+		}
+		return diag.FromErr(err)
+	}
+	toUpdate, err := util.ResourceConstruct(d, Updater(obj))
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	_, err = c.KubeOVNClient.KubeovnV1().OvnFips().Update(ctx, toUpdate.(*kubeovnv1.OvnFip), metav1.UpdateOptions{})
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	return resourceKubeOVNOvnFipRead(ctx, d, meta)
+}
+
+func resourceKubeOVNOvnFipDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	c, err := meta.(*config.Config).K8sClient()
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	_, name, err := helper.IDParts(d.Id())
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	err = c.KubeOVNClient.KubeovnV1().OvnFips().Delete(ctx, name, metav1.DeleteOptions{})
+	if err != nil && !apierrors.IsNotFound(err) {
+		return diag.FromErr(err)
+	}
+	d.SetId("")
+	return nil
+}
+
+func resourceKubeOVNOvnFipImport(d *schema.ResourceData, obj *kubeovnv1.OvnFip) error {
+	stateGetter, err := importer.ResourceKubeOVNOvnFipStateGetter(obj)
+	if err != nil {
+		return err
+	}
+	return util.ResourceStatesSet(d, stateGetter)
+}
