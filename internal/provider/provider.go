@@ -34,6 +34,7 @@ import (
 	kubeovnvlan "github.com/harvester/terraform-provider-harvester/internal/provider/kubeovn_vlan"
 	kubeovnvpc "github.com/harvester/terraform-provider-harvester/internal/provider/kubeovn_vpc"
 	kubeovnvpcdns "github.com/harvester/terraform-provider-harvester/internal/provider/kubeovn_vpc_dns"
+	kubeovnegw "github.com/harvester/terraform-provider-harvester/internal/provider/kubeovn_vpc_egress_gateway"
 	kubeovnnatgw "github.com/harvester/terraform-provider-harvester/internal/provider/kubeovn_vpc_nat_gateway"
 	"github.com/harvester/terraform-provider-harvester/internal/provider/loadbalancer"
 	"github.com/harvester/terraform-provider-harvester/internal/provider/network"
@@ -93,6 +94,7 @@ func Provider() *schema.Provider {
 			constants.ResourceTypeKubeOVNSwitchLBRule:     kubeovnslr.DataSourceKubeOVNSwitchLBRule(),
 			constants.ResourceTypeKubeOVNVip:              kubeovnvip.DataSourceKubeOVNVip(),
 			constants.ResourceTypeKubeOVNVpcDns:           kubeovnvpcdns.DataSourceKubeOVNVpcDns(),
+			constants.ResourceTypeKubeOVNVpcEgressGateway: kubeovnegw.DataSourceKubeOVNVpcEgressGateway(),
 			constants.ResourceTypeKubeOVNVpcNatGateway:    kubeovnnatgw.DataSourceKubeOVNVpcNatGateway(),
 			constants.ResourceTypeLoadBalancer:            loadbalancer.DataSourceLoadBalancer(),
 			constants.ResourceTypeNetwork:                 network.DataSourceNetwork(),
@@ -128,6 +130,7 @@ func Provider() *schema.Provider {
 			constants.ResourceTypeKubeOVNSwitchLBRule:     kubeovnslr.ResourceKubeOVNSwitchLBRule(),
 			constants.ResourceTypeKubeOVNVip:              kubeovnvip.ResourceKubeOVNVip(),
 			constants.ResourceTypeKubeOVNVpcDns:           kubeovnvpcdns.ResourceKubeOVNVpcDns(),
+			constants.ResourceTypeKubeOVNVpcEgressGateway: kubeovnegw.ResourceKubeOVNVpcEgressGateway(),
 			constants.ResourceTypeKubeOVNVpcNatGateway:    kubeovnnatgw.ResourceKubeOVNVpcNatGateway(),
 			constants.ResourceTypeLoadBalancer:            loadbalancer.ResourceLoadBalancer(),
 			constants.ResourceTypeNetwork:                 network.ResourceNetwork(),
