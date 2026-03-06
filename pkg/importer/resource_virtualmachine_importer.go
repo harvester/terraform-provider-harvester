@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"slices"
+	"strings"
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -387,10 +388,19 @@ func exportLabelSelector(selector *metav1.LabelSelector) []map[string]interface{
 	return []map[string]interface{}{result}
 }
 
-// exportNodeSelectorRequirements exports node selector requirements to Terraform state format
+// isHarvesterInjectedNodeSelector returns true if the requirement was injected by Harvester webhook
+func isHarvesterInjectedNodeSelector(req corev1.NodeSelectorRequirement) bool {
+	return strings.HasPrefix(req.Key, "network.harvesterhci.io/")
+}
+
+// exportNodeSelectorRequirements exports node selector requirements to Terraform state format,
+// filtering out Harvester-injected expressions (e.g. network.harvesterhci.io/mgmt)
 func exportNodeSelectorRequirements(requirements []corev1.NodeSelectorRequirement) []map[string]interface{} {
 	result := make([]map[string]interface{}, 0, len(requirements))
 	for _, req := range requirements {
+		if isHarvesterInjectedNodeSelector(req) {
+			continue
+		}
 		values := make([]interface{}, 0, len(req.Values))
 		for _, v := range req.Values {
 			values = append(values, v)
@@ -420,10 +430,14 @@ func exportNodeSelectorTerms(terms []corev1.NodeSelectorTerm) []map[string]inter
 	return result
 }
 
-// exportPodAffinityTerms exports pod affinity terms to Terraform state format
+// exportPodAffinityTerms exports pod affinity terms to Terraform state format,
+// filtering out Harvester-injected terms
 func exportPodAffinityTerms(terms []corev1.PodAffinityTerm) []map[string]interface{} {
 	result := make([]map[string]interface{}, 0, len(terms))
 	for _, term := range terms {
+		if isHarvesterInjectedPodAffinityTerm(term) {
+			continue
+		}
 		termMap := map[string]interface{}{
 			constants.FieldTopologyKey: term.TopologyKey,
 		}
@@ -445,10 +459,27 @@ func exportPodAffinityTerms(terms []corev1.PodAffinityTerm) []map[string]interfa
 	return result
 }
 
-// exportWeightedPodAffinityTerms exports weighted pod affinity terms to Terraform state format
+// isHarvesterInjectedPodAffinityTerm returns true if the term was injected by Harvester webhook
+func isHarvesterInjectedPodAffinityTerm(term corev1.PodAffinityTerm) bool {
+	if term.LabelSelector == nil {
+		return false
+	}
+	for _, expr := range term.LabelSelector.MatchExpressions {
+		if strings.HasPrefix(expr.Key, "harvesterhci.io/") {
+			return true
+		}
+	}
+	return false
+}
+
+// exportWeightedPodAffinityTerms exports weighted pod affinity terms to Terraform state format,
+// filtering out Harvester-injected terms (e.g. harvesterhci.io/creator)
 func exportWeightedPodAffinityTerms(terms []corev1.WeightedPodAffinityTerm) []map[string]interface{} {
 	result := make([]map[string]interface{}, 0, len(terms))
 	for _, term := range terms {
+		if isHarvesterInjectedPodAffinityTerm(term.PodAffinityTerm) {
+			continue
+		}
 		termMap := map[string]interface{}{
 			constants.FieldPreferredWeight: int(term.Weight),
 			constants.FieldPodAffinityTerm: exportPodAffinityTerms([]corev1.PodAffinityTerm{term.PodAffinityTerm}),
@@ -504,11 +535,15 @@ func (v *VMImporter) PodAffinity() []map[string]interface{} {
 	result := map[string]interface{}{}
 
 	if len(podAffinity.RequiredDuringSchedulingIgnoredDuringExecution) > 0 {
-		result[constants.FieldPodAffinityRequired] = exportPodAffinityTerms(podAffinity.RequiredDuringSchedulingIgnoredDuringExecution)
+		if terms := exportPodAffinityTerms(podAffinity.RequiredDuringSchedulingIgnoredDuringExecution); len(terms) > 0 {
+			result[constants.FieldPodAffinityRequired] = terms
+		}
 	}
 
 	if len(podAffinity.PreferredDuringSchedulingIgnoredDuringExecution) > 0 {
-		result[constants.FieldPodAffinityPreferred] = exportWeightedPodAffinityTerms(podAffinity.PreferredDuringSchedulingIgnoredDuringExecution)
+		if terms := exportWeightedPodAffinityTerms(podAffinity.PreferredDuringSchedulingIgnoredDuringExecution); len(terms) > 0 {
+			result[constants.FieldPodAffinityPreferred] = terms
+		}
 	}
 
 	if len(result) == 0 {
@@ -527,11 +562,15 @@ func (v *VMImporter) PodAntiAffinity() []map[string]interface{} {
 	result := map[string]interface{}{}
 
 	if len(podAntiAffinity.RequiredDuringSchedulingIgnoredDuringExecution) > 0 {
-		result[constants.FieldPodAffinityRequired] = exportPodAffinityTerms(podAntiAffinity.RequiredDuringSchedulingIgnoredDuringExecution)
+		if terms := exportPodAffinityTerms(podAntiAffinity.RequiredDuringSchedulingIgnoredDuringExecution); len(terms) > 0 {
+			result[constants.FieldPodAffinityRequired] = terms
+		}
 	}
 
 	if len(podAntiAffinity.PreferredDuringSchedulingIgnoredDuringExecution) > 0 {
-		result[constants.FieldPodAffinityPreferred] = exportWeightedPodAffinityTerms(podAntiAffinity.PreferredDuringSchedulingIgnoredDuringExecution)
+		if terms := exportWeightedPodAffinityTerms(podAntiAffinity.PreferredDuringSchedulingIgnoredDuringExecution); len(terms) > 0 {
+			result[constants.FieldPodAffinityPreferred] = terms
+		}
 	}
 
 	if len(result) == 0 {
