@@ -19,19 +19,15 @@ func ResourceKubeOVNVipStateGetter(obj *kubeovnv1.Vip) (*StateGetter, error) {
 		constants.FieldKubeOVNVipV4IP:          obj.Spec.V4ip,
 		constants.FieldKubeOVNVipV6IP:          obj.Spec.V6ip,
 		constants.FieldKubeOVNVipMacAddress:    obj.Spec.MacAddress,
-		constants.FieldKubeOVNVipParentV4IP:    obj.Spec.ParentV4ip,
-		constants.FieldKubeOVNVipParentV6IP:    obj.Spec.ParentV6ip,
-		constants.FieldKubeOVNVipParentMac:     obj.Spec.ParentMac,
 		constants.FieldKubeOVNVipSelector:      obj.Spec.Selector,
 		constants.FieldKubeOVNVipAttachSubnets: obj.Spec.AttachSubnets,
-		constants.FieldKubeOVNVipStatusReady:   obj.Status.Ready,
 		constants.FieldKubeOVNVipStatusV4IP:    obj.Status.V4ip,
 		constants.FieldKubeOVNVipStatusV6IP:    obj.Status.V6ip,
 		constants.FieldKubeOVNVipStatusMac:     obj.Status.Mac,
 		constants.FieldKubeOVNVipStatusType:    obj.Status.Type,
 	}
 
-	if obj.Status.Ready {
+	if obj.Status.V4ip != "" || obj.Status.V6ip != "" {
 		states[constants.FieldCommonState] = constants.StateCommonReady
 	} else {
 		states[constants.FieldCommonState] = constants.StateCommonActive

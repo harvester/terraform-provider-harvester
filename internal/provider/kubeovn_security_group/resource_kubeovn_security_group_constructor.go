@@ -13,9 +13,9 @@ type Constructor struct {
 	SG *kubeovnv1.SecurityGroup
 }
 
-func parseSgRule(i interface{}) *kubeovnv1.SgRule {
+func parseSgRule(i interface{}) kubeovnv1.SecurityGroupRule {
 	r := i.(map[string]interface{})
-	return &kubeovnv1.SgRule{
+	return kubeovnv1.SecurityGroupRule{
 		IPVersion:           r[constants.FieldKubeOVNSGRuleIPVersion].(string),
 		Protocol:            kubeovnv1.SgProtocol(r[constants.FieldKubeOVNSGRuleProtocol].(string)),
 		Priority:            r[constants.FieldKubeOVNSGRulePriority].(int),
