@@ -16,7 +16,7 @@ description: |-
 resource "harvester_kubeovn_vlan" "example" {
   name             = "example-vlan"
   vlan_id          = 100
-  network_provider = "provider-net1"
+  network_provider = harvester_kubeovn_provider_network.example.name
 }
 ```
 
@@ -26,13 +26,13 @@ resource "harvester_kubeovn_vlan" "example" {
 ### Required
 
 - `name` (String) A unique name
+- `network_provider` (String)
 - `vlan_id` (Number)
 
 ### Optional
 
 - `description` (String) Any text you want that better describes this resource
 - `labels` (Map of String)
-- `network_provider` (String)
 - `tags` (Map of String)
 - `timeouts` (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))
 
