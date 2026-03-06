@@ -18,7 +18,7 @@ func (c *Constructor) Setup() util.Processors {
 		Tags(&c.Vlan.Labels).
 		Labels(&c.Vlan.Labels).
 		Description(&c.Vlan.Annotations).
-		String(constants.FieldKubeOVNVlanProvider, &c.Vlan.Spec.Provider, false)
+		String(constants.FieldKubeOVNVlanProvider, &c.Vlan.Spec.Provider, true)
 
 	customProcessors := []util.Processor{
 		{
