@@ -10,6 +10,28 @@ import (
 	"github.com/harvester/terraform-provider-harvester/pkg/helper"
 )
 
+func assertStringSlice(t *testing.T, field string, got interface{}, expected []string) {
+	t.Helper()
+	if expected == nil {
+		if got != nil {
+			if s, ok := got.([]string); ok && len(s) > 0 {
+				t.Errorf("%s: expected nil, got %v", field, got)
+			}
+		}
+		return
+	}
+	gotSlice := got.([]string)
+	if len(gotSlice) != len(expected) {
+		t.Errorf("%s length: expected %d, got %d", field, len(expected), len(gotSlice))
+		return
+	}
+	for i, v := range expected {
+		if gotSlice[i] != v {
+			t.Errorf("%s[%d]: expected %q, got %q", field, i, v, gotSlice[i])
+		}
+	}
+}
+
 func TestResourceKubeOVNVipStateGetter(t *testing.T) {
 	testcases := []struct {
 		name                  string
@@ -112,46 +134,8 @@ func TestResourceKubeOVNVipStateGetter(t *testing.T) {
 			if statusV4IP != tc.expectedStatusV4IP {
 				t.Errorf("StatusV4IP: expected %q, got %q", tc.expectedStatusV4IP, statusV4IP)
 			}
-			selector := getter.States[constants.FieldKubeOVNVipSelector]
-			if tc.expectedSelector == nil {
-				if selector != nil {
-					selectorSlice, ok := selector.([]string)
-					if ok && len(selectorSlice) > 0 {
-						t.Errorf("Selector: expected nil, got %v", selector)
-					}
-				}
-			} else {
-				selectorSlice := selector.([]string)
-				if len(selectorSlice) != len(tc.expectedSelector) {
-					t.Errorf("Selector length: expected %d, got %d", len(tc.expectedSelector), len(selectorSlice))
-				} else {
-					for i, v := range tc.expectedSelector {
-						if selectorSlice[i] != v {
-							t.Errorf("Selector[%d]: expected %q, got %q", i, v, selectorSlice[i])
-						}
-					}
-				}
-			}
-			attachSubnets := getter.States[constants.FieldKubeOVNVipAttachSubnets]
-			if tc.expectedAttachSubnets == nil {
-				if attachSubnets != nil {
-					attachSlice, ok := attachSubnets.([]string)
-					if ok && len(attachSlice) > 0 {
-						t.Errorf("AttachSubnets: expected nil, got %v", attachSubnets)
-					}
-				}
-			} else {
-				attachSlice := attachSubnets.([]string)
-				if len(attachSlice) != len(tc.expectedAttachSubnets) {
-					t.Errorf("AttachSubnets length: expected %d, got %d", len(tc.expectedAttachSubnets), len(attachSlice))
-				} else {
-					for i, v := range tc.expectedAttachSubnets {
-						if attachSlice[i] != v {
-							t.Errorf("AttachSubnets[%d]: expected %q, got %q", i, v, attachSlice[i])
-						}
-					}
-				}
-			}
+			assertStringSlice(t, "Selector", getter.States[constants.FieldKubeOVNVipSelector], tc.expectedSelector)
+			assertStringSlice(t, "AttachSubnets", getter.States[constants.FieldKubeOVNVipAttachSubnets], tc.expectedAttachSubnets)
 		})
 	}
 }
