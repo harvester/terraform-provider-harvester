@@ -1,7 +1,9 @@
 package pcidevice
 
 import (
+	"fmt"
 	"regexp"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
@@ -16,6 +18,18 @@ func Schema() map[string]*schema.Schema {
 			Type:        schema.TypeString,
 			Required:    true,
 			Description: "The name of the virtual machine to attach PCI devices to. Format: 'namespace/name' or 'name' (if in default namespace).",
+			DiffSuppressFunc: func(k, old, new string, d *schema.ResourceData) bool {
+				ns := d.Get(constants.FieldCommonNamespace).(string)
+				oldNorm := old
+				newNorm := new
+				if !strings.Contains(old, "/") {
+					oldNorm = fmt.Sprintf("%s/%s", ns, old)
+				}
+				if !strings.Contains(new, "/") {
+					newNorm = fmt.Sprintf("%s/%s", ns, new)
+				}
+				return oldNorm == newNorm
+			},
 		},
 		constants.FieldPCIDeviceNodeName: {
 			Type:        schema.TypeString,
