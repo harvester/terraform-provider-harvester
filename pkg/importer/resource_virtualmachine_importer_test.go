@@ -405,6 +405,109 @@ func TestNetworkInterface(t *testing.T) {
 	}
 }
 
+func TestTolerations(t *testing.T) {
+	type testcase struct {
+		name        string
+		importer    *VMImporter
+		expectation []map[string]interface{}
+	}
+
+	int64Ptr := func(v int64) *int64 { return &v }
+
+	testcases := []testcase{
+		{
+			name: "nil tolerations returns empty slice",
+			importer: &VMImporter{
+				VirtualMachine: &kubevirtv1.VirtualMachine{
+					Spec: kubevirtv1.VirtualMachineSpec{
+						Template: &kubevirtv1.VirtualMachineInstanceTemplateSpec{
+							Spec: kubevirtv1.VirtualMachineInstanceSpec{},
+						},
+					},
+				},
+			},
+			expectation: []map[string]interface{}{},
+		},
+		{
+			name: "standard toleration",
+			importer: &VMImporter{
+				VirtualMachine: &kubevirtv1.VirtualMachine{
+					Spec: kubevirtv1.VirtualMachineSpec{
+						Template: &kubevirtv1.VirtualMachineInstanceTemplateSpec{
+							Spec: kubevirtv1.VirtualMachineInstanceSpec{
+								Tolerations: []corev1.Toleration{
+									{
+										Key:      "key1",
+										Operator: corev1.TolerationOpEqual,
+										Value:    "value1",
+										Effect:   corev1.TaintEffectNoSchedule,
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			expectation: []map[string]interface{}{
+				{
+					constants.FieldTolerationKey:               "key1",
+					constants.FieldTolerationOperator:          "Equal",
+					constants.FieldTolerationValue:             "value1",
+					constants.FieldTolerationEffect:            "NoSchedule",
+					constants.FieldTolerationTolerationSeconds: 0,
+				},
+			},
+		},
+		{
+			name: "Exists operator with TolerationSeconds",
+			importer: &VMImporter{
+				VirtualMachine: &kubevirtv1.VirtualMachine{
+					Spec: kubevirtv1.VirtualMachineSpec{
+						Template: &kubevirtv1.VirtualMachineInstanceTemplateSpec{
+							Spec: kubevirtv1.VirtualMachineInstanceSpec{
+								Tolerations: []corev1.Toleration{
+									{
+										Key:               "node.kubernetes.io/not-ready",
+										Operator:          corev1.TolerationOpExists,
+										Effect:            corev1.TaintEffectNoExecute,
+										TolerationSeconds: int64Ptr(300),
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			expectation: []map[string]interface{}{
+				{
+					constants.FieldTolerationKey:               "node.kubernetes.io/not-ready",
+					constants.FieldTolerationOperator:          "Exists",
+					constants.FieldTolerationValue:             "",
+					constants.FieldTolerationEffect:            "NoExecute",
+					constants.FieldTolerationTolerationSeconds: 300,
+				},
+			},
+		},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			result := tc.importer.Tolerations()
+			if len(result) != len(tc.expectation) {
+				t.Fatalf("expected %d tolerations, got %d", len(tc.expectation), len(result))
+			}
+			for idx, r := range result {
+				e := tc.expectation[idx]
+				for k, ev := range e {
+					if r[k] != ev {
+						t.Errorf("toleration[%d][%s] = %v, expected %v", idx, k, r[k], ev)
+					}
+				}
+			}
+		})
+	}
+}
+
 func TestCPU(t *testing.T) {
 	type testcase struct {
 		importer      *VMImporter
