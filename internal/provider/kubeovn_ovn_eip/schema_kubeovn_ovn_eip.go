@@ -31,7 +31,7 @@ func Schema() map[string]*schema.Schema {
 		},
 		constants.FieldKubeOVNOvnEipType: {
 			Type:     schema.TypeString,
-			Optional: true,
+			Computed: true,
 		},
 		constants.FieldKubeOVNOvnEipStatusReady: {
 			Type:     schema.TypeBool,
