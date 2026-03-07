@@ -7,7 +7,7 @@ const (
 	FieldKubeOVNOvnEipV4IP           = "v4_ip"
 	FieldKubeOVNOvnEipV6IP           = "v6_ip"
 	FieldKubeOVNOvnEipMacAddress     = "mac_address"
-	FieldKubeOVNOvnEipType           = "type"
+	FieldKubeOVNOvnEipType           = "eip_type"
 	FieldKubeOVNOvnEipStatusReady    = "status_ready"
 	FieldKubeOVNOvnEipStatusV4IP     = "status_v4_ip"
 	FieldKubeOVNOvnEipStatusV6IP     = "status_v6_ip"
