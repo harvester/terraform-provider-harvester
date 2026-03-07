@@ -13,9 +13,9 @@ import (
 	"github.com/harvester/terraform-provider-harvester/pkg/constants"
 )
 
-func TestVirtualMachineTemplateVersionStateGetter(t *testing.T) {
+func newTestVersion() *harvsterv1.VirtualMachineTemplateVersion {
 	runStrategy := kubevirtv1.RunStrategyRerunOnFailure
-	version := &harvsterv1.VirtualMachineTemplateVersion{
+	return &harvsterv1.VirtualMachineTemplateVersion{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test-template-v1",
 			Namespace: "default",
@@ -109,7 +109,10 @@ func TestVirtualMachineTemplateVersionStateGetter(t *testing.T) {
 			Version: 1,
 		},
 	}
+}
 
+func TestVirtualMachineTemplateVersionStateGetter(t *testing.T) {
+	version := newTestVersion()
 	stateGetter, err := ResourceVirtualMachineTemplateVersionStateGetter(version)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -122,68 +125,53 @@ func TestVirtualMachineTemplateVersionStateGetter(t *testing.T) {
 		t.Errorf("ResourceType = %q, want %q", stateGetter.ResourceType, constants.ResourceTypeVirtualMachineTemplateVersion)
 	}
 
-	// Template-specific fields
-	if got := stateGetter.States[constants.FieldVirtualMachineTemplateVersionTemplateID]; got != "default/test-template" {
-		t.Errorf("TemplateID = %q, want %q", got, "default/test-template")
-	}
-	if got := stateGetter.States[constants.FieldVirtualMachineTemplateVersionImageID]; got != "default/image-abc" {
-		t.Errorf("ImageID = %q, want %q", got, "default/image-abc")
-	}
-	if got := stateGetter.States[constants.FieldVirtualMachineTemplateVersionVersion]; got != 1 {
-		t.Errorf("Version = %v, want %v", got, 1)
-	}
+	t.Run("metadata", func(t *testing.T) {
+		assertState(t, stateGetter, constants.FieldVirtualMachineTemplateVersionTemplateID, "default/test-template")
+		assertState(t, stateGetter, constants.FieldVirtualMachineTemplateVersionImageID, "default/image-abc")
+		assertState(t, stateGetter, constants.FieldVirtualMachineTemplateVersionVersion, 1)
 
-	keyPairIDs := stateGetter.States[constants.FieldVirtualMachineTemplateVersionKeyPairIDs].([]string)
-	if len(keyPairIDs) != 1 || keyPairIDs[0] != "default/my-key" {
-		t.Errorf("KeyPairIDs = %v, want [default/my-key]", keyPairIDs)
-	}
+		keyPairIDs := stateGetter.States[constants.FieldVirtualMachineTemplateVersionKeyPairIDs].([]string)
+		if len(keyPairIDs) != 1 || keyPairIDs[0] != "default/my-key" {
+			t.Errorf("KeyPairIDs = %v, want [default/my-key]", keyPairIDs)
+		}
 
-	// VM spec fields
-	if got := stateGetter.States[constants.FieldVirtualMachineCPU]; got != 2 {
-		t.Errorf("CPU = %v, want 2", got)
-	}
-	if got := stateGetter.States[constants.FieldVirtualMachineCPUModel]; got != "host-model" {
-		t.Errorf("CPUModel = %q, want %q", got, "host-model")
-	}
-	if got := stateGetter.States[constants.FieldVirtualMachineMemory]; got != "4Gi" {
-		t.Errorf("Memory = %q, want %q", got, "4Gi")
-	}
-	if got := stateGetter.States[constants.FieldVirtualMachineMachineType]; got != "q35" {
-		t.Errorf("MachineType = %q, want %q", got, "q35")
-	}
-	if got := stateGetter.States[constants.FieldVirtualMachineRunStrategy]; got != "RerunOnFailure" {
-		t.Errorf("RunStrategy = %q, want %q", got, "RerunOnFailure")
-	}
+		tags := stateGetter.States[constants.FieldCommonTags].(map[string]string)
+		if tags["env"] != "prod" {
+			t.Errorf("Tags[env] = %q, want %q", tags["env"], "prod")
+		}
+	})
 
-	// Network interfaces
-	networkInterfaces := stateGetter.States[constants.FieldVirtualMachineNetworkInterface].([]map[string]interface{})
-	if len(networkInterfaces) != 1 {
-		t.Fatalf("NetworkInterfaces count = %d, want 1", len(networkInterfaces))
-	}
-	if networkInterfaces[0][constants.FieldNetworkInterfaceName] != "nic-1" {
-		t.Errorf("NetworkInterface name = %q, want %q", networkInterfaces[0][constants.FieldNetworkInterfaceName], "nic-1")
-	}
-	if networkInterfaces[0][constants.FieldNetworkInterfaceNetworkName] != "default/production" {
-		t.Errorf("NetworkInterface network = %q, want %q", networkInterfaces[0][constants.FieldNetworkInterfaceNetworkName], "default/production")
-	}
+	t.Run("vm_spec", func(t *testing.T) {
+		assertState(t, stateGetter, constants.FieldVirtualMachineCPU, 2)
+		assertState(t, stateGetter, constants.FieldVirtualMachineCPUModel, "host-model")
+		assertState(t, stateGetter, constants.FieldVirtualMachineMemory, "4Gi")
+		assertState(t, stateGetter, constants.FieldVirtualMachineMachineType, "q35")
+		assertState(t, stateGetter, constants.FieldVirtualMachineRunStrategy, "RerunOnFailure")
+	})
 
-	// Disks
-	disks := stateGetter.States[constants.FieldVirtualMachineDisk].([]map[string]interface{})
-	if len(disks) != 1 {
-		t.Fatalf("Disks count = %d, want 1", len(disks))
-	}
-	if disks[0][constants.FieldDiskName] != "rootdisk" {
-		t.Errorf("Disk name = %q, want %q", disks[0][constants.FieldDiskName], "rootdisk")
-	}
-	if disks[0][constants.FieldDiskContainerImageName] != "test-image:latest" {
-		t.Errorf("Disk container image = %q, want %q", disks[0][constants.FieldDiskContainerImageName], "test-image:latest")
-	}
+	t.Run("devices", func(t *testing.T) {
+		networkInterfaces := stateGetter.States[constants.FieldVirtualMachineNetworkInterface].([]map[string]interface{})
+		if len(networkInterfaces) != 1 {
+			t.Fatalf("NetworkInterfaces count = %d, want 1", len(networkInterfaces))
+		}
+		if networkInterfaces[0][constants.FieldNetworkInterfaceName] != "nic-1" {
+			t.Errorf("NetworkInterface name = %q, want %q", networkInterfaces[0][constants.FieldNetworkInterfaceName], "nic-1")
+		}
+		if networkInterfaces[0][constants.FieldNetworkInterfaceNetworkName] != "default/production" {
+			t.Errorf("NetworkInterface network = %q, want %q", networkInterfaces[0][constants.FieldNetworkInterfaceNetworkName], "default/production")
+		}
 
-	// Tags
-	tags := stateGetter.States[constants.FieldCommonTags].(map[string]string)
-	if tags["env"] != "prod" {
-		t.Errorf("Tags[env] = %q, want %q", tags["env"], "prod")
-	}
+		disks := stateGetter.States[constants.FieldVirtualMachineDisk].([]map[string]interface{})
+		if len(disks) != 1 {
+			t.Fatalf("Disks count = %d, want 1", len(disks))
+		}
+		if disks[0][constants.FieldDiskName] != "rootdisk" {
+			t.Errorf("Disk name = %q, want %q", disks[0][constants.FieldDiskName], "rootdisk")
+		}
+		if disks[0][constants.FieldDiskContainerImageName] != "test-image:latest" {
+			t.Errorf("Disk container image = %q, want %q", disks[0][constants.FieldDiskContainerImageName], "test-image:latest")
+		}
+	})
 }
 
 func TestVirtualMachineTemplateVersionStateGetterMinimal(t *testing.T) {
@@ -240,18 +228,19 @@ func TestVirtualMachineTemplateVersionStateGetterMinimal(t *testing.T) {
 	if stateGetter.ID != "default/minimal-version" {
 		t.Errorf("ID = %q, want %q", stateGetter.ID, "default/minimal-version")
 	}
-	if got := stateGetter.States[constants.FieldVirtualMachineCPU]; got != 1 {
-		t.Errorf("CPU = %v, want 1", got)
-	}
-	if got := stateGetter.States[constants.FieldVirtualMachineMemory]; got != "1Gi" {
-		t.Errorf("Memory = %q, want %q", got, "1Gi")
-	}
-	if got := stateGetter.States[constants.FieldVirtualMachineTemplateVersionVersion]; got != 0 {
-		t.Errorf("Version = %v, want 0", got)
-	}
+	assertState(t, stateGetter, constants.FieldVirtualMachineCPU, 1)
+	assertState(t, stateGetter, constants.FieldVirtualMachineMemory, "1Gi")
+	assertState(t, stateGetter, constants.FieldVirtualMachineTemplateVersionVersion, 0)
 
 	keyPairIDs := stateGetter.States[constants.FieldVirtualMachineTemplateVersionKeyPairIDs].([]string)
 	if len(keyPairIDs) != 0 {
 		t.Errorf("KeyPairIDs = %v, want empty", keyPairIDs)
+	}
+}
+
+func assertState(t *testing.T, sg *StateGetter, key string, want interface{}) {
+	t.Helper()
+	if got := sg.States[key]; got != want {
+		t.Errorf("%s = %v, want %v", key, got, want)
 	}
 }
