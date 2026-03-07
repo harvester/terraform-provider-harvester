@@ -124,8 +124,8 @@ func readDeviceStatus(obj *unstructured.Unstructured) []interface{} {
 	partitioned, _ := ds["partitioned"].(bool)
 
 	var capacitySizeBytes int64
-	if cap, ok := ds["capacity"].(map[string]interface{}); ok {
-		capacitySizeBytes = nestedInt64(cap, "sizeBytes")
+	if capacity, ok := ds["capacity"].(map[string]interface{}); ok {
+		capacitySizeBytes = nestedInt64(capacity, "sizeBytes")
 	}
 
 	var deviceType, driveType, storageController, vendor, model, serialNumber, wwn, busPath string
