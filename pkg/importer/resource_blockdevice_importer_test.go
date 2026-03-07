@@ -6,8 +6,8 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
-func TestResourceBlockDeviceStateGetter(t *testing.T) {
-	obj := &unstructured.Unstructured{
+func newFullBlockDevice() *unstructured.Unstructured {
+	return &unstructured.Unstructured{
 		Object: map[string]interface{}{
 			"apiVersion": "harvesterhci.io/v1beta1",
 			"kind":       "BlockDevice",
@@ -68,8 +68,10 @@ func TestResourceBlockDeviceStateGetter(t *testing.T) {
 			},
 		},
 	}
+}
 
-	sg, err := ResourceBlockDeviceStateGetter(obj)
+func TestBlockDeviceStateGetterIdentity(t *testing.T) {
+	sg, err := ResourceBlockDeviceStateGetter(newFullBlockDevice())
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -83,8 +85,14 @@ func TestResourceBlockDeviceStateGetter(t *testing.T) {
 	if sg.ResourceType != "harvester_blockdevice" {
 		t.Errorf("expected ResourceType harvester_blockdevice, got %s", sg.ResourceType)
 	}
+}
 
-	// Verify spec fields
+func TestBlockDeviceStateGetterSpec(t *testing.T) {
+	sg, err := ResourceBlockDeviceStateGetter(newFullBlockDevice())
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
 	if sg.States["node_name"] != "node1" {
 		t.Errorf("expected node_name=node1, got %v", sg.States["node_name"])
 	}
@@ -98,13 +106,18 @@ func TestResourceBlockDeviceStateGetter(t *testing.T) {
 		t.Errorf("expected force_formatted=false, got %v", sg.States["force_formatted"])
 	}
 
-	// Verify device tags
 	deviceTags := sg.States["device_tags"].([]interface{})
 	if len(deviceTags) != 2 {
 		t.Errorf("expected 2 device tags, got %d", len(deviceTags))
 	}
+}
 
-	// Verify provisioner
+func TestBlockDeviceStateGetterProvisioner(t *testing.T) {
+	sg, err := ResourceBlockDeviceStateGetter(newFullBlockDevice())
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
 	prov := sg.States["disk_provisioner"].([]interface{})
 	if len(prov) != 1 {
 		t.Fatalf("expected 1 provisioner block, got %d", len(prov))
@@ -118,8 +131,14 @@ func TestResourceBlockDeviceStateGetter(t *testing.T) {
 	if lh["engine_version"] != "LonghornV2" {
 		t.Errorf("expected engine_version=LonghornV2, got %v", lh["engine_version"])
 	}
+}
 
-	// Verify status
+func TestBlockDeviceStateGetterStatus(t *testing.T) {
+	sg, err := ResourceBlockDeviceStateGetter(newFullBlockDevice())
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
 	if sg.States["provision_phase"] != "Provisioned" {
 		t.Errorf("expected provision_phase=Provisioned, got %v", sg.States["provision_phase"])
 	}
@@ -127,7 +146,6 @@ func TestResourceBlockDeviceStateGetter(t *testing.T) {
 		t.Errorf("expected state=Active, got %v", sg.States["state"])
 	}
 
-	// Verify device status
 	dsList := sg.States["device_status"].([]interface{})
 	if len(dsList) != 1 {
 		t.Fatalf("expected 1 device_status block, got %d", len(dsList))
@@ -142,8 +160,14 @@ func TestResourceBlockDeviceStateGetter(t *testing.T) {
 	if ds["device_type"] != "disk" {
 		t.Errorf("expected device_type=disk, got %v", ds["device_type"])
 	}
+}
 
-	// Verify NDM labels are filtered out
+func TestBlockDeviceStateGetterLabels(t *testing.T) {
+	sg, err := ResourceBlockDeviceStateGetter(newFullBlockDevice())
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
 	labels := sg.States["labels"].(map[string]string)
 	if _, ok := labels["kubernetes.io/hostname"]; ok {
 		t.Error("kubernetes.io/hostname should be filtered from labels")
@@ -153,7 +177,7 @@ func TestResourceBlockDeviceStateGetter(t *testing.T) {
 	}
 }
 
-func TestResourceBlockDeviceStateGetterMinimal(t *testing.T) {
+func TestBlockDeviceStateGetterMinimal(t *testing.T) {
 	obj := &unstructured.Unstructured{
 		Object: map[string]interface{}{
 			"apiVersion": "harvesterhci.io/v1beta1",
@@ -192,13 +216,11 @@ func TestResourceBlockDeviceStateGetterMinimal(t *testing.T) {
 		t.Errorf("expected provision_phase=Unprovisioned, got %v", sg.States["provision_phase"])
 	}
 
-	// No provisioner should return empty list
 	prov := sg.States["disk_provisioner"].([]interface{})
 	if len(prov) != 0 {
 		t.Errorf("expected empty provisioner, got %v", prov)
 	}
 
-	// No device status should return empty list
 	ds := sg.States["device_status"].([]interface{})
 	if len(ds) != 0 {
 		t.Errorf("expected empty device_status, got %v", ds)
