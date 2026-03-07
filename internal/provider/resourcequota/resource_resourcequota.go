@@ -5,6 +5,7 @@ import (
 	"time"
 
 	harvsterv1 "github.com/harvester/harvester/pkg/apis/harvesterhci.io/v1beta1"
+	"github.com/harvester/harvester/pkg/builder"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -210,7 +211,7 @@ func setCommonFields(d *schema.ResourceData, obj *harvsterv1.ResourceQuota) {
 
 	if v, ok := d.GetOk(constants.FieldCommonTags); ok {
 		for k, val := range v.(map[string]interface{}) {
-			obj.Labels["tags.harvesterhci.io/"+k] = val.(string)
+			obj.Labels[builder.LabelPrefixHarvesterTag+k] = val.(string)
 		}
 	}
 
