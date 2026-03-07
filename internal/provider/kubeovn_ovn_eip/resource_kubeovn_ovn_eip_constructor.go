@@ -21,8 +21,7 @@ func (c *Constructor) Setup() util.Processors {
 		String(constants.FieldKubeOVNOvnEipExternalSubnet, &c.OvnEip.Spec.ExternalSubnet, true).
 		String(constants.FieldKubeOVNOvnEipV4IP, &c.OvnEip.Spec.V4Ip, false).
 		String(constants.FieldKubeOVNOvnEipV6IP, &c.OvnEip.Spec.V6Ip, false).
-		String(constants.FieldKubeOVNOvnEipMacAddress, &c.OvnEip.Spec.MacAddress, false).
-		String(constants.FieldKubeOVNOvnEipType, &c.OvnEip.Spec.Type, false)
+		String(constants.FieldKubeOVNOvnEipMacAddress, &c.OvnEip.Spec.MacAddress, false)
 }
 
 func (c *Constructor) Validate() error {
