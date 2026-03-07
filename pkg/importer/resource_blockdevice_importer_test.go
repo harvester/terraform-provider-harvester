@@ -105,7 +105,7 @@ func TestResourceBlockDeviceStateGetter(t *testing.T) {
 	}
 
 	// Verify provisioner
-	prov := sg.States["provisioner"].([]interface{})
+	prov := sg.States["disk_provisioner"].([]interface{})
 	if len(prov) != 1 {
 		t.Fatalf("expected 1 provisioner block, got %d", len(prov))
 	}
@@ -193,7 +193,7 @@ func TestResourceBlockDeviceStateGetterMinimal(t *testing.T) {
 	}
 
 	// No provisioner should return empty list
-	prov := sg.States["provisioner"].([]interface{})
+	prov := sg.States["disk_provisioner"].([]interface{})
 	if len(prov) != 0 {
 		t.Errorf("expected empty provisioner, got %v", prov)
 	}
