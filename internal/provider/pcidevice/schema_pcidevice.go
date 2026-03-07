@@ -18,15 +18,15 @@ func Schema() map[string]*schema.Schema {
 			Type:        schema.TypeString,
 			Required:    true,
 			Description: "The name of the virtual machine to attach PCI devices to. Format: 'namespace/name' or 'name' (if in default namespace).",
-			DiffSuppressFunc: func(k, old, new string, d *schema.ResourceData) bool {
+			DiffSuppressFunc: func(k, oldVal, newVal string, d *schema.ResourceData) bool {
 				ns := d.Get(constants.FieldCommonNamespace).(string)
-				oldNorm := old
-				newNorm := new
-				if !strings.Contains(old, "/") {
-					oldNorm = fmt.Sprintf("%s/%s", ns, old)
+				oldNorm := oldVal
+				newNorm := newVal
+				if !strings.Contains(oldVal, "/") {
+					oldNorm = fmt.Sprintf("%s/%s", ns, oldVal)
 				}
-				if !strings.Contains(new, "/") {
-					newNorm = fmt.Sprintf("%s/%s", ns, new)
+				if !strings.Contains(newVal, "/") {
+					newNorm = fmt.Sprintf("%s/%s", ns, newVal)
 				}
 				return oldNorm == newNorm
 			},
