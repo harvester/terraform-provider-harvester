@@ -11,6 +11,7 @@ import (
 	"github.com/harvester/harvester/pkg/generated/clientset/versioned/scheme"
 	"github.com/rancher/wrangler/v3/pkg/kubeconfig"
 	kubeschema "k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	storageclient "k8s.io/client-go/kubernetes/typed/storage/v1"
 	"k8s.io/client-go/rest"
@@ -25,6 +26,7 @@ type Client struct {
 	HarvesterClient             *harvclient.Clientset
 	HarvesterNetworkClient      *harvnetworkclient.Clientset
 	HarvesterLoadbalancerClient *harvloadbalancerclient.Clientset
+	DynamicClient               dynamic.Interface
 }
 
 func NewClient(kubeConfig, kubeContext string) (*Client, error) {
@@ -67,6 +69,10 @@ func NewClient(kubeConfig, kubeContext string) (*Client, error) {
 	if err != nil {
 		return nil, err
 	}
+	dynClient, err := dynamic.NewForConfig(restConfig)
+	if err != nil {
+		return nil, err
+	}
 	return &Client{
 		RestConfig:                  restConfig,
 		KubeVirtSubresourceClient:   restClient,
@@ -75,6 +81,7 @@ func NewClient(kubeConfig, kubeContext string) (*Client, error) {
 		HarvesterClient:             harvClient,
 		HarvesterNetworkClient:      harvNetworkClient,
 		HarvesterLoadbalancerClient: harvLoadbalancerClient,
+		DynamicClient:               dynClient,
 	}, nil
 }
 
