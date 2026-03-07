@@ -11,7 +11,7 @@ const (
 	FieldBlockDeviceForceFormatted = "force_formatted"
 	FieldBlockDeviceDeviceTags     = "device_tags"
 
-	FieldBlockDeviceProvisioner              = "provisioner"
+	FieldBlockDeviceProvisioner              = "disk_provisioner"
 	FieldBlockDeviceProvisionerLonghorn      = "longhorn"
 	FieldBlockDeviceProvisionerLonghornEV    = "engine_version"
 	FieldBlockDeviceProvisionerLonghornDD    = "disk_driver"

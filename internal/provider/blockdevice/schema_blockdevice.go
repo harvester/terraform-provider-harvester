@@ -48,11 +48,10 @@ func Schema() map[string]*schema.Schema {
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					constants.FieldBlockDeviceProvisionerLonghorn: {
-						Type:          schema.TypeList,
-						Optional:      true,
-						MaxItems:      1,
-						Description:   "Longhorn volume backend disk provisioner",
-						ConflictsWith: []string{constants.FieldBlockDeviceProvisioner + ".0." + constants.FieldBlockDeviceProvisionerLVM},
+						Type:        schema.TypeList,
+						Optional:    true,
+						MaxItems:    1,
+						Description: "Longhorn volume backend disk provisioner",
 						Elem: &schema.Resource{
 							Schema: map[string]*schema.Schema{
 								constants.FieldBlockDeviceProvisionerLonghornEV: {
@@ -73,11 +72,10 @@ func Schema() map[string]*schema.Schema {
 						},
 					},
 					constants.FieldBlockDeviceProvisionerLVM: {
-						Type:          schema.TypeList,
-						Optional:      true,
-						MaxItems:      1,
-						Description:   "LVM volume backend disk provisioner",
-						ConflictsWith: []string{constants.FieldBlockDeviceProvisioner + ".0." + constants.FieldBlockDeviceProvisionerLonghorn},
+						Type:        schema.TypeList,
+						Optional:    true,
+						MaxItems:    1,
+						Description: "LVM volume backend disk provisioner",
 						Elem: &schema.Resource{
 							Schema: map[string]*schema.Schema{
 								constants.FieldBlockDeviceProvisionerLVMVGName: {
