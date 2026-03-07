@@ -13,8 +13,27 @@ import (
 )
 
 func ResourceVirtualMachineTemplateVersionStateGetter(obj *harvsterv1.VirtualMachineTemplateVersion) (*StateGetter, error) {
-	// Build a synthetic VirtualMachine from the template version's VM spec
-	// so we can reuse VMImporter for reading disk/network/cloudinit/etc
+	vm := buildSyntheticVM(obj)
+	vmImporter := NewVMImporter(vm, nil)
+
+	states := buildVersionMetadata(obj)
+	addVMSpecStates(states, vm, vmImporter)
+
+	if err := addVMDeviceStates(states, vmImporter); err != nil {
+		return nil, err
+	}
+
+	return &StateGetter{
+		ID:           helper.BuildID(obj.Namespace, obj.Name),
+		Name:         obj.Name,
+		ResourceType: constants.ResourceTypeVirtualMachineTemplateVersion,
+		States:       states,
+	}, nil
+}
+
+// buildSyntheticVM constructs a VirtualMachine from the template version's VM spec
+// so we can reuse VMImporter for reading disk/network/cloudinit/etc.
+func buildSyntheticVM(obj *harvsterv1.VirtualMachineTemplateVersion) *kubevirtv1.VirtualMachine {
 	vm := &kubevirtv1.VirtualMachine{
 		Spec: obj.Spec.VM.Spec,
 	}
@@ -23,17 +42,19 @@ func ResourceVirtualMachineTemplateVersionStateGetter(obj *harvsterv1.VirtualMac
 		vm.Spec.Template = &kubevirtv1.VirtualMachineInstanceTemplateSpec{}
 	}
 	vm.Spec.Template.ObjectMeta = obj.Spec.VM.ObjectMeta
+
 	// VolumeClaimTemplates is stored on the version's own annotations (not nested VM ObjectMeta)
 	// because the K8s API strips annotations from nested metav1.ObjectMeta fields.
-	// Copy it to vm.Annotations where VMImporter.pvcVolume() expects it.
 	if vct, ok := obj.Annotations[harvesterutil.AnnotationVolumeClaimTemplates]; ok {
 		vm.Annotations = map[string]string{
 			harvesterutil.AnnotationVolumeClaimTemplates: vct,
 		}
 	}
+	return vm
+}
 
-	vmImporter := NewVMImporter(vm, nil)
-
+// buildVersionMetadata populates version-specific fields (template ID, image, key pairs, labels/tags).
+func buildVersionMetadata(obj *harvsterv1.VirtualMachineTemplateVersion) map[string]interface{} {
 	// Filter server-side labels (template.harvesterhci.io/) from user labels
 	labels := GetLabels(obj.Labels)
 	for key := range labels {
@@ -60,7 +81,11 @@ func ResourceVirtualMachineTemplateVersionStateGetter(obj *harvsterv1.VirtualMac
 	}
 	states[constants.FieldVirtualMachineTemplateVersionKeyPairIDs] = keyPairIDs
 
-	// VM spec fields via VMImporter
+	return states
+}
+
+// addVMSpecStates adds VM spec fields (CPU, memory, machine type, run strategy, etc.) to the state map.
+func addVMSpecStates(states map[string]interface{}, vm *kubevirtv1.VirtualMachine, vmImporter *VMImporter) {
 	states[constants.FieldVirtualMachineCPU] = vmImporter.CPU()
 	states[constants.FieldVirtualMachineCPUModel] = vmImporter.CPUModel()
 	states[constants.FieldVirtualMachineMemory] = vmImporter.Memory()
@@ -72,40 +97,37 @@ func ResourceVirtualMachineTemplateVersionStateGetter(obj *harvsterv1.VirtualMac
 	states[constants.FieldVirtualMachineCPUPinning] = vmImporter.DedicatedCPUPlacement()
 	states[constants.FieldVirtualMachineIsolateEmulatorThread] = vmImporter.IsolateEmulatorThread()
 
-	// MachineType may be nil in template versions with minimal specs
 	machineType := ""
 	if vm.Spec.Template != nil && vm.Spec.Template.Spec.Domain.Machine != nil {
 		machineType = vm.Spec.Template.Spec.Domain.Machine.Type
 	}
 	states[constants.FieldVirtualMachineMachineType] = machineType
 
-	// Node selector — nil when empty to avoid {} vs null drift
 	if vm.Spec.Template != nil && len(vm.Spec.Template.Spec.NodeSelector) > 0 {
 		states[constants.FieldVirtualMachineNodeSelector] = vm.Spec.Template.Spec.NodeSelector
 	}
 
-	// Run strategy
 	runStrategy, err := vm.RunStrategy()
 	if err != nil {
-		// If no run strategy is set, use a sensible default
 		states[constants.FieldVirtualMachineRunStrategy] = string(kubevirtv1.RunStrategyRerunOnFailure)
 	} else {
 		states[constants.FieldVirtualMachineRunStrategy] = string(runStrategy)
 	}
 
-	// SSH keys — nil when empty to avoid [] vs null drift
 	sshKeys, err := vmImporter.SSHKeys()
 	if err != nil || len(sshKeys) == 0 {
 		sshKeys = nil
 	}
 	states[constants.FieldVirtualMachineSSHKeys] = sshKeys
+}
 
-	// Disks, cloud-init
+// addVMDeviceStates adds disk, network, cloud-init, input and TPM states.
+func addVMDeviceStates(states map[string]interface{}, vmImporter *VMImporter) error {
 	allDisks, cloudInit, err := vmImporter.Volume()
 	if err != nil {
-		return nil, err
+		return err
 	}
-	// Filter out cloudinitdisk from disk list — it's handled by the cloudinit block
+	// Filter out cloudinitdisk — it's handled by the cloudinit block
 	var disks []map[string]interface{}
 	for _, d := range allDisks {
 		if d[constants.FieldDiskName] == builder.CloudInitDiskName {
@@ -116,27 +138,18 @@ func ResourceVirtualMachineTemplateVersionStateGetter(obj *harvsterv1.VirtualMac
 	states[constants.FieldVirtualMachineDisk] = disks
 	states[constants.FieldVirtualMachineCloudInit] = cloudInit
 
-	// Network interfaces
 	networkInterface, err := vmImporter.NetworkInterface()
 	if err != nil {
-		return nil, err
+		return err
 	}
 	states[constants.FieldVirtualMachineNetworkInterface] = networkInterface
 
-	// Input devices
 	input, err := vmImporter.Input()
 	if err != nil {
-		return nil, err
+		return err
 	}
 	states[constants.FieldVirtualMachineInput] = input
 
-	// TPM
 	states[constants.FieldVirtualMachineTPM] = vmImporter.TPM()
-
-	return &StateGetter{
-		ID:           helper.BuildID(obj.Namespace, obj.Name),
-		Name:         obj.Name,
-		ResourceType: constants.ResourceTypeVirtualMachineTemplateVersion,
-		States:       states,
-	}, nil
+	return nil
 }
