@@ -327,6 +327,10 @@ func (v *VMImporter) Volume() ([]map[string]interface{}, []map[string]interface{
 					}
 				} else if volume.ContainerDisk != nil {
 					diskState[constants.FieldDiskContainerImageName] = volume.ContainerDisk.Image
+				} else if volume.ConfigMap != nil {
+					diskState[constants.FieldDiskConfigMapName] = volume.ConfigMap.Name
+				} else if volume.Secret != nil {
+					diskState[constants.FieldDiskSecretName] = volume.Secret.SecretName
 				} else {
 					return nil, nil, fmt.Errorf("unsupported volume type found on volume %s. ", volume.Name)
 				}
@@ -335,6 +339,70 @@ func (v *VMImporter) Volume() ([]map[string]interface{}, []map[string]interface{
 		diskStates = append(diskStates, diskState)
 	}
 	return diskStates, cloudInitState, nil
+}
+
+func (v *VMImporter) AccessCredentials() []map[string]interface{} {
+	acs := v.VirtualMachine.Spec.Template.Spec.AccessCredentials
+	result := make([]map[string]interface{}, 0, len(acs))
+	for _, ac := range acs {
+		entry := map[string]interface{}{}
+		if ac.SSHPublicKey != nil {
+			ssh := map[string]interface{}{}
+			if ac.SSHPublicKey.Source.Secret != nil {
+				ssh[constants.FieldAccessCredentialSecretName] = ac.SSHPublicKey.Source.Secret.SecretName
+			}
+			pm := ac.SSHPublicKey.PropagationMethod
+			switch {
+			case pm.ConfigDrive != nil:
+				ssh[constants.FieldAccessCredentialPropagationMethod] = "configDrive"
+			case pm.NoCloud != nil:
+				ssh[constants.FieldAccessCredentialPropagationMethod] = "noCloud"
+			case pm.QemuGuestAgent != nil:
+				ssh[constants.FieldAccessCredentialPropagationMethod] = "qemuGuestAgent"
+				ssh[constants.FieldAccessCredentialUsers] = pm.QemuGuestAgent.Users
+			}
+			entry[constants.FieldAccessCredentialSSHPublicKey] = []interface{}{ssh}
+			entry[constants.FieldAccessCredentialUserPassword] = []interface{}{}
+		} else if ac.UserPassword != nil {
+			pw := map[string]interface{}{}
+			if ac.UserPassword.Source.Secret != nil {
+				pw[constants.FieldAccessCredentialSecretName] = ac.UserPassword.Source.Secret.SecretName
+			}
+			entry[constants.FieldAccessCredentialUserPassword] = []interface{}{pw}
+			entry[constants.FieldAccessCredentialSSHPublicKey] = []interface{}{}
+		}
+		result = append(result, entry)
+	}
+	return result
+}
+
+func (v *VMImporter) DNSPolicy() string {
+	return string(v.VirtualMachine.Spec.Template.Spec.DNSPolicy)
+}
+
+func (v *VMImporter) DNSConfig() []map[string]interface{} {
+	dc := v.VirtualMachine.Spec.Template.Spec.DNSConfig
+	if dc == nil {
+		return nil
+	}
+	result := map[string]interface{}{
+		constants.FieldDNSConfigNameservers: dc.Nameservers,
+		constants.FieldDNSConfigSearches:    dc.Searches,
+	}
+	opts := make([]map[string]interface{}, 0, len(dc.Options))
+	for _, o := range dc.Options {
+		opt := map[string]interface{}{
+			constants.FieldDNSOptionName: o.Name,
+		}
+		if o.Value != nil {
+			opt[constants.FieldDNSOptionValue] = *o.Value
+		} else {
+			opt[constants.FieldDNSOptionValue] = ""
+		}
+		opts = append(opts, opt)
+	}
+	result[constants.FieldDNSConfigOptions] = opts
+	return []map[string]interface{}{result}
 }
 
 func (v *VMImporter) NodeName() string {
@@ -430,6 +498,9 @@ func ResourceVirtualMachineStateGetter(vm *kubevirtv1.VirtualMachine, vmi *kubev
 			constants.FieldVirtualMachineCPUPinning:            vmImporter.DedicatedCPUPlacement(),
 			constants.FieldVirtualMachineIsolateEmulatorThread: vmImporter.IsolateEmulatorThread(),
 			constants.FieldVirtualMachineNodeSelector:          vm.Spec.Template.Spec.NodeSelector,
+			constants.FieldVirtualMachineAccessCredentials:     vmImporter.AccessCredentials(),
+			constants.FieldVirtualMachineDNSPolicy:             vmImporter.DNSPolicy(),
+			constants.FieldVirtualMachineDNSConfig:             vmImporter.DNSConfig(),
 		},
 	}, nil
 }

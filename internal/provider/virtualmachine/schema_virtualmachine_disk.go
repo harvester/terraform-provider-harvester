@@ -99,6 +99,16 @@ func resourceDiskSchema() map[string]*schema.Schema {
 			Computed:     true,
 			ValidateFunc: util.IsValidName,
 		},
+		constants.FieldDiskConfigMapName: {
+			Type:        schema.TypeString,
+			Optional:    true,
+			Description: "Name of a ConfigMap to mount as a disk volume",
+		},
+		constants.FieldDiskSecretName: {
+			Type:        schema.TypeString,
+			Optional:    true,
+			Description: "Name of a Secret to mount as a disk volume",
+		},
 	}
 	return s
 }
