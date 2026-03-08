@@ -3,9 +3,12 @@ package importer
 import (
 	"testing"
 
+	"reflect"
+
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/utils/ptr"
 	kubevirtv1 "kubevirt.io/api/core/v1"
 
 	"github.com/harvester/harvester/pkg/builder"
@@ -563,5 +566,214 @@ func TestResourceRequestsImport(t *testing.T) {
 	}
 	if got := reqsNil[0][constants.FieldRequestsMemory]; got != "" {
 		t.Errorf("Requests() nil memory = %q, want empty", got)
+	}
+}
+
+func TestAccessCredentialsImport(t *testing.T) {
+	// VM with SSH public key via qemuGuestAgent
+	vm := &kubevirtv1.VirtualMachine{
+		Spec: kubevirtv1.VirtualMachineSpec{
+			Template: &kubevirtv1.VirtualMachineInstanceTemplateSpec{
+				Spec: kubevirtv1.VirtualMachineInstanceSpec{
+					AccessCredentials: []kubevirtv1.AccessCredential{
+						{
+							SSHPublicKey: &kubevirtv1.SSHPublicKeyAccessCredential{
+								Source: kubevirtv1.SSHPublicKeyAccessCredentialSource{
+									Secret: &kubevirtv1.AccessCredentialSecretSource{SecretName: "my-ssh-keys"}, // #nosec G101
+								},
+								PropagationMethod: kubevirtv1.SSHPublicKeyAccessCredentialPropagationMethod{
+									QemuGuestAgent: &kubevirtv1.QemuGuestAgentSSHPublicKeyAccessCredentialPropagation{
+										Users: []string{"root", "admin"},
+									},
+								},
+							},
+						},
+						{
+							UserPassword: &kubevirtv1.UserPasswordAccessCredential{
+								Source: kubevirtv1.UserPasswordAccessCredentialSource{
+									Secret: &kubevirtv1.AccessCredentialSecretSource{SecretName: "my-passwords"},
+								},
+								PropagationMethod: kubevirtv1.UserPasswordAccessCredentialPropagationMethod{
+									QemuGuestAgent: &kubevirtv1.QemuGuestAgentUserPasswordAccessCredentialPropagation{},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+	importer := &VMImporter{VirtualMachine: vm}
+	acs := importer.AccessCredentials()
+
+	if len(acs) != 2 {
+		t.Fatalf("AccessCredentials() returned %d entries, want 2", len(acs))
+	}
+
+	// Check SSH entry
+	sshList := acs[0][constants.FieldAccessCredentialSSHPublicKey].([]interface{})
+	if len(sshList) != 1 {
+		t.Fatalf("SSH entry has %d items, want 1", len(sshList))
+	}
+	ssh := sshList[0].(map[string]interface{})
+	if ssh[constants.FieldAccessCredentialSecretName] != "my-ssh-keys" {
+		t.Errorf("SSH secret_name = %q, want %q", ssh[constants.FieldAccessCredentialSecretName], "my-ssh-keys")
+	}
+	if ssh[constants.FieldAccessCredentialPropagationMethod] != "qemuGuestAgent" {
+		t.Errorf("SSH propagation_method = %q, want %q", ssh[constants.FieldAccessCredentialPropagationMethod], "qemuGuestAgent")
+	}
+	users := ssh[constants.FieldAccessCredentialUsers].([]string)
+	if !reflect.DeepEqual(users, []string{"root", "admin"}) {
+		t.Errorf("SSH users = %v, want [root admin]", users)
+	}
+
+	// Check UserPassword entry
+	pwList := acs[1][constants.FieldAccessCredentialUserPassword].([]interface{})
+	if len(pwList) != 1 {
+		t.Fatalf("UserPassword entry has %d items, want 1", len(pwList))
+	}
+	pw := pwList[0].(map[string]interface{})
+	if pw[constants.FieldAccessCredentialSecretName] != "my-passwords" {
+		t.Errorf("UserPassword secret_name = %q, want %q", pw[constants.FieldAccessCredentialSecretName], "my-passwords")
+	}
+
+	// Test empty access credentials
+	vmEmpty := &kubevirtv1.VirtualMachine{
+		Spec: kubevirtv1.VirtualMachineSpec{
+			Template: &kubevirtv1.VirtualMachineInstanceTemplateSpec{
+				Spec: kubevirtv1.VirtualMachineInstanceSpec{},
+			},
+		},
+	}
+	importerEmpty := &VMImporter{VirtualMachine: vmEmpty}
+	if got := importerEmpty.AccessCredentials(); len(got) != 0 {
+		t.Errorf("AccessCredentials() empty VM returned %d entries, want 0", len(got))
+	}
+}
+
+func TestDNSImport(t *testing.T) {
+	// VM with DNS policy and config
+	vm := &kubevirtv1.VirtualMachine{
+		Spec: kubevirtv1.VirtualMachineSpec{
+			Template: &kubevirtv1.VirtualMachineInstanceTemplateSpec{
+				Spec: kubevirtv1.VirtualMachineInstanceSpec{
+					DNSPolicy: corev1.DNSNone,
+					DNSConfig: &corev1.PodDNSConfig{
+						Nameservers: []string{"8.8.8.8", "8.8.4.4"},
+						Searches:    []string{"example.com"},
+						Options: []corev1.PodDNSConfigOption{
+							{Name: "ndots", Value: ptr.To("5")},
+							{Name: "single-request"},
+						},
+					},
+				},
+			},
+		},
+	}
+	importer := &VMImporter{VirtualMachine: vm}
+
+	if policy := importer.DNSPolicy(); policy != "None" {
+		t.Errorf("DNSPolicy() = %q, want %q", policy, "None")
+	}
+
+	dc := importer.DNSConfig()
+	if len(dc) != 1 {
+		t.Fatalf("DNSConfig() returned %d entries, want 1", len(dc))
+	}
+	ns := dc[0][constants.FieldDNSConfigNameservers].([]string)
+	if !reflect.DeepEqual(ns, []string{"8.8.8.8", "8.8.4.4"}) {
+		t.Errorf("DNSConfig nameservers = %v, want [8.8.8.8 8.8.4.4]", ns)
+	}
+	searches := dc[0][constants.FieldDNSConfigSearches].([]string)
+	if !reflect.DeepEqual(searches, []string{"example.com"}) {
+		t.Errorf("DNSConfig searches = %v, want [example.com]", searches)
+	}
+	opts := dc[0][constants.FieldDNSConfigOptions].([]map[string]interface{})
+	if len(opts) != 2 {
+		t.Fatalf("DNSConfig options has %d items, want 2", len(opts))
+	}
+	if opts[0][constants.FieldDNSOptionName] != "ndots" || opts[0][constants.FieldDNSOptionValue] != "5" {
+		t.Errorf("DNS option 0 = %v, want {name:ndots, value:5}", opts[0])
+	}
+	if opts[1][constants.FieldDNSOptionName] != "single-request" || opts[1][constants.FieldDNSOptionValue] != "" {
+		t.Errorf("DNS option 1 = %v, want {name:single-request, value:\"\"}", opts[1])
+	}
+
+	// VM without DNS config
+	vmNoDNS := &kubevirtv1.VirtualMachine{
+		Spec: kubevirtv1.VirtualMachineSpec{
+			Template: &kubevirtv1.VirtualMachineInstanceTemplateSpec{
+				Spec: kubevirtv1.VirtualMachineInstanceSpec{},
+			},
+		},
+	}
+	importerNoDNS := &VMImporter{VirtualMachine: vmNoDNS}
+	if policy := importerNoDNS.DNSPolicy(); policy != "" {
+		t.Errorf("DNSPolicy() empty = %q, want empty", policy)
+	}
+	if dc := importerNoDNS.DNSConfig(); dc != nil {
+		t.Errorf("DNSConfig() empty = %v, want nil", dc)
+	}
+}
+
+func TestConfigMapSecretDiskImport(t *testing.T) {
+	vm := &kubevirtv1.VirtualMachine{
+		ObjectMeta: metav1.ObjectMeta{Namespace: "default"},
+		Spec: kubevirtv1.VirtualMachineSpec{
+			Template: &kubevirtv1.VirtualMachineInstanceTemplateSpec{
+				Spec: kubevirtv1.VirtualMachineInstanceSpec{
+					Domain: kubevirtv1.DomainSpec{
+						Devices: kubevirtv1.Devices{
+							Disks: []kubevirtv1.Disk{
+								{
+									Name: "cm-disk",
+									DiskDevice: kubevirtv1.DiskDevice{
+										Disk: &kubevirtv1.DiskTarget{Bus: "virtio"},
+									},
+								},
+								{
+									Name: "sec-disk",
+									DiskDevice: kubevirtv1.DiskDevice{
+										Disk: &kubevirtv1.DiskTarget{Bus: "virtio"},
+									},
+								},
+							},
+						},
+					},
+					Volumes: []kubevirtv1.Volume{
+						{
+							Name: "cm-disk",
+							VolumeSource: kubevirtv1.VolumeSource{
+								ConfigMap: &kubevirtv1.ConfigMapVolumeSource{
+									LocalObjectReference: corev1.LocalObjectReference{Name: "my-config"},
+								},
+							},
+						},
+						{
+							Name: "sec-disk",
+							VolumeSource: kubevirtv1.VolumeSource{
+								Secret: &kubevirtv1.SecretVolumeSource{
+									SecretName: "my-secret",
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+	importer := &VMImporter{VirtualMachine: vm}
+	disks, _, err := importer.Volume()
+	if err != nil {
+		t.Fatalf("Volume() error: %v", err)
+	}
+	if len(disks) != 2 {
+		t.Fatalf("Volume() returned %d disks, want 2", len(disks))
+	}
+	if disks[0][constants.FieldDiskConfigMapName] != "my-config" {
+		t.Errorf("disk 0 configmap_name = %v, want my-config", disks[0][constants.FieldDiskConfigMapName])
+	}
+	if disks[1][constants.FieldDiskSecretName] != "my-secret" {
+		t.Errorf("disk 1 secret_name = %v, want my-secret", disks[1][constants.FieldDiskSecretName])
 	}
 }
