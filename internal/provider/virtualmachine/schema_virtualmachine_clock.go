@@ -10,16 +10,14 @@ import (
 func resourceClockSchema() map[string]*schema.Schema {
 	return map[string]*schema.Schema{
 		constants.FieldClockTimezone: {
-			Type:          schema.TypeString,
-			Optional:      true,
-			ConflictsWith: []string{constants.FieldVirtualMachineClock + ".0." + constants.FieldClockUTCOffsetSeconds},
-			Description:   "Timezone for the guest clock (e.g. 'America/New_York'). Mutually exclusive with utc_offset_seconds",
+			Type:        schema.TypeString,
+			Optional:    true,
+			Description: "Timezone for the guest clock (e.g. 'America/New_York'). Mutually exclusive with utc_offset_seconds",
 		},
 		constants.FieldClockUTCOffsetSeconds: {
-			Type:          schema.TypeInt,
-			Optional:      true,
-			ConflictsWith: []string{constants.FieldVirtualMachineClock + ".0." + constants.FieldClockTimezone},
-			Description:   "UTC offset in seconds. Mutually exclusive with timezone",
+			Type:        schema.TypeInt,
+			Optional:    true,
+			Description: "UTC offset in seconds. Mutually exclusive with timezone",
 		},
 		constants.FieldClockTimer: {
 			Type:     schema.TypeList,
