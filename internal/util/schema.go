@@ -76,10 +76,8 @@ func DataSourceSchemaWrap(s map[string]*schema.Schema) map[string]*schema.Schema
 		}
 		if v.Elem != nil {
 			switch elem := v.Elem.(type) {
-			case *schema.Resource:
-				v.Elem = &schema.Resource{
-					Schema: DataSourceSchemaWrap(elem.Schema),
-				}
+			case schema.Resource:
+				v.Elem = DataSourceSchemaWrap(elem.Schema)
 			}
 		}
 		v.ForceNew = false
@@ -91,8 +89,6 @@ func DataSourceSchemaWrap(s map[string]*schema.Schema) map[string]*schema.Schema
 		v.ValidateFunc = nil
 		v.ConflictsWith = nil
 		v.AtLeastOneOf = nil
-		v.ExactlyOneOf = nil
-		v.RequiredWith = nil
 		v.MinItems = 0
 		v.MaxItems = 0
 	}
