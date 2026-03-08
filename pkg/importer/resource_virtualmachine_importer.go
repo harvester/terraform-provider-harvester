@@ -421,77 +421,65 @@ func (v *VMImporter) Clock() []map[string]interface{} {
 	}
 
 	if clock.Timer != nil {
-		timer := map[string]interface{}{}
-
-		if clock.Timer.HPET != nil {
-			h := map[string]interface{}{
-				constants.FieldTimerEnabled: clock.Timer.HPET.Enabled == nil || *clock.Timer.HPET.Enabled,
-			}
-			if clock.Timer.HPET.TickPolicy != "" {
-				h[constants.FieldTimerTickPolicy] = string(clock.Timer.HPET.TickPolicy)
-			} else {
-				h[constants.FieldTimerTickPolicy] = ""
-			}
-			timer[constants.FieldTimerHPET] = []interface{}{h}
-		} else {
-			timer[constants.FieldTimerHPET] = []interface{}{}
-		}
-
-		if clock.Timer.KVM != nil {
-			timer[constants.FieldTimerKVM] = []interface{}{map[string]interface{}{
-				constants.FieldTimerEnabled: clock.Timer.KVM.Enabled == nil || *clock.Timer.KVM.Enabled,
-			}}
-		} else {
-			timer[constants.FieldTimerKVM] = []interface{}{}
-		}
-
-		if clock.Timer.PIT != nil {
-			p := map[string]interface{}{
-				constants.FieldTimerEnabled: clock.Timer.PIT.Enabled == nil || *clock.Timer.PIT.Enabled,
-			}
-			if clock.Timer.PIT.TickPolicy != "" {
-				p[constants.FieldTimerTickPolicy] = string(clock.Timer.PIT.TickPolicy)
-			} else {
-				p[constants.FieldTimerTickPolicy] = ""
-			}
-			timer[constants.FieldTimerPIT] = []interface{}{p}
-		} else {
-			timer[constants.FieldTimerPIT] = []interface{}{}
-		}
-
-		if clock.Timer.RTC != nil {
-			r := map[string]interface{}{
-				constants.FieldTimerEnabled: clock.Timer.RTC.Enabled == nil || *clock.Timer.RTC.Enabled,
-			}
-			if clock.Timer.RTC.TickPolicy != "" {
-				r[constants.FieldTimerTickPolicy] = string(clock.Timer.RTC.TickPolicy)
-			} else {
-				r[constants.FieldTimerTickPolicy] = ""
-			}
-			if clock.Timer.RTC.Track != "" {
-				r[constants.FieldTimerTrack] = string(clock.Timer.RTC.Track)
-			} else {
-				r[constants.FieldTimerTrack] = ""
-			}
-			timer[constants.FieldTimerRTC] = []interface{}{r}
-		} else {
-			timer[constants.FieldTimerRTC] = []interface{}{}
-		}
-
-		if clock.Timer.Hyperv != nil {
-			timer[constants.FieldTimerHyperv] = []interface{}{map[string]interface{}{
-				constants.FieldTimerEnabled: clock.Timer.Hyperv.Enabled == nil || *clock.Timer.Hyperv.Enabled,
-			}}
-		} else {
-			timer[constants.FieldTimerHyperv] = []interface{}{}
-		}
-
-		result[constants.FieldClockTimer] = []interface{}{timer}
+		result[constants.FieldClockTimer] = []interface{}{importClockTimers(clock.Timer)}
 	} else {
 		result[constants.FieldClockTimer] = []interface{}{}
 	}
 
 	return []map[string]interface{}{result}
+}
+
+func importClockTimers(t *kubevirtv1.Timer) map[string]interface{} {
+	timer := map[string]interface{}{}
+
+	if t.HPET != nil {
+		h := map[string]interface{}{
+			constants.FieldTimerEnabled:    t.HPET.Enabled == nil || *t.HPET.Enabled,
+			constants.FieldTimerTickPolicy: string(t.HPET.TickPolicy),
+		}
+		timer[constants.FieldTimerHPET] = []interface{}{h}
+	} else {
+		timer[constants.FieldTimerHPET] = []interface{}{}
+	}
+
+	if t.KVM != nil {
+		timer[constants.FieldTimerKVM] = []interface{}{map[string]interface{}{
+			constants.FieldTimerEnabled: t.KVM.Enabled == nil || *t.KVM.Enabled,
+		}}
+	} else {
+		timer[constants.FieldTimerKVM] = []interface{}{}
+	}
+
+	if t.PIT != nil {
+		p := map[string]interface{}{
+			constants.FieldTimerEnabled:    t.PIT.Enabled == nil || *t.PIT.Enabled,
+			constants.FieldTimerTickPolicy: string(t.PIT.TickPolicy),
+		}
+		timer[constants.FieldTimerPIT] = []interface{}{p}
+	} else {
+		timer[constants.FieldTimerPIT] = []interface{}{}
+	}
+
+	if t.RTC != nil {
+		r := map[string]interface{}{
+			constants.FieldTimerEnabled:    t.RTC.Enabled == nil || *t.RTC.Enabled,
+			constants.FieldTimerTickPolicy: string(t.RTC.TickPolicy),
+			constants.FieldTimerTrack:      string(t.RTC.Track),
+		}
+		timer[constants.FieldTimerRTC] = []interface{}{r}
+	} else {
+		timer[constants.FieldTimerRTC] = []interface{}{}
+	}
+
+	if t.Hyperv != nil {
+		timer[constants.FieldTimerHyperv] = []interface{}{map[string]interface{}{
+			constants.FieldTimerEnabled: t.Hyperv.Enabled == nil || *t.Hyperv.Enabled,
+		}}
+	} else {
+		timer[constants.FieldTimerHyperv] = []interface{}{}
+	}
+
+	return timer
 }
 
 func (v *VMImporter) NodeName() string {

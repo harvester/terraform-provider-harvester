@@ -600,54 +600,57 @@ func parseClock(r map[string]interface{}) (*kubevirtv1.Clock, error) {
 	}
 
 	if timerList, ok := r[constants.FieldClockTimer].([]interface{}); ok && len(timerList) > 0 {
-		t := timerList[0].(map[string]interface{})
-		timer := &kubevirtv1.Timer{}
-
-		if hpetList, ok := t[constants.FieldTimerHPET].([]interface{}); ok && len(hpetList) > 0 {
-			h := hpetList[0].(map[string]interface{})
-			enabled := h[constants.FieldTimerEnabled].(bool)
-			timer.HPET = &kubevirtv1.HPETTimer{Enabled: &enabled}
-			if tp, ok := h[constants.FieldTimerTickPolicy].(string); ok && tp != "" {
-				timer.HPET.TickPolicy = kubevirtv1.HPETTickPolicy(tp)
-			}
-		}
-
-		if kvmList, ok := t[constants.FieldTimerKVM].([]interface{}); ok && len(kvmList) > 0 {
-			k := kvmList[0].(map[string]interface{})
-			enabled := k[constants.FieldTimerEnabled].(bool)
-			timer.KVM = &kubevirtv1.KVMTimer{Enabled: &enabled}
-		}
-
-		if pitList, ok := t[constants.FieldTimerPIT].([]interface{}); ok && len(pitList) > 0 {
-			p := pitList[0].(map[string]interface{})
-			enabled := p[constants.FieldTimerEnabled].(bool)
-			timer.PIT = &kubevirtv1.PITTimer{Enabled: &enabled}
-			if tp, ok := p[constants.FieldTimerTickPolicy].(string); ok && tp != "" {
-				timer.PIT.TickPolicy = kubevirtv1.PITTickPolicy(tp)
-			}
-		}
-
-		if rtcList, ok := t[constants.FieldTimerRTC].([]interface{}); ok && len(rtcList) > 0 {
-			rtc := rtcList[0].(map[string]interface{})
-			enabled := rtc[constants.FieldTimerEnabled].(bool)
-			timer.RTC = &kubevirtv1.RTCTimer{Enabled: &enabled}
-			if tp, ok := rtc[constants.FieldTimerTickPolicy].(string); ok && tp != "" {
-				timer.RTC.TickPolicy = kubevirtv1.RTCTickPolicy(tp)
-			}
-			if track, ok := rtc[constants.FieldTimerTrack].(string); ok && track != "" {
-				timer.RTC.Track = kubevirtv1.RTCTimerTrack(track)
-			}
-		}
-
-		if hvList, ok := t[constants.FieldTimerHyperv].([]interface{}); ok && len(hvList) > 0 {
-			hv := hvList[0].(map[string]interface{})
-			enabled := hv[constants.FieldTimerEnabled].(bool)
-			timer.Hyperv = &kubevirtv1.HypervTimer{Enabled: &enabled}
-		}
-
-		clock.Timer = timer
+		clock.Timer = parseClockTimers(timerList[0].(map[string]interface{}))
 	}
 	return clock, nil
+}
+
+func parseClockTimers(t map[string]interface{}) *kubevirtv1.Timer {
+	timer := &kubevirtv1.Timer{}
+
+	if hpetList, ok := t[constants.FieldTimerHPET].([]interface{}); ok && len(hpetList) > 0 {
+		h := hpetList[0].(map[string]interface{})
+		enabled := h[constants.FieldTimerEnabled].(bool)
+		timer.HPET = &kubevirtv1.HPETTimer{Enabled: &enabled}
+		if tp, ok := h[constants.FieldTimerTickPolicy].(string); ok && tp != "" {
+			timer.HPET.TickPolicy = kubevirtv1.HPETTickPolicy(tp)
+		}
+	}
+
+	if kvmList, ok := t[constants.FieldTimerKVM].([]interface{}); ok && len(kvmList) > 0 {
+		k := kvmList[0].(map[string]interface{})
+		enabled := k[constants.FieldTimerEnabled].(bool)
+		timer.KVM = &kubevirtv1.KVMTimer{Enabled: &enabled}
+	}
+
+	if pitList, ok := t[constants.FieldTimerPIT].([]interface{}); ok && len(pitList) > 0 {
+		p := pitList[0].(map[string]interface{})
+		enabled := p[constants.FieldTimerEnabled].(bool)
+		timer.PIT = &kubevirtv1.PITTimer{Enabled: &enabled}
+		if tp, ok := p[constants.FieldTimerTickPolicy].(string); ok && tp != "" {
+			timer.PIT.TickPolicy = kubevirtv1.PITTickPolicy(tp)
+		}
+	}
+
+	if rtcList, ok := t[constants.FieldTimerRTC].([]interface{}); ok && len(rtcList) > 0 {
+		rtc := rtcList[0].(map[string]interface{})
+		enabled := rtc[constants.FieldTimerEnabled].(bool)
+		timer.RTC = &kubevirtv1.RTCTimer{Enabled: &enabled}
+		if tp, ok := rtc[constants.FieldTimerTickPolicy].(string); ok && tp != "" {
+			timer.RTC.TickPolicy = kubevirtv1.RTCTickPolicy(tp)
+		}
+		if track, ok := rtc[constants.FieldTimerTrack].(string); ok && track != "" {
+			timer.RTC.Track = kubevirtv1.RTCTimerTrack(track)
+		}
+	}
+
+	if hvList, ok := t[constants.FieldTimerHyperv].([]interface{}); ok && len(hvList) > 0 {
+		hv := hvList[0].(map[string]interface{})
+		enabled := hv[constants.FieldTimerEnabled].(bool)
+		timer.Hyperv = &kubevirtv1.HypervTimer{Enabled: &enabled}
+	}
+
+	return timer
 }
 
 func Updater(c *client.Client, ctx context.Context, vm *kubevirtv1.VirtualMachine) util.Constructor {
