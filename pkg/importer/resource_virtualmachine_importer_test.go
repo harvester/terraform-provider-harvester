@@ -6,6 +6,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/utils/ptr"
 	kubevirtv1 "kubevirt.io/api/core/v1"
 
 	"github.com/harvester/harvester/pkg/builder"
@@ -563,5 +564,280 @@ func TestResourceRequestsImport(t *testing.T) {
 	}
 	if got := reqsNil[0][constants.FieldRequestsMemory]; got != "" {
 		t.Errorf("Requests() nil memory = %q, want empty", got)
+	}
+}
+
+func TestHypervImport(t *testing.T) {
+	retries := uint32(8192)
+	vm := &kubevirtv1.VirtualMachine{
+		Spec: kubevirtv1.VirtualMachineSpec{
+			Template: &kubevirtv1.VirtualMachineInstanceTemplateSpec{
+				Spec: kubevirtv1.VirtualMachineInstanceSpec{
+					Domain: kubevirtv1.DomainSpec{
+						Features: &kubevirtv1.Features{
+							Hyperv: &kubevirtv1.FeatureHyperv{
+								Relaxed:         &kubevirtv1.FeatureState{Enabled: ptr.To(true)},
+								VAPIC:           &kubevirtv1.FeatureState{Enabled: ptr.To(true)},
+								VPIndex:         &kubevirtv1.FeatureState{Enabled: ptr.To(true)},
+								Runtime:         &kubevirtv1.FeatureState{Enabled: ptr.To(true)},
+								SyNIC:           &kubevirtv1.FeatureState{Enabled: ptr.To(true)},
+								Frequencies:     &kubevirtv1.FeatureState{Enabled: ptr.To(true)},
+								Reenlightenment: &kubevirtv1.FeatureState{Enabled: ptr.To(true)},
+								Spinlocks: &kubevirtv1.FeatureSpinlocks{
+									Enabled: ptr.To(true),
+									Retries: &retries,
+								},
+								SyNICTimer: &kubevirtv1.SyNICTimer{
+									Enabled: ptr.To(true),
+									Direct:  &kubevirtv1.FeatureState{Enabled: ptr.To(true)},
+								},
+								VendorID: &kubevirtv1.FeatureVendorID{
+									Enabled:  ptr.To(true),
+									VendorID: "KVMKVMKVM",
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+	importer := &VMImporter{VirtualMachine: vm}
+	hvList := importer.Hyperv()
+
+	if len(hvList) != 1 {
+		t.Fatalf("Hyperv() returned %d entries, want 1", len(hvList))
+	}
+	hv := hvList[0]
+	if hv[constants.FieldHypervRelaxed] != true {
+		t.Error("relaxed should be true")
+	}
+	if hv[constants.FieldHypervVAPIC] != true {
+		t.Error("vapic should be true")
+	}
+	if hv[constants.FieldHypervSpinlocks] != true {
+		t.Error("spinlocks should be true")
+	}
+	if hv[constants.FieldHypervSpinlocksRetries] != 8192 {
+		t.Errorf("spinlocks_retries = %v, want 8192", hv[constants.FieldHypervSpinlocksRetries])
+	}
+	if hv[constants.FieldHypervSyNICTimer] != true {
+		t.Error("synictimer should be true")
+	}
+	if hv[constants.FieldHypervSyNICTimerDirect] != true {
+		t.Error("synictimer_direct should be true")
+	}
+	if hv[constants.FieldHypervVendorID] != true {
+		t.Error("vendorid should be true")
+	}
+	if hv[constants.FieldHypervVendorIDValue] != "KVMKVMKVM" {
+		t.Errorf("vendorid_value = %q, want KVMKVMKVM", hv[constants.FieldHypervVendorIDValue])
+	}
+
+	// Test nil hyperv
+	vmNil := &kubevirtv1.VirtualMachine{
+		Spec: kubevirtv1.VirtualMachineSpec{
+			Template: &kubevirtv1.VirtualMachineInstanceTemplateSpec{
+				Spec: kubevirtv1.VirtualMachineInstanceSpec{
+					Domain: kubevirtv1.DomainSpec{},
+				},
+			},
+		},
+	}
+	importerNil := &VMImporter{VirtualMachine: vmNil}
+	if got := importerNil.Hyperv(); got != nil {
+		t.Errorf("Hyperv() on nil features = %v, want nil", got)
+	}
+}
+
+func TestHypervPassthroughImport(t *testing.T) {
+	vm := &kubevirtv1.VirtualMachine{
+		Spec: kubevirtv1.VirtualMachineSpec{
+			Template: &kubevirtv1.VirtualMachineInstanceTemplateSpec{
+				Spec: kubevirtv1.VirtualMachineInstanceSpec{
+					Domain: kubevirtv1.DomainSpec{
+						Features: &kubevirtv1.Features{
+							HypervPassthrough: &kubevirtv1.HyperVPassthrough{
+								Enabled: ptr.To(true),
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+	importer := &VMImporter{VirtualMachine: vm}
+	if !importer.HypervPassthrough() {
+		t.Error("HypervPassthrough() should be true")
+	}
+
+	vmNil := &kubevirtv1.VirtualMachine{
+		Spec: kubevirtv1.VirtualMachineSpec{
+			Template: &kubevirtv1.VirtualMachineInstanceTemplateSpec{
+				Spec: kubevirtv1.VirtualMachineInstanceSpec{
+					Domain: kubevirtv1.DomainSpec{},
+				},
+			},
+		},
+	}
+	importerNil := &VMImporter{VirtualMachine: vmNil}
+	if importerNil.HypervPassthrough() {
+		t.Error("HypervPassthrough() on nil should be false")
+	}
+}
+
+func TestClockImport(t *testing.T) {
+	tz := kubevirtv1.ClockOffsetTimezone("Europe/Paris")
+	vm := &kubevirtv1.VirtualMachine{
+		Spec: kubevirtv1.VirtualMachineSpec{
+			Template: &kubevirtv1.VirtualMachineInstanceTemplateSpec{
+				Spec: kubevirtv1.VirtualMachineInstanceSpec{
+					Domain: kubevirtv1.DomainSpec{
+						Clock: &kubevirtv1.Clock{
+							ClockOffset: kubevirtv1.ClockOffset{
+								Timezone: &tz,
+							},
+							Timer: &kubevirtv1.Timer{
+								HPET: &kubevirtv1.HPETTimer{
+									Enabled:    ptr.To(true),
+									TickPolicy: kubevirtv1.HPETTickPolicyDelay,
+								},
+								KVM: &kubevirtv1.KVMTimer{
+									Enabled: ptr.To(true),
+								},
+								PIT: &kubevirtv1.PITTimer{
+									Enabled:    ptr.To(true),
+									TickPolicy: kubevirtv1.PITTickPolicyCatchup,
+								},
+								RTC: &kubevirtv1.RTCTimer{
+									Enabled:    ptr.To(true),
+									TickPolicy: kubevirtv1.RTCTickPolicyCatchup,
+									Track:      kubevirtv1.TrackGuest,
+								},
+								Hyperv: &kubevirtv1.HypervTimer{
+									Enabled: ptr.To(true),
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+	importer := &VMImporter{VirtualMachine: vm}
+	clockList := importer.Clock()
+
+	if len(clockList) != 1 {
+		t.Fatalf("Clock() returned %d entries, want 1", len(clockList))
+	}
+	c := clockList[0]
+	if c[constants.FieldClockTimezone] != "Europe/Paris" {
+		t.Errorf("timezone = %q, want Europe/Paris", c[constants.FieldClockTimezone])
+	}
+
+	timerList := c[constants.FieldClockTimer].([]interface{})
+	if len(timerList) != 1 {
+		t.Fatalf("timer list has %d entries, want 1", len(timerList))
+	}
+	timer := timerList[0].(map[string]interface{})
+
+	// Check HPET
+	hpetList := timer[constants.FieldTimerHPET].([]interface{})
+	if len(hpetList) != 1 {
+		t.Fatalf("hpet has %d entries, want 1", len(hpetList))
+	}
+	hpet := hpetList[0].(map[string]interface{})
+	if hpet[constants.FieldTimerEnabled] != true {
+		t.Error("hpet enabled should be true")
+	}
+	if hpet[constants.FieldTimerTickPolicy] != "delay" {
+		t.Errorf("hpet tick_policy = %q, want delay", hpet[constants.FieldTimerTickPolicy])
+	}
+
+	// Check RTC
+	rtcList := timer[constants.FieldTimerRTC].([]interface{})
+	if len(rtcList) != 1 {
+		t.Fatalf("rtc has %d entries, want 1", len(rtcList))
+	}
+	rtc := rtcList[0].(map[string]interface{})
+	if rtc[constants.FieldTimerTrack] != "guest" {
+		t.Errorf("rtc track = %q, want guest", rtc[constants.FieldTimerTrack])
+	}
+
+	// Test nil clock
+	vmNil := &kubevirtv1.VirtualMachine{
+		Spec: kubevirtv1.VirtualMachineSpec{
+			Template: &kubevirtv1.VirtualMachineInstanceTemplateSpec{
+				Spec: kubevirtv1.VirtualMachineInstanceSpec{
+					Domain: kubevirtv1.DomainSpec{},
+				},
+			},
+		},
+	}
+	importerNil := &VMImporter{VirtualMachine: vmNil}
+	if got := importerNil.Clock(); got != nil {
+		t.Errorf("Clock() on nil = %v, want nil", got)
+	}
+}
+
+func TestSysprepDiskImport(t *testing.T) {
+	vm := &kubevirtv1.VirtualMachine{
+		ObjectMeta: metav1.ObjectMeta{Namespace: "default"},
+		Spec: kubevirtv1.VirtualMachineSpec{
+			Template: &kubevirtv1.VirtualMachineInstanceTemplateSpec{
+				Spec: kubevirtv1.VirtualMachineInstanceSpec{
+					Domain: kubevirtv1.DomainSpec{
+						Devices: kubevirtv1.Devices{
+							Disks: []kubevirtv1.Disk{
+								{
+									Name: "sysprep-secret",
+									DiskDevice: kubevirtv1.DiskDevice{
+										CDRom: &kubevirtv1.CDRomTarget{Bus: "sata"},
+									},
+								},
+								{
+									Name: "sysprep-cm",
+									DiskDevice: kubevirtv1.DiskDevice{
+										CDRom: &kubevirtv1.CDRomTarget{Bus: "sata"},
+									},
+								},
+							},
+						},
+					},
+					Volumes: []kubevirtv1.Volume{
+						{
+							Name: "sysprep-secret",
+							VolumeSource: kubevirtv1.VolumeSource{
+								Sysprep: &kubevirtv1.SysprepSource{
+									Secret: &corev1.LocalObjectReference{Name: "win-unattend"},
+								},
+							},
+						},
+						{
+							Name: "sysprep-cm",
+							VolumeSource: kubevirtv1.VolumeSource{
+								Sysprep: &kubevirtv1.SysprepSource{
+									ConfigMap: &corev1.LocalObjectReference{Name: "win-unattend-cm"},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+	importer := &VMImporter{VirtualMachine: vm}
+	disks, _, err := importer.Volume()
+	if err != nil {
+		t.Fatalf("Volume() error: %v", err)
+	}
+	if len(disks) != 2 {
+		t.Fatalf("Volume() returned %d disks, want 2", len(disks))
+	}
+	if disks[0][constants.FieldDiskSysprepSecretName] != "win-unattend" {
+		t.Errorf("disk 0 sysprep_secret_name = %v, want win-unattend", disks[0][constants.FieldDiskSysprepSecretName])
+	}
+	if disks[1][constants.FieldDiskSysprepConfigMapName] != "win-unattend-cm" {
+		t.Errorf("disk 1 sysprep_configmap_name = %v, want win-unattend-cm", disks[1][constants.FieldDiskSysprepConfigMapName])
 	}
 }
