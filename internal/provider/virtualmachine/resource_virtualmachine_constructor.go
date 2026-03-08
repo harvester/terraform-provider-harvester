@@ -514,7 +514,10 @@ func (c *Constructor) Setup() util.Processors {
 			Field: constants.FieldVirtualMachineClock,
 			Parser: func(i interface{}) error {
 				r := i.(map[string]interface{})
-				clock := parseClock(r)
+				clock, err := parseClock(r)
+				if err != nil {
+					return err
+				}
 				vmBuilder.VirtualMachine.Spec.Template.Spec.Domain.Clock = clock
 				return nil
 			},
@@ -601,12 +604,17 @@ func parseHyperv(r map[string]interface{}) *kubevirtv1.FeatureHyperv {
 	return hv
 }
 
-func parseClock(r map[string]interface{}) *kubevirtv1.Clock {
+func parseClock(r map[string]interface{}) (*kubevirtv1.Clock, error) {
 	clock := &kubevirtv1.Clock{}
-	if tz, ok := r[constants.FieldClockTimezone].(string); ok && tz != "" {
+	tz, hasTZ := r[constants.FieldClockTimezone].(string)
+	offset, hasOffset := r[constants.FieldClockUTCOffsetSeconds].(int)
+	if hasTZ && tz != "" && hasOffset && offset != 0 {
+		return nil, errors.New("clock: timezone and utc_offset_seconds are mutually exclusive")
+	}
+	if hasTZ && tz != "" {
 		timezone := kubevirtv1.ClockOffsetTimezone(tz)
 		clock.Timezone = &timezone
-	} else if offset, ok := r[constants.FieldClockUTCOffsetSeconds].(int); ok && offset != 0 {
+	} else if hasOffset && offset != 0 {
 		clock.UTC = &kubevirtv1.ClockOffsetUTC{OffsetSeconds: &offset}
 	}
 
@@ -658,7 +666,7 @@ func parseClock(r map[string]interface{}) *kubevirtv1.Clock {
 
 		clock.Timer = timer
 	}
-	return clock
+	return clock, nil
 }
 
 func Updater(c *client.Client, ctx context.Context, vm *kubevirtv1.VirtualMachine) util.Constructor {
