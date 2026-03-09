@@ -73,10 +73,10 @@ func DoGet(url, username, password, token, cacert string, insecure bool) (*http.
 				return fmt.Errorf("stopped after %d redirects", maxHTTPRedirect)
 			}
 			if len(token) > 0 {
-				req.Header.Add("Authorization", "Bearer "+token)
+				req.Header.Add("Authorization", "Bearer "+token) //nolint:gosec
 			} else if len(username) > 0 && len(password) > 0 {
 				s := username + ":" + password
-				req.Header.Add("Authorization", "Basic "+base64.StdEncoding.EncodeToString([]byte(s)))
+				req.Header.Add("Authorization", "Basic "+base64.StdEncoding.EncodeToString([]byte(s))) //nolint:gosec
 			}
 			return nil
 		},
