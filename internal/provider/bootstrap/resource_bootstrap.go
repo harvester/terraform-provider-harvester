@@ -26,7 +26,7 @@ const (
 
 type loginRequestPayload struct {
 	Username     string `json:"username"`
-	Password     string `json:"password"` //nolint:gosec
+	Password     string `json:"password"`
 	ResponseType string `json:"responseType"`
 	TTL          int    `json:"ttl"`
 	Description  string `json:"description"`
@@ -35,7 +35,7 @@ type loginRequestPayload struct {
 type loginResponsePayload struct {
 	ID    string `json:"id"`
 	Type  string `json:"type"`
-	Token string `json:"token"` //nolint:gosec
+	Token string `json:"token"`
 	Code  string `json:"code"`
 }
 
@@ -207,7 +207,7 @@ func bootstrapLogin(apiURL string, d *schema.ResourceData, c *config.Config) (st
 
 func DoUserLogin(url, user, pass string, ttl int, desc, cacert string, insecure bool) (string, string, error) {
 	loginURL := url + "/v3-public/localProviders/local?action=login"
-	loginData, err := json.Marshal(loginRequestPayload{
+	loginData, err := json.Marshal(loginRequestPayload{ //nolint:gosec
 		Username:     user,
 		Password:     pass,
 		ResponseType: "token",
