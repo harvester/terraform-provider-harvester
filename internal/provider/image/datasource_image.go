@@ -41,12 +41,24 @@ func dataSourceImageRead(ctx context.Context, d *schema.ResourceData, meta inter
 		if err != nil {
 			return diag.FromErr(err)
 		}
+		var matchIndices []int
 		for i, image := range images.Items {
 			if image.Spec.DisplayName == displayName {
-				return diag.FromErr(resourceImageImport(d, &images.Items[i]))
+				matchIndices = append(matchIndices, i)
 			}
 		}
-		return diag.FromErr(fmt.Errorf("can not find image %s in namespace %s", displayName, namespace))
+		if len(matchIndices) == 0 {
+			return diag.FromErr(fmt.Errorf("no image with display_name %q found in namespace %q", displayName, namespace))
+		}
+		if len(matchIndices) > 1 {
+			names := make([]string, len(matchIndices))
+			for i, idx := range matchIndices {
+				names[i] = images.Items[idx].Name
+			}
+			return diag.FromErr(fmt.Errorf("display_name %q matches %d images in namespace %q: %v — use 'name' to select a specific image",
+				displayName, len(matchIndices), namespace, names))
+		}
+		return diag.FromErr(resourceImageImport(d, &images.Items[matchIndices[0]]))
 	}
 
 	return diag.FromErr(fmt.Errorf("must specify image %s or %s", constants.FieldCommonName, constants.FieldImageDisplayName))
