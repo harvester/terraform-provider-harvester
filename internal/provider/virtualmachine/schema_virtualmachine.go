@@ -181,6 +181,27 @@ please use %s instead of this deprecated field:
 			Default:     false,
 			Description: "Create an initial snapshot named {vm-name}-initial after the VM is created and ready",
 		},
+		constants.FieldVirtualMachinePCIDevice: {
+			Type:     schema.TypeList,
+			Optional: true,
+			Description: "PCI devices to passthrough to the VM via KubeVirt hostDevices." +
+				" The Harvester VM webhook automatically creates PCIDeviceClaims" +
+				" and handles IOMMU group devices.",
+			Elem: &schema.Resource{
+				Schema: map[string]*schema.Schema{
+					constants.FieldVirtualMachinePCIDeviceName: {
+						Type:        schema.TypeString,
+						Required:    true,
+						Description: "Arbitrary name for this host device entry.",
+					},
+					constants.FieldVirtualMachinePCIDeviceDeviceName: {
+						Type:        schema.TypeString,
+						Required:    true,
+						Description: "Device plugin resource name (e.g. from harvester_pcidevice data source resource_name).",
+					},
+				},
+			},
+		},
 	}
 	util.NamespacedSchemaWrap(s, false)
 	s[constants.FieldCommonTags].Description = "The tag is reflected as label on the VM.\n" +

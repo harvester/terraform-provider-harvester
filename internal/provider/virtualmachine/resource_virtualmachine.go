@@ -114,6 +114,7 @@ func resourceVirtualMachineUpdate(ctx context.Context, d *schema.ResourceData, m
 	if err != nil {
 		return diag.FromErr(err)
 	}
+
 	if err = updateLocalFields(d, constants.FieldVirtualMachineRestartAfterUpdate); err != nil {
 		return diag.FromErr(err)
 	}

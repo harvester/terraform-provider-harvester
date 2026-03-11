@@ -344,6 +344,18 @@ func (v *VMImporter) NodeName() string {
 	return v.VirtualMachineInstance.Status.NodeName
 }
 
+func (v *VMImporter) HostDevices() []map[string]interface{} {
+	hostDevices := v.VirtualMachine.Spec.Template.Spec.Domain.Devices.HostDevices
+	result := make([]map[string]interface{}, 0, len(hostDevices))
+	for _, hd := range hostDevices {
+		result = append(result, map[string]interface{}{
+			constants.FieldVirtualMachinePCIDeviceName:       hd.Name,
+			constants.FieldVirtualMachinePCIDeviceDeviceName: hd.DeviceName,
+		})
+	}
+	return result
+}
+
 func (v *VMImporter) State(networkInterfaces []map[string]interface{}, oldInstanceUID string) string {
 	if v.VirtualMachineInstance == nil {
 		return constants.StateVirtualMachineStopped
@@ -430,6 +442,7 @@ func ResourceVirtualMachineStateGetter(vm *kubevirtv1.VirtualMachine, vmi *kubev
 			constants.FieldVirtualMachineCPUPinning:            vmImporter.DedicatedCPUPlacement(),
 			constants.FieldVirtualMachineIsolateEmulatorThread: vmImporter.IsolateEmulatorThread(),
 			constants.FieldVirtualMachineNodeSelector:          vm.Spec.Template.Spec.NodeSelector,
+			constants.FieldVirtualMachinePCIDevice:             vmImporter.HostDevices(),
 		},
 	}, nil
 }
