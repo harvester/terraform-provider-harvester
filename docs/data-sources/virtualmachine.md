@@ -37,6 +37,7 @@ data "harvester_virtualmachine" "opensuse154" {
 
 ### Read-Only
 
+- `access_credentials` (List of Object) Access credentials for the VM (SSH public keys or user passwords) (see [below for nested schema](#nestedatt--access_credentials))
 - `cloudinit` (List of Object) (see [below for nested schema](#nestedatt--cloudinit))
 - `cpu` (Number)
 - `cpu_model` (String) CPU model for the virtual machine
@@ -44,6 +45,8 @@ data "harvester_virtualmachine" "opensuse154" {
 - `create_initial_snapshot` (Boolean) Create an initial snapshot named {vm-name}-initial after the VM is created and ready
 - `description` (String) Any text you want that better describes this resource
 - `disk` (List of Object) (see [below for nested schema](#nestedatt--disk))
+- `dns_config` (List of Object) DNS configuration for the VM pod (see [below for nested schema](#nestedatt--dns_config))
+- `dns_policy` (String) DNS policy for the VM pod: ClusterFirst, ClusterFirstWithHostNet, Default, or None
 - `efi` (Boolean)
 - `host_device` (List of Object) Attaches a host device to the VM (see [below for nested schema](#nestedatt--host_device))
 - `hostname` (String)
@@ -74,6 +77,33 @@ For `ssh-user` tag, the value is added to `cloudinit.user_data` if:
 2. There is no `user` field in `cloudinit.user_data`.
 - `tpm` (List of Object) (see [below for nested schema](#nestedatt--tpm))
 
+<a id="nestedatt--access_credentials"></a>
+### Nested Schema for `access_credentials`
+
+Read-Only:
+
+- `ssh_public_key` (List of Object) (see [below for nested schema](#nestedobjatt--access_credentials--ssh_public_key))
+- `user_password` (List of Object) (see [below for nested schema](#nestedobjatt--access_credentials--user_password))
+
+<a id="nestedobjatt--access_credentials--ssh_public_key"></a>
+### Nested Schema for `access_credentials.ssh_public_key`
+
+Read-Only:
+
+- `propagation_method` (String)
+- `secret_name` (String)
+- `users` (List of String)
+
+
+<a id="nestedobjatt--access_credentials--user_password"></a>
+### Nested Schema for `access_credentials.user_password`
+
+Read-Only:
+
+- `secret_name` (String)
+
+
+
 <a id="nestedatt--cloudinit"></a>
 ### Nested Schema for `cloudinit`
 
@@ -98,16 +128,37 @@ Read-Only:
 - `boot_order` (Number)
 - `bus` (String)
 - `cache_mode` (String)
+- `configmap_name` (String)
 - `container_image_name` (String)
 - `existing_volume_name` (String)
 - `hot_plug` (Boolean)
 - `image` (String)
 - `name` (String)
+- `secret_name` (String)
 - `size` (String)
 - `storage_class_name` (String)
 - `type` (String)
 - `volume_mode` (String)
 - `volume_name` (String)
+
+
+<a id="nestedatt--dns_config"></a>
+### Nested Schema for `dns_config`
+
+Read-Only:
+
+- `nameservers` (List of String)
+- `options` (List of Object) (see [below for nested schema](#nestedobjatt--dns_config--options))
+- `searches` (List of String)
+
+<a id="nestedobjatt--dns_config--options"></a>
+### Nested Schema for `dns_config.options`
+
+Read-Only:
+
+- `name` (String)
+- `value` (String)
+
 
 
 <a id="nestedatt--host_device"></a>
