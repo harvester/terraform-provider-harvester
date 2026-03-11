@@ -7,10 +7,16 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/validation"
 
 	"github.com/harvester/terraform-provider-harvester/internal/config"
 	"github.com/harvester/terraform-provider-harvester/pkg/constants"
 )
+
+// isValidLabelValue returns true if the string is a valid Kubernetes label value.
+func isValidLabelValue(v string) bool {
+	return len(validation.IsValidLabelValue(v)) == 0
+}
 
 func DataSourceImage() *schema.Resource {
 	return &schema.Resource{
@@ -37,7 +43,14 @@ func dataSourceImageRead(ctx context.Context, d *schema.ResourceData, meta inter
 	}
 
 	if displayName != "" {
-		images, err := c.HarvesterClient.HarvesterhciV1beta1().VirtualMachineImages(namespace).List(ctx, metav1.ListOptions{})
+		// Harvester sets harvesterhci.io/imageDisplayName label on images whose display
+		// name is a valid label value. Use it to filter server-side when possible;
+		// fall back to listing all images when the name contains spaces or special chars.
+		listOpts := metav1.ListOptions{}
+		if isValidLabelValue(displayName) {
+			listOpts.LabelSelector = "harvesterhci.io/imageDisplayName=" + displayName
+		}
+		images, err := c.HarvesterClient.HarvesterhciV1beta1().VirtualMachineImages(namespace).List(ctx, listOpts)
 		if err != nil {
 			return diag.FromErr(err)
 		}
