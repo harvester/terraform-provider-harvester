@@ -76,8 +76,10 @@ func DataSourceSchemaWrap(s map[string]*schema.Schema) map[string]*schema.Schema
 		}
 		if v.Elem != nil {
 			switch elem := v.Elem.(type) {
-			case schema.Resource:
-				v.Elem = DataSourceSchemaWrap(elem.Schema)
+			case *schema.Resource:
+				v.Elem = &schema.Resource{
+					Schema: DataSourceSchemaWrap(elem.Schema),
+				}
 			}
 		}
 		v.ForceNew = false
