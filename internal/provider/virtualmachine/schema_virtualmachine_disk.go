@@ -99,6 +99,16 @@ func resourceDiskSchema() map[string]*schema.Schema {
 			Computed:     true,
 			ValidateFunc: util.IsValidName,
 		},
+		constants.FieldDiskSysprepSecretName: {
+			Type:        schema.TypeString,
+			Optional:    true,
+			Description: "Name of a Secret containing Sysprep answer file (autounattend.xml) for Windows unattended setup",
+		},
+		constants.FieldDiskSysprepConfigMapName: {
+			Type:        schema.TypeString,
+			Optional:    true,
+			Description: "Name of a ConfigMap containing Sysprep answer file (autounattend.xml) for Windows unattended setup",
+		},
 	}
 	return s
 }
