@@ -441,6 +441,21 @@ func (c *Constructor) Setup() util.Processors {
 				return nil
 			},
 		},
+		{
+			Field: constants.FieldVirtualMachinePCIDevice,
+			Parser: func(i interface{}) error {
+				r := i.(map[string]interface{})
+				hostDevice := kubevirtv1.HostDevice{
+					Name:       r[constants.FieldVirtualMachinePCIDeviceName].(string),
+					DeviceName: r[constants.FieldVirtualMachinePCIDeviceDeviceName].(string),
+				}
+				vmBuilder.VirtualMachine.Spec.Template.Spec.Domain.Devices.HostDevices = append(
+					vmBuilder.VirtualMachine.Spec.Template.Spec.Domain.Devices.HostDevices,
+					hostDevice,
+				)
+				return nil
+			},
+		},
 	}
 	return append(processors, customProcessors...)
 }
@@ -483,6 +498,7 @@ func Updater(c *client.Client, ctx context.Context, vm *kubevirtv1.VirtualMachin
 	vm.Spec.Template.Spec.Domain.Devices.Interfaces = []kubevirtv1.Interface{}
 	vm.Spec.Template.Spec.Domain.Devices.Disks = []kubevirtv1.Disk{}
 	vm.Spec.Template.Spec.Domain.Devices.Inputs = []kubevirtv1.Input{}
+	vm.Spec.Template.Spec.Domain.Devices.HostDevices = nil
 	vm.Spec.Template.Spec.Volumes = []kubevirtv1.Volume{}
 	vm.Annotations[harvesterutil.AnnotationVolumeClaimTemplates] = "[]"
 	return newVMConstructor(c, ctx, &builder.VMBuilder{

@@ -565,3 +565,64 @@ func TestResourceRequestsImport(t *testing.T) {
 		t.Errorf("Requests() nil memory = %q, want empty", got)
 	}
 }
+
+func TestHostDevicesImport(t *testing.T) {
+	// VM with no host devices
+	vmEmpty := &kubevirtv1.VirtualMachine{
+		Spec: kubevirtv1.VirtualMachineSpec{
+			Template: &kubevirtv1.VirtualMachineInstanceTemplateSpec{
+				Spec: kubevirtv1.VirtualMachineInstanceSpec{
+					Domain: kubevirtv1.DomainSpec{
+						Devices: kubevirtv1.Devices{},
+					},
+				},
+			},
+		},
+	}
+	importerEmpty := &VMImporter{VirtualMachine: vmEmpty}
+	result := importerEmpty.HostDevices()
+	if len(result) != 0 {
+		t.Errorf("HostDevices() empty = %d entries, want 0", len(result))
+	}
+
+	// VM with two host devices
+	vmWithDevices := &kubevirtv1.VirtualMachine{
+		Spec: kubevirtv1.VirtualMachineSpec{
+			Template: &kubevirtv1.VirtualMachineInstanceTemplateSpec{
+				Spec: kubevirtv1.VirtualMachineInstanceSpec{
+					Domain: kubevirtv1.DomainSpec{
+						Devices: kubevirtv1.Devices{
+							HostDevices: []kubevirtv1.HostDevice{
+								{
+									Name:       "gpu0",
+									DeviceName: "nvidia.com/GP102GL_Tesla_P40",
+								},
+								{
+									Name:       "wifi",
+									DeviceName: "intel.com/QCA6174",
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+	importerWithDevices := &VMImporter{VirtualMachine: vmWithDevices}
+	result = importerWithDevices.HostDevices()
+	if len(result) != 2 {
+		t.Fatalf("HostDevices() = %d entries, want 2", len(result))
+	}
+	if got := result[0][constants.FieldVirtualMachinePCIDeviceName]; got != "gpu0" {
+		t.Errorf("HostDevices()[0] name = %q, want %q", got, "gpu0")
+	}
+	if got := result[0][constants.FieldVirtualMachinePCIDeviceDeviceName]; got != "nvidia.com/GP102GL_Tesla_P40" {
+		t.Errorf("HostDevices()[0] device_name = %q, want %q", got, "nvidia.com/GP102GL_Tesla_P40")
+	}
+	if got := result[1][constants.FieldVirtualMachinePCIDeviceName]; got != "wifi" {
+		t.Errorf("HostDevices()[1] name = %q, want %q", got, "wifi")
+	}
+	if got := result[1][constants.FieldVirtualMachinePCIDeviceDeviceName]; got != "intel.com/QCA6174" {
+		t.Errorf("HostDevices()[1] device_name = %q, want %q", got, "intel.com/QCA6174")
+	}
+}

@@ -16,6 +16,7 @@ import (
 	"github.com/harvester/terraform-provider-harvester/internal/provider/keypair"
 	"github.com/harvester/terraform-provider-harvester/internal/provider/loadbalancer"
 	"github.com/harvester/terraform-provider-harvester/internal/provider/network"
+	"github.com/harvester/terraform-provider-harvester/internal/provider/pcidevice"
 	"github.com/harvester/terraform-provider-harvester/internal/provider/schedulebackup"
 	"github.com/harvester/terraform-provider-harvester/internal/provider/setting"
 	"github.com/harvester/terraform-provider-harvester/internal/provider/storageclass"
@@ -47,19 +48,21 @@ func Provider() *schema.Provider {
 			},
 		},
 		DataSourcesMap: map[string]*schema.Resource{
-			constants.ResourceTypeCloudInitSecret: cloudinitsecret.DataSourceCloudInitSecret(),
-			constants.ResourceTypeClusterNetwork:  clusternetwork.DataSourceClusterNetwork(),
-			constants.ResourceTypeIPPool:          ippool.DataSourceIPPool(),
-			constants.ResourceTypeImage:           image.DataSourceImage(),
-			constants.ResourceTypeKeyPair:         keypair.DataSourceKeypair(),
-			constants.ResourceTypeLoadBalancer:    loadbalancer.DataSourceLoadBalancer(),
-			constants.ResourceTypeNetwork:         network.DataSourceNetwork(),
-			constants.ResourceTypeSetting:         setting.DataSourceSetting(),
-			constants.ResourceTypeStorageClass:    storageclass.DataSourceStorageClass(),
-			constants.ResourceTypeVLANConfig:      vlanconfig.DataSourceVLANConfig(),
-			constants.ResourceTypeVirtualMachine:  virtualmachine.DataSourceVirtualMachine(),
-			constants.ResourceTypeVolume:          volume.DataSourceVolume(),
-			constants.ResourceTypeScheduleBackup:  schedulebackup.DataSourceScheduleBackup(),
+			constants.ResourceTypeCloudInitSecret:  cloudinitsecret.DataSourceCloudInitSecret(),
+			constants.ResourceTypeClusterNetwork:   clusternetwork.DataSourceClusterNetwork(),
+			constants.ResourceTypeIPPool:           ippool.DataSourceIPPool(),
+			constants.ResourceTypeImage:            image.DataSourceImage(),
+			constants.ResourceTypeKeyPair:          keypair.DataSourceKeypair(),
+			constants.ResourceTypeLoadBalancer:     loadbalancer.DataSourceLoadBalancer(),
+			constants.ResourceTypeNetwork:          network.DataSourceNetwork(),
+			constants.DataSourceTypePCIDevice:      pcidevice.DataSourcePCIDevice(),
+			constants.DataSourceTypePCIDeviceClaim: pcidevice.DataSourcePCIDeviceClaim(),
+			constants.ResourceTypeSetting:          setting.DataSourceSetting(),
+			constants.ResourceTypeStorageClass:     storageclass.DataSourceStorageClass(),
+			constants.ResourceTypeVLANConfig:       vlanconfig.DataSourceVLANConfig(),
+			constants.ResourceTypeVirtualMachine:   virtualmachine.DataSourceVirtualMachine(),
+			constants.ResourceTypeVolume:           volume.DataSourceVolume(),
+			constants.ResourceTypeScheduleBackup:   schedulebackup.DataSourceScheduleBackup(),
 		},
 		ResourcesMap: map[string]*schema.Resource{
 			constants.ResourceTypeCloudInitSecret: cloudinitsecret.ResourceCloudInitSecret(),
