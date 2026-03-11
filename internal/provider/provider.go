@@ -15,6 +15,7 @@ import (
 	"github.com/harvester/terraform-provider-harvester/internal/provider/ippool"
 	"github.com/harvester/terraform-provider-harvester/internal/provider/keypair"
 	"github.com/harvester/terraform-provider-harvester/internal/provider/loadbalancer"
+	"github.com/harvester/terraform-provider-harvester/internal/provider/namespace"
 	"github.com/harvester/terraform-provider-harvester/internal/provider/network"
 	"github.com/harvester/terraform-provider-harvester/internal/provider/schedulebackup"
 	"github.com/harvester/terraform-provider-harvester/internal/provider/setting"
@@ -53,6 +54,7 @@ func Provider() *schema.Provider {
 			constants.ResourceTypeImage:           image.DataSourceImage(),
 			constants.ResourceTypeKeyPair:         keypair.DataSourceKeypair(),
 			constants.ResourceTypeLoadBalancer:    loadbalancer.DataSourceLoadBalancer(),
+			constants.ResourceTypeNamespace:       namespace.DataSourceNamespace(),
 			constants.ResourceTypeNetwork:         network.DataSourceNetwork(),
 			constants.ResourceTypeSetting:         setting.DataSourceSetting(),
 			constants.ResourceTypeStorageClass:    storageclass.DataSourceStorageClass(),
@@ -68,6 +70,7 @@ func Provider() *schema.Provider {
 			constants.ResourceTypeImage:           image.ResourceImage(),
 			constants.ResourceTypeKeyPair:         keypair.ResourceKeypair(),
 			constants.ResourceTypeLoadBalancer:    loadbalancer.ResourceLoadBalancer(),
+			constants.ResourceTypeNamespace:       namespace.ResourceNamespace(),
 			constants.ResourceTypeNetwork:         network.ResourceNetwork(),
 			constants.ResourceTypeSetting:         setting.ResourceSetting(),
 			constants.ResourceTypeStorageClass:    storageclass.ResourceStorageClass(),
