@@ -241,6 +241,8 @@ func (c *Constructor) Setup() util.Processors {
 				volumeName := r[constants.FieldDiskVolumeName].(string)
 				existingVolumeName := r[constants.FieldDiskExistingVolumeName].(string)
 				containerImageName := r[constants.FieldDiskContainerImageName].(string)
+				configMapName := r[constants.FieldDiskConfigMapName].(string)
+				secretName := r[constants.FieldDiskSecretName].(string)
 				hotPlug := r[constants.FieldDiskHotPlug].(bool)
 				isCDRom := diskType == builder.DiskTypeCDRom
 				if diskBus == "" {
@@ -254,7 +256,25 @@ func (c *Constructor) Setup() util.Processors {
 				}
 
 				vmBuilder.Disk(diskName, diskBus, isCDRom, uint(bootOrder)) // nolint: gosec
-				if existingVolumeName != "" {
+				if configMapName != "" {
+					vmBuilder.Volume(diskName, kubevirtv1.Volume{
+						Name: diskName,
+						VolumeSource: kubevirtv1.VolumeSource{
+							ConfigMap: &kubevirtv1.ConfigMapVolumeSource{
+								LocalObjectReference: corev1.LocalObjectReference{Name: configMapName},
+							},
+						},
+					})
+				} else if secretName != "" {
+					vmBuilder.Volume(diskName, kubevirtv1.Volume{
+						Name: diskName,
+						VolumeSource: kubevirtv1.VolumeSource{
+							Secret: &kubevirtv1.SecretVolumeSource{
+								SecretName: secretName,
+							},
+						},
+					})
+				} else if existingVolumeName != "" {
 					vmBuilder.ExistingPVCVolume(diskName, existingVolumeName, hotPlug)
 				} else if containerImageName != "" {
 					vmBuilder.ContainerDiskVolume(diskName, containerImageName, builder.DefaultImagePullPolicy)
@@ -441,6 +461,36 @@ func (c *Constructor) Setup() util.Processors {
 				return nil
 			},
 		},
+		{
+			Field: constants.FieldVirtualMachineAccessCredentials,
+			Parser: func(i interface{}) error {
+				r := i.(map[string]interface{})
+				ac, err := parseAccessCredential(r)
+				if err != nil {
+					return err
+				}
+				vmBuilder.VirtualMachine.Spec.Template.Spec.AccessCredentials = append(
+					vmBuilder.VirtualMachine.Spec.Template.Spec.AccessCredentials, ac)
+				return nil
+			},
+		},
+		{
+			Field: constants.FieldVirtualMachineDNSPolicy,
+			Parser: func(i interface{}) error {
+				if val := i.(string); val != "" {
+					vmBuilder.VirtualMachine.Spec.Template.Spec.DNSPolicy = corev1.DNSPolicy(val)
+				}
+				return nil
+			},
+		},
+		{
+			Field: constants.FieldVirtualMachineDNSConfig,
+			Parser: func(i interface{}) error {
+				r := i.(map[string]interface{})
+				vmBuilder.VirtualMachine.Spec.Template.Spec.DNSConfig = parseDNSConfig(r)
+				return nil
+			},
+		},
 	}
 	return append(processors, customProcessors...)
 }
@@ -477,6 +527,89 @@ func Creator(c *client.Client, ctx context.Context, namespace, name string) util
 	return newVMConstructor(c, ctx, vmBuilder)
 }
 
+func parseAccessCredential(r map[string]interface{}) (kubevirtv1.AccessCredential, error) {
+	sshList, hasSSH := r[constants.FieldAccessCredentialSSHPublicKey].([]interface{})
+	pwList, hasPW := r[constants.FieldAccessCredentialUserPassword].([]interface{})
+
+	if hasSSH && len(sshList) > 0 && hasPW && len(pwList) > 0 {
+		return kubevirtv1.AccessCredential{}, errors.New("access_credentials entry must have either ssh_public_key or user_password, not both")
+	}
+
+	if hasSSH && len(sshList) > 0 {
+		ssh := sshList[0].(map[string]interface{})
+		secretName := ssh[constants.FieldAccessCredentialSecretName].(string)
+		method := ssh[constants.FieldAccessCredentialPropagationMethod].(string)
+		ac := kubevirtv1.AccessCredential{
+			SSHPublicKey: &kubevirtv1.SSHPublicKeyAccessCredential{
+				Source: kubevirtv1.SSHPublicKeyAccessCredentialSource{
+					Secret: &kubevirtv1.AccessCredentialSecretSource{SecretName: secretName},
+				},
+			},
+		}
+		switch method {
+		case "configDrive":
+			ac.SSHPublicKey.PropagationMethod.ConfigDrive = &kubevirtv1.ConfigDriveSSHPublicKeyAccessCredentialPropagation{}
+		case "noCloud":
+			ac.SSHPublicKey.PropagationMethod.NoCloud = &kubevirtv1.NoCloudSSHPublicKeyAccessCredentialPropagation{}
+		case "qemuGuestAgent":
+			var users []string
+			if uList, ok := ssh[constants.FieldAccessCredentialUsers].([]interface{}); ok {
+				for _, u := range uList {
+					users = append(users, u.(string))
+				}
+			}
+			ac.SSHPublicKey.PropagationMethod.QemuGuestAgent = &kubevirtv1.QemuGuestAgentSSHPublicKeyAccessCredentialPropagation{
+				Users: users,
+			}
+		}
+		return ac, nil
+	}
+
+	if hasPW && len(pwList) > 0 {
+		pw := pwList[0].(map[string]interface{})
+		secretName := pw[constants.FieldAccessCredentialSecretName].(string)
+		return kubevirtv1.AccessCredential{
+			UserPassword: &kubevirtv1.UserPasswordAccessCredential{
+				Source: kubevirtv1.UserPasswordAccessCredentialSource{
+					Secret: &kubevirtv1.AccessCredentialSecretSource{SecretName: secretName},
+				},
+				PropagationMethod: kubevirtv1.UserPasswordAccessCredentialPropagationMethod{
+					QemuGuestAgent: &kubevirtv1.QemuGuestAgentUserPasswordAccessCredentialPropagation{},
+				},
+			},
+		}, nil
+	}
+
+	return kubevirtv1.AccessCredential{}, errors.New("access_credentials entry must have either ssh_public_key or user_password")
+}
+
+func parseDNSConfig(r map[string]interface{}) *corev1.PodDNSConfig {
+	config := &corev1.PodDNSConfig{}
+	if ns, ok := r[constants.FieldDNSConfigNameservers].([]interface{}); ok {
+		for _, n := range ns {
+			config.Nameservers = append(config.Nameservers, n.(string))
+		}
+	}
+	if ss, ok := r[constants.FieldDNSConfigSearches].([]interface{}); ok {
+		for _, s := range ss {
+			config.Searches = append(config.Searches, s.(string))
+		}
+	}
+	if opts, ok := r[constants.FieldDNSConfigOptions].([]interface{}); ok {
+		for _, o := range opts {
+			opt := o.(map[string]interface{})
+			dnsOpt := corev1.PodDNSConfigOption{
+				Name: opt[constants.FieldDNSOptionName].(string),
+			}
+			if val, ok := opt[constants.FieldDNSOptionValue].(string); ok && val != "" {
+				dnsOpt.Value = &val
+			}
+			config.Options = append(config.Options, dnsOpt)
+		}
+	}
+	return config
+}
+
 func Updater(c *client.Client, ctx context.Context, vm *kubevirtv1.VirtualMachine) util.Constructor {
 	vm.Spec.Template.Spec.Networks = []kubevirtv1.Network{}
 	vm.Spec.Template.Spec.Domain.Devices.TPM = nil
@@ -484,6 +617,9 @@ func Updater(c *client.Client, ctx context.Context, vm *kubevirtv1.VirtualMachin
 	vm.Spec.Template.Spec.Domain.Devices.Disks = []kubevirtv1.Disk{}
 	vm.Spec.Template.Spec.Domain.Devices.Inputs = []kubevirtv1.Input{}
 	vm.Spec.Template.Spec.Volumes = []kubevirtv1.Volume{}
+	vm.Spec.Template.Spec.AccessCredentials = nil
+	vm.Spec.Template.Spec.DNSPolicy = ""
+	vm.Spec.Template.Spec.DNSConfig = nil
 	vm.Annotations[harvesterutil.AnnotationVolumeClaimTemplates] = "[]"
 	return newVMConstructor(c, ctx, &builder.VMBuilder{
 		VirtualMachine: vm,
