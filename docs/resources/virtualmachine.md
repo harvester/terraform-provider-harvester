@@ -202,8 +202,8 @@ resource "harvester_virtualmachine" "opensuse154" {
 - `create_initial_snapshot` (Boolean) Create an initial snapshot named {vm-name}-initial after the VM is created and ready
 - `description` (String) Any text you want that better describes this resource
 - `efi` (Boolean)
-- `host_device` (Block List) Attaches a host device to the VM (see [below for nested schema](#nestedblock--host_device))
 - `eviction_strategy` (String) Eviction strategy for the VM (None, LiveMigrate, LiveMigrateIfPossible, External)
+- `host_device` (Block List) Attaches a host device to the VM (see [below for nested schema](#nestedblock--host_device))
 - `hostname` (String)
 - `input` (Block List) (see [below for nested schema](#nestedblock--input))
 - `isolate_emulator_thread` (Boolean) To enable isolate emulator thread, ensure that at least one node has the CPU manager enabled, also VM CPU pinning must be enabled. Note that enable option will allocate an additional dedicated CPU.
