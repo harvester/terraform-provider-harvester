@@ -1,4 +1,4 @@
-package sriovdevice
+package sriovnetworkdevice
 
 import (
 	"context"
