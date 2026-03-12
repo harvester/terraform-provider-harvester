@@ -28,6 +28,7 @@ const (
 	FieldVirtualMachineIsolateEmulatorThread = "isolate_emulator_thread"
 	FieldVirtualMachineNodeSelector          = "node_selector"
 	FieldVirtualMachineCreateInitialSnapshot = "create_initial_snapshot"
+	FieldVirtualMachineHostDevice            = "host_device"
 
 	StateVirtualMachineStarting = "Starting"
 	StateVirtualMachineRunning  = "Running"
@@ -89,4 +90,9 @@ const (
 
 const (
 	LabelSSHUsername = "ssh-user"
+)
+
+const (
+	FieldHostDeviceName       = "name"
+	FieldHostDeviceDeviceName = "device_name"
 )
