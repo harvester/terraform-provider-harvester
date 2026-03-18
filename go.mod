@@ -5,6 +5,8 @@ go 1.25.7
 replace (
 	github.com/google/gnostic-models => github.com/google/gnostic-models v0.6.9
 
+	github.com/harvester/pcidevices v1.7.1 => github.com/harvester/pcidevices v0.0.0-20260317225112-9a141ebabdb0
+
 	github.com/openshift/api => github.com/openshift/api v0.0.0-20191219222812-2987a591a72c
 	github.com/openshift/client-go => github.com/openshift/client-go v0.0.0-20200521150516-05eb9880269c
 
@@ -25,6 +27,7 @@ require (
 	github.com/harvester/harvester v1.8.0-dev-20260301.0.20260306082615-2f8e741d99e9
 	github.com/harvester/harvester-load-balancer v1.5.0
 	github.com/harvester/harvester-network-controller v1.6.0-rc3
+	github.com/harvester/pcidevices v1.7.1
 	github.com/hashicorp/terraform-plugin-docs v0.22.0
 	github.com/hashicorp/terraform-plugin-log v0.9.0
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.37.0
@@ -49,6 +52,7 @@ require (
 	github.com/Masterminds/semver/v3 v3.4.0 // indirect
 	github.com/Masterminds/sprig/v3 v3.3.0 // indirect
 	github.com/ProtonMail/go-crypto v1.1.6 // indirect
+	github.com/StackExchange/wmi v1.2.1 // indirect
 	github.com/achanda/go-sysctl v0.0.0-20160222034550-6be7678c45d2 // indirect
 	github.com/agext/levenshtein v1.2.2 // indirect
 	github.com/apparentlymart/go-textseg/v15 v15.0.0 // indirect
@@ -109,6 +113,8 @@ require (
 	github.com/hashicorp/yamux v0.1.1 // indirect
 	github.com/huandu/xstrings v1.5.0 // indirect
 	github.com/iancoleman/orderedmap v0.3.0 // indirect
+	github.com/jaypipes/ghw v0.9.0 // indirect
+	github.com/jaypipes/pcidb v1.0.0 // indirect
 	github.com/jinzhu/copier v0.4.0 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect

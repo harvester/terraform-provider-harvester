@@ -16,8 +16,10 @@ import (
 	"github.com/harvester/terraform-provider-harvester/internal/provider/keypair"
 	"github.com/harvester/terraform-provider-harvester/internal/provider/loadbalancer"
 	"github.com/harvester/terraform-provider-harvester/internal/provider/network"
+	"github.com/harvester/terraform-provider-harvester/internal/provider/pcidevice"
 	"github.com/harvester/terraform-provider-harvester/internal/provider/schedulebackup"
 	"github.com/harvester/terraform-provider-harvester/internal/provider/setting"
+	"github.com/harvester/terraform-provider-harvester/internal/provider/sriovdevice"
 	"github.com/harvester/terraform-provider-harvester/internal/provider/storageclass"
 	"github.com/harvester/terraform-provider-harvester/internal/provider/virtualmachine"
 	"github.com/harvester/terraform-provider-harvester/internal/provider/vlanconfig"
@@ -47,35 +49,39 @@ func Provider() *schema.Provider {
 			},
 		},
 		DataSourcesMap: map[string]*schema.Resource{
-			constants.ResourceTypeCloudInitSecret: cloudinitsecret.DataSourceCloudInitSecret(),
-			constants.ResourceTypeClusterNetwork:  clusternetwork.DataSourceClusterNetwork(),
-			constants.ResourceTypeIPPool:          ippool.DataSourceIPPool(),
-			constants.ResourceTypeImage:           image.DataSourceImage(),
-			constants.ResourceTypeKeyPair:         keypair.DataSourceKeypair(),
-			constants.ResourceTypeLoadBalancer:    loadbalancer.DataSourceLoadBalancer(),
-			constants.ResourceTypeNetwork:         network.DataSourceNetwork(),
-			constants.ResourceTypeSetting:         setting.DataSourceSetting(),
-			constants.ResourceTypeStorageClass:    storageclass.DataSourceStorageClass(),
-			constants.ResourceTypeVLANConfig:      vlanconfig.DataSourceVLANConfig(),
-			constants.ResourceTypeVirtualMachine:  virtualmachine.DataSourceVirtualMachine(),
-			constants.ResourceTypeVolume:          volume.DataSourceVolume(),
-			constants.ResourceTypeScheduleBackup:  schedulebackup.DataSourceScheduleBackup(),
+			constants.ResourceTypeCloudInitSecret:    cloudinitsecret.DataSourceCloudInitSecret(),
+			constants.ResourceTypeClusterNetwork:     clusternetwork.DataSourceClusterNetwork(),
+			constants.ResourceTypeIPPool:             ippool.DataSourceIPPool(),
+			constants.ResourceTypeImage:              image.DataSourceImage(),
+			constants.ResourceTypeKeyPair:            keypair.DataSourceKeypair(),
+			constants.ResourceTypeLoadBalancer:       loadbalancer.DataSourceLoadBalancer(),
+			constants.ResourceTypeNetwork:            network.DataSourceNetwork(),
+			constants.ResourceTypePCIDevice:          pcidevice.DataSourcePCIDevice(),
+			constants.ResourceTypeSRIOVNetworkDevice: sriovdevice.DataSourceSRIOVNetworkDevice(),
+			constants.ResourceTypeScheduleBackup:     schedulebackup.DataSourceScheduleBackup(),
+			constants.ResourceTypeSetting:            setting.DataSourceSetting(),
+			constants.ResourceTypeStorageClass:       storageclass.DataSourceStorageClass(),
+			constants.ResourceTypeVLANConfig:         vlanconfig.DataSourceVLANConfig(),
+			constants.ResourceTypeVirtualMachine:     virtualmachine.DataSourceVirtualMachine(),
+			constants.ResourceTypeVolume:             volume.DataSourceVolume(),
 		},
 		ResourcesMap: map[string]*schema.Resource{
-			constants.ResourceTypeCloudInitSecret: cloudinitsecret.ResourceCloudInitSecret(),
-			constants.ResourceTypeClusterNetwork:  clusternetwork.ResourceClusterNetwork(),
-			constants.ResourceTypeIPPool:          ippool.ResourceIPPool(),
-			constants.ResourceTypeImage:           image.ResourceImage(),
-			constants.ResourceTypeKeyPair:         keypair.ResourceKeypair(),
-			constants.ResourceTypeLoadBalancer:    loadbalancer.ResourceLoadBalancer(),
-			constants.ResourceTypeNetwork:         network.ResourceNetwork(),
-			constants.ResourceTypeSetting:         setting.ResourceSetting(),
-			constants.ResourceTypeStorageClass:    storageclass.ResourceStorageClass(),
-			constants.ResourceTypeVLANConfig:      vlanconfig.ResourceVLANConfig(),
-			constants.ResourceTypeVirtualMachine:  virtualmachine.ResourceVirtualMachine(),
-			constants.ResourceTypeVolume:          volume.ResourceVolume(),
-			constants.ResourceTypeBootstrap:       bootstrap.ResourceBootstrap(),
-			constants.ResourceTypeScheduleBackup:  schedulebackup.ResourceScheduleBackup(),
+			constants.ResourceTypeBootstrap:          bootstrap.ResourceBootstrap(),
+			constants.ResourceTypeCloudInitSecret:    cloudinitsecret.ResourceCloudInitSecret(),
+			constants.ResourceTypeClusterNetwork:     clusternetwork.ResourceClusterNetwork(),
+			constants.ResourceTypeIPPool:             ippool.ResourceIPPool(),
+			constants.ResourceTypeImage:              image.ResourceImage(),
+			constants.ResourceTypeKeyPair:            keypair.ResourceKeypair(),
+			constants.ResourceTypeLoadBalancer:       loadbalancer.ResourceLoadBalancer(),
+			constants.ResourceTypeNetwork:            network.ResourceNetwork(),
+			constants.ResourceTypePCIDevice:          pcidevice.ResourcePCIDevice(),
+			constants.ResourceTypeSRIOVNetworkDevice: sriovdevice.ResourceSRIOVNetworkDevice(),
+			constants.ResourceTypeScheduleBackup:     schedulebackup.ResourceScheduleBackup(),
+			constants.ResourceTypeSetting:            setting.ResourceSetting(),
+			constants.ResourceTypeStorageClass:       storageclass.ResourceStorageClass(),
+			constants.ResourceTypeVLANConfig:         vlanconfig.ResourceVLANConfig(),
+			constants.ResourceTypeVirtualMachine:     virtualmachine.ResourceVirtualMachine(),
+			constants.ResourceTypeVolume:             volume.ResourceVolume(),
 		},
 		ConfigureContextFunc: providerConfig,
 	}
