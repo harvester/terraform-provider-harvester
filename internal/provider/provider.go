@@ -8,12 +8,33 @@ import (
 	"github.com/mitchellh/go-homedir"
 
 	"github.com/harvester/terraform-provider-harvester/internal/config"
+	"github.com/harvester/terraform-provider-harvester/internal/provider/addon"
 	"github.com/harvester/terraform-provider-harvester/internal/provider/bootstrap"
 	"github.com/harvester/terraform-provider-harvester/internal/provider/cloudinitsecret"
 	"github.com/harvester/terraform-provider-harvester/internal/provider/clusternetwork"
 	"github.com/harvester/terraform-provider-harvester/internal/provider/image"
 	"github.com/harvester/terraform-provider-harvester/internal/provider/ippool"
 	"github.com/harvester/terraform-provider-harvester/internal/provider/keypair"
+	kubeovnip "github.com/harvester/terraform-provider-harvester/internal/provider/kubeovn_ip"
+	kubeovnippool "github.com/harvester/terraform-provider-harvester/internal/provider/kubeovn_ippool"
+	kubeovndnat "github.com/harvester/terraform-provider-harvester/internal/provider/kubeovn_iptables_dnat_rule"
+	kubeovneip "github.com/harvester/terraform-provider-harvester/internal/provider/kubeovn_iptables_eip"
+	kubeovnfip "github.com/harvester/terraform-provider-harvester/internal/provider/kubeovn_iptables_fip_rule"
+	kubeovnsnat "github.com/harvester/terraform-provider-harvester/internal/provider/kubeovn_iptables_snat_rule"
+	kubeovnovndnat "github.com/harvester/terraform-provider-harvester/internal/provider/kubeovn_ovn_dnat_rule"
+	kubeovnovneip "github.com/harvester/terraform-provider-harvester/internal/provider/kubeovn_ovn_eip"
+	kubeovnovnfip "github.com/harvester/terraform-provider-harvester/internal/provider/kubeovn_ovn_fip"
+	kubeovnovnsnat "github.com/harvester/terraform-provider-harvester/internal/provider/kubeovn_ovn_snat_rule"
+	kubeovnprovnet "github.com/harvester/terraform-provider-harvester/internal/provider/kubeovn_provider_network"
+	kubeovnqos "github.com/harvester/terraform-provider-harvester/internal/provider/kubeovn_qos_policy"
+	kubeovnsg "github.com/harvester/terraform-provider-harvester/internal/provider/kubeovn_security_group"
+	kubeovnsubnet "github.com/harvester/terraform-provider-harvester/internal/provider/kubeovn_subnet"
+	kubeovnslr "github.com/harvester/terraform-provider-harvester/internal/provider/kubeovn_switch_lb_rule"
+	kubeovnvip "github.com/harvester/terraform-provider-harvester/internal/provider/kubeovn_vip"
+	kubeovnvlan "github.com/harvester/terraform-provider-harvester/internal/provider/kubeovn_vlan"
+	kubeovnvpc "github.com/harvester/terraform-provider-harvester/internal/provider/kubeovn_vpc"
+	kubeovnvpcdns "github.com/harvester/terraform-provider-harvester/internal/provider/kubeovn_vpc_dns"
+	kubeovnnatgw "github.com/harvester/terraform-provider-harvester/internal/provider/kubeovn_vpc_nat_gateway"
 	"github.com/harvester/terraform-provider-harvester/internal/provider/loadbalancer"
 	"github.com/harvester/terraform-provider-harvester/internal/provider/network"
 	"github.com/harvester/terraform-provider-harvester/internal/provider/schedulebackup"
@@ -47,35 +68,76 @@ func Provider() *schema.Provider {
 			},
 		},
 		DataSourcesMap: map[string]*schema.Resource{
-			constants.ResourceTypeCloudInitSecret: cloudinitsecret.DataSourceCloudInitSecret(),
-			constants.ResourceTypeClusterNetwork:  clusternetwork.DataSourceClusterNetwork(),
-			constants.ResourceTypeIPPool:          ippool.DataSourceIPPool(),
-			constants.ResourceTypeImage:           image.DataSourceImage(),
-			constants.ResourceTypeKeyPair:         keypair.DataSourceKeypair(),
-			constants.ResourceTypeLoadBalancer:    loadbalancer.DataSourceLoadBalancer(),
-			constants.ResourceTypeNetwork:         network.DataSourceNetwork(),
-			constants.ResourceTypeSetting:         setting.DataSourceSetting(),
-			constants.ResourceTypeStorageClass:    storageclass.DataSourceStorageClass(),
-			constants.ResourceTypeVLANConfig:      vlanconfig.DataSourceVLANConfig(),
-			constants.ResourceTypeVirtualMachine:  virtualmachine.DataSourceVirtualMachine(),
-			constants.ResourceTypeVolume:          volume.DataSourceVolume(),
-			constants.ResourceTypeScheduleBackup:  schedulebackup.DataSourceScheduleBackup(),
+			constants.ResourceTypeAddon:                   addon.DataSourceAddon(),
+			constants.ResourceTypeCloudInitSecret:         cloudinitsecret.DataSourceCloudInitSecret(),
+			constants.ResourceTypeClusterNetwork:          clusternetwork.DataSourceClusterNetwork(),
+			constants.ResourceTypeIPPool:                  ippool.DataSourceIPPool(),
+			constants.ResourceTypeImage:                   image.DataSourceImage(),
+			constants.ResourceTypeKeyPair:                 keypair.DataSourceKeypair(),
+			constants.ResourceTypeKubeOVNIP:               kubeovnip.DataSourceKubeOVNIP(),
+			constants.ResourceTypeKubeOVNIptablesDnatRule: kubeovndnat.DataSourceKubeOVNIptablesDnatRule(),
+			constants.ResourceTypeKubeOVNIptablesEIP:      kubeovneip.DataSourceKubeOVNIptablesEIP(),
+			constants.ResourceTypeKubeOVNIptablesFIPRule:  kubeovnfip.DataSourceKubeOVNIptablesFIPRule(),
+			constants.ResourceTypeKubeOVNIptablesSnatRule: kubeovnsnat.DataSourceKubeOVNIptablesSnatRule(),
+			constants.ResourceTypeKubeOVNIPPool:           kubeovnippool.DataSourceKubeOVNIPPool(),
+			constants.ResourceTypeKubeOVNProviderNetwork:  kubeovnprovnet.DataSourceKubeOVNProviderNetwork(),
+			constants.ResourceTypeKubeOVNQoSPolicy:        kubeovnqos.DataSourceKubeOVNQoSPolicy(),
+			constants.ResourceTypeKubeOVNSecurityGroup:    kubeovnsg.DataSourceKubeOVNSecurityGroup(),
+			constants.ResourceTypeKubeOVNSubnet:           kubeovnsubnet.DataSourceKubeOVNSubnet(),
+			constants.ResourceTypeKubeOVNVlan:             kubeovnvlan.DataSourceKubeOVNVlan(),
+			constants.ResourceTypeKubeOVNVpc:              kubeovnvpc.DataSourceKubeOVNVpc(),
+			constants.ResourceTypeKubeOVNOvnDnatRule:      kubeovnovndnat.DataSourceKubeOVNOvnDnatRule(),
+			constants.ResourceTypeKubeOVNOvnEip:           kubeovnovneip.DataSourceKubeOVNOvnEip(),
+			constants.ResourceTypeKubeOVNOvnFip:           kubeovnovnfip.DataSourceKubeOVNOvnFip(),
+			constants.ResourceTypeKubeOVNOvnSnatRule:      kubeovnovnsnat.DataSourceKubeOVNOvnSnatRule(),
+			constants.ResourceTypeKubeOVNSwitchLBRule:     kubeovnslr.DataSourceKubeOVNSwitchLBRule(),
+			constants.ResourceTypeKubeOVNVip:              kubeovnvip.DataSourceKubeOVNVip(),
+			constants.ResourceTypeKubeOVNVpcDns:           kubeovnvpcdns.DataSourceKubeOVNVpcDns(),
+			constants.ResourceTypeKubeOVNVpcNatGateway:    kubeovnnatgw.DataSourceKubeOVNVpcNatGateway(),
+			constants.ResourceTypeLoadBalancer:            loadbalancer.DataSourceLoadBalancer(),
+			constants.ResourceTypeNetwork:                 network.DataSourceNetwork(),
+			constants.ResourceTypeScheduleBackup:          schedulebackup.DataSourceScheduleBackup(),
+			constants.ResourceTypeSetting:                 setting.DataSourceSetting(),
+			constants.ResourceTypeStorageClass:            storageclass.DataSourceStorageClass(),
+			constants.ResourceTypeVLANConfig:              vlanconfig.DataSourceVLANConfig(),
+			constants.ResourceTypeVirtualMachine:          virtualmachine.DataSourceVirtualMachine(),
+			constants.ResourceTypeVolume:                  volume.DataSourceVolume(),
 		},
 		ResourcesMap: map[string]*schema.Resource{
-			constants.ResourceTypeCloudInitSecret: cloudinitsecret.ResourceCloudInitSecret(),
-			constants.ResourceTypeClusterNetwork:  clusternetwork.ResourceClusterNetwork(),
-			constants.ResourceTypeIPPool:          ippool.ResourceIPPool(),
-			constants.ResourceTypeImage:           image.ResourceImage(),
-			constants.ResourceTypeKeyPair:         keypair.ResourceKeypair(),
-			constants.ResourceTypeLoadBalancer:    loadbalancer.ResourceLoadBalancer(),
-			constants.ResourceTypeNetwork:         network.ResourceNetwork(),
-			constants.ResourceTypeSetting:         setting.ResourceSetting(),
-			constants.ResourceTypeStorageClass:    storageclass.ResourceStorageClass(),
-			constants.ResourceTypeVLANConfig:      vlanconfig.ResourceVLANConfig(),
-			constants.ResourceTypeVirtualMachine:  virtualmachine.ResourceVirtualMachine(),
-			constants.ResourceTypeVolume:          volume.ResourceVolume(),
-			constants.ResourceTypeBootstrap:       bootstrap.ResourceBootstrap(),
-			constants.ResourceTypeScheduleBackup:  schedulebackup.ResourceScheduleBackup(),
+			constants.ResourceTypeAddon:                   addon.ResourceAddon(),
+			constants.ResourceTypeCloudInitSecret:         cloudinitsecret.ResourceCloudInitSecret(),
+			constants.ResourceTypeClusterNetwork:          clusternetwork.ResourceClusterNetwork(),
+			constants.ResourceTypeIPPool:                  ippool.ResourceIPPool(),
+			constants.ResourceTypeImage:                   image.ResourceImage(),
+			constants.ResourceTypeKeyPair:                 keypair.ResourceKeypair(),
+			constants.ResourceTypeKubeOVNIptablesDnatRule: kubeovndnat.ResourceKubeOVNIptablesDnatRule(),
+			constants.ResourceTypeKubeOVNIptablesEIP:      kubeovneip.ResourceKubeOVNIptablesEIP(),
+			constants.ResourceTypeKubeOVNIptablesFIPRule:  kubeovnfip.ResourceKubeOVNIptablesFIPRule(),
+			constants.ResourceTypeKubeOVNIptablesSnatRule: kubeovnsnat.ResourceKubeOVNIptablesSnatRule(),
+			constants.ResourceTypeKubeOVNIPPool:           kubeovnippool.ResourceKubeOVNIPPool(),
+			constants.ResourceTypeKubeOVNProviderNetwork:  kubeovnprovnet.ResourceKubeOVNProviderNetwork(),
+			constants.ResourceTypeKubeOVNQoSPolicy:        kubeovnqos.ResourceKubeOVNQoSPolicy(),
+			constants.ResourceTypeKubeOVNSecurityGroup:    kubeovnsg.ResourceKubeOVNSecurityGroup(),
+			constants.ResourceTypeKubeOVNSubnet:           kubeovnsubnet.ResourceKubeOVNSubnet(),
+			constants.ResourceTypeKubeOVNVlan:             kubeovnvlan.ResourceKubeOVNVlan(),
+			constants.ResourceTypeKubeOVNVpc:              kubeovnvpc.ResourceKubeOVNVpc(),
+			constants.ResourceTypeKubeOVNOvnDnatRule:      kubeovnovndnat.ResourceKubeOVNOvnDnatRule(),
+			constants.ResourceTypeKubeOVNOvnEip:           kubeovnovneip.ResourceKubeOVNOvnEip(),
+			constants.ResourceTypeKubeOVNOvnFip:           kubeovnovnfip.ResourceKubeOVNOvnFip(),
+			constants.ResourceTypeKubeOVNOvnSnatRule:      kubeovnovnsnat.ResourceKubeOVNOvnSnatRule(),
+			constants.ResourceTypeKubeOVNSwitchLBRule:     kubeovnslr.ResourceKubeOVNSwitchLBRule(),
+			constants.ResourceTypeKubeOVNVip:              kubeovnvip.ResourceKubeOVNVip(),
+			constants.ResourceTypeKubeOVNVpcDns:           kubeovnvpcdns.ResourceKubeOVNVpcDns(),
+			constants.ResourceTypeKubeOVNVpcNatGateway:    kubeovnnatgw.ResourceKubeOVNVpcNatGateway(),
+			constants.ResourceTypeLoadBalancer:            loadbalancer.ResourceLoadBalancer(),
+			constants.ResourceTypeNetwork:                 network.ResourceNetwork(),
+			constants.ResourceTypeScheduleBackup:          schedulebackup.ResourceScheduleBackup(),
+			constants.ResourceTypeSetting:                 setting.ResourceSetting(),
+			constants.ResourceTypeStorageClass:            storageclass.ResourceStorageClass(),
+			constants.ResourceTypeVLANConfig:              vlanconfig.ResourceVLANConfig(),
+			constants.ResourceTypeVirtualMachine:          virtualmachine.ResourceVirtualMachine(),
+			constants.ResourceTypeVolume:                  volume.ResourceVolume(),
+			constants.ResourceTypeBootstrap:               bootstrap.ResourceBootstrap(),
 		},
 		ConfigureContextFunc: providerConfig,
 	}
