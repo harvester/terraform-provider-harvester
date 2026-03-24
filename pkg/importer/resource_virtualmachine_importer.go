@@ -327,6 +327,13 @@ func (v *VMImporter) Volume() ([]map[string]interface{}, []map[string]interface{
 					}
 				} else if volume.ContainerDisk != nil {
 					diskState[constants.FieldDiskContainerImageName] = volume.ContainerDisk.Image
+				} else if volume.Sysprep != nil {
+					if volume.Sysprep.Secret != nil {
+						diskState[constants.FieldDiskSysprepSecretName] = volume.Sysprep.Secret.Name
+					}
+					if volume.Sysprep.ConfigMap != nil {
+						diskState[constants.FieldDiskSysprepConfigMapName] = volume.Sysprep.ConfigMap.Name
+					}
 				} else {
 					return nil, nil, fmt.Errorf("unsupported volume type found on volume %s. ", volume.Name)
 				}
@@ -335,6 +342,144 @@ func (v *VMImporter) Volume() ([]map[string]interface{}, []map[string]interface{
 		diskStates = append(diskStates, diskState)
 	}
 	return diskStates, cloudInitState, nil
+}
+
+func (v *VMImporter) Hyperv() []map[string]interface{} {
+	features := v.VirtualMachine.Spec.Template.Spec.Domain.Features
+	if features == nil || features.Hyperv == nil {
+		return nil
+	}
+	hv := features.Hyperv
+	getBool := func(fs *kubevirtv1.FeatureState) bool {
+		return fs != nil && fs.Enabled != nil && *fs.Enabled
+	}
+	result := map[string]interface{}{
+		constants.FieldHypervRelaxed:         getBool(hv.Relaxed),
+		constants.FieldHypervVAPIC:           getBool(hv.VAPIC),
+		constants.FieldHypervVPIndex:         getBool(hv.VPIndex),
+		constants.FieldHypervRuntime:         getBool(hv.Runtime),
+		constants.FieldHypervSyNIC:           getBool(hv.SyNIC),
+		constants.FieldHypervReset:           getBool(hv.Reset),
+		constants.FieldHypervFrequencies:     getBool(hv.Frequencies),
+		constants.FieldHypervReenlightenment: getBool(hv.Reenlightenment),
+		constants.FieldHypervTLBFlush:        getBool(hv.TLBFlush),
+		constants.FieldHypervIPI:             getBool(hv.IPI),
+		constants.FieldHypervEVMCS:           getBool(hv.EVMCS),
+	}
+
+	if hv.Spinlocks != nil && hv.Spinlocks.Enabled != nil && *hv.Spinlocks.Enabled {
+		result[constants.FieldHypervSpinlocks] = true
+		retries := 4096
+		if hv.Spinlocks.Retries != nil {
+			retries = int(*hv.Spinlocks.Retries)
+		}
+		result[constants.FieldHypervSpinlocksRetries] = retries
+	} else {
+		result[constants.FieldHypervSpinlocks] = false
+		result[constants.FieldHypervSpinlocksRetries] = 4096
+	}
+
+	if hv.SyNICTimer != nil && hv.SyNICTimer.Enabled != nil && *hv.SyNICTimer.Enabled {
+		result[constants.FieldHypervSyNICTimer] = true
+		result[constants.FieldHypervSyNICTimerDirect] = getBool(hv.SyNICTimer.Direct)
+	} else {
+		result[constants.FieldHypervSyNICTimer] = false
+		result[constants.FieldHypervSyNICTimerDirect] = false
+	}
+
+	if hv.VendorID != nil && hv.VendorID.Enabled != nil && *hv.VendorID.Enabled {
+		result[constants.FieldHypervVendorID] = true
+		result[constants.FieldHypervVendorIDValue] = hv.VendorID.VendorID
+	} else {
+		result[constants.FieldHypervVendorID] = false
+		result[constants.FieldHypervVendorIDValue] = ""
+	}
+
+	return []map[string]interface{}{result}
+}
+
+func (v *VMImporter) HypervPassthrough() bool {
+	features := v.VirtualMachine.Spec.Template.Spec.Domain.Features
+	return features != nil && features.HypervPassthrough != nil &&
+		features.HypervPassthrough.Enabled != nil && *features.HypervPassthrough.Enabled
+}
+
+func (v *VMImporter) Clock() []map[string]interface{} {
+	clock := v.VirtualMachine.Spec.Template.Spec.Domain.Clock
+	if clock == nil {
+		return nil
+	}
+	result := map[string]interface{}{
+		constants.FieldClockTimezone:         "",
+		constants.FieldClockUTCOffsetSeconds: 0,
+	}
+	if clock.Timezone != nil {
+		result[constants.FieldClockTimezone] = string(*clock.Timezone)
+	}
+	if clock.UTC != nil && clock.UTC.OffsetSeconds != nil {
+		result[constants.FieldClockUTCOffsetSeconds] = *clock.UTC.OffsetSeconds
+	}
+
+	if clock.Timer != nil {
+		result[constants.FieldClockTimer] = []interface{}{importClockTimers(clock.Timer)}
+	} else {
+		result[constants.FieldClockTimer] = []interface{}{}
+	}
+
+	return []map[string]interface{}{result}
+}
+
+func importClockTimers(t *kubevirtv1.Timer) map[string]interface{} {
+	timer := map[string]interface{}{}
+
+	if t.HPET != nil {
+		h := map[string]interface{}{
+			constants.FieldTimerEnabled:    t.HPET.Enabled == nil || *t.HPET.Enabled,
+			constants.FieldTimerTickPolicy: string(t.HPET.TickPolicy),
+		}
+		timer[constants.FieldTimerHPET] = []interface{}{h}
+	} else {
+		timer[constants.FieldTimerHPET] = []interface{}{}
+	}
+
+	if t.KVM != nil {
+		timer[constants.FieldTimerKVM] = []interface{}{map[string]interface{}{
+			constants.FieldTimerEnabled: t.KVM.Enabled == nil || *t.KVM.Enabled,
+		}}
+	} else {
+		timer[constants.FieldTimerKVM] = []interface{}{}
+	}
+
+	if t.PIT != nil {
+		p := map[string]interface{}{
+			constants.FieldTimerEnabled:    t.PIT.Enabled == nil || *t.PIT.Enabled,
+			constants.FieldTimerTickPolicy: string(t.PIT.TickPolicy),
+		}
+		timer[constants.FieldTimerPIT] = []interface{}{p}
+	} else {
+		timer[constants.FieldTimerPIT] = []interface{}{}
+	}
+
+	if t.RTC != nil {
+		r := map[string]interface{}{
+			constants.FieldTimerEnabled:    t.RTC.Enabled == nil || *t.RTC.Enabled,
+			constants.FieldTimerTickPolicy: string(t.RTC.TickPolicy),
+			constants.FieldTimerTrack:      string(t.RTC.Track),
+		}
+		timer[constants.FieldTimerRTC] = []interface{}{r}
+	} else {
+		timer[constants.FieldTimerRTC] = []interface{}{}
+	}
+
+	if t.Hyperv != nil {
+		timer[constants.FieldTimerHyperv] = []interface{}{map[string]interface{}{
+			constants.FieldTimerEnabled: t.Hyperv.Enabled == nil || *t.Hyperv.Enabled,
+		}}
+	} else {
+		timer[constants.FieldTimerHyperv] = []interface{}{}
+	}
+
+	return timer
 }
 
 func (v *VMImporter) NodeName() string {
@@ -430,6 +575,9 @@ func ResourceVirtualMachineStateGetter(vm *kubevirtv1.VirtualMachine, vmi *kubev
 			constants.FieldVirtualMachineCPUPinning:            vmImporter.DedicatedCPUPlacement(),
 			constants.FieldVirtualMachineIsolateEmulatorThread: vmImporter.IsolateEmulatorThread(),
 			constants.FieldVirtualMachineNodeSelector:          vm.Spec.Template.Spec.NodeSelector,
+			constants.FieldVirtualMachineHyperv:                vmImporter.Hyperv(),
+			constants.FieldVirtualMachineHypervPassthrough:     vmImporter.HypervPassthrough(),
+			constants.FieldVirtualMachineClock:                 vmImporter.Clock(),
 		},
 	}, nil
 }
