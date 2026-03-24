@@ -181,6 +181,51 @@ please use %s instead of this deprecated field:
 			Default:     false,
 			Description: "Create an initial snapshot named {vm-name}-initial after the VM is created and ready",
 		},
+		constants.FieldVirtualMachineToleration: {
+			Type:        schema.TypeList,
+			Optional:    true,
+			Description: "Tolerations allow the VM to be scheduled on nodes with matching taints",
+			Elem: &schema.Resource{
+				Schema: map[string]*schema.Schema{
+					constants.FieldTolerationKey: {
+						Type:        schema.TypeString,
+						Optional:    true,
+						Description: "The taint key that the toleration applies to",
+					},
+					constants.FieldTolerationOperator: {
+						Type:     schema.TypeString,
+						Optional: true,
+						Default:  "Equal",
+						ValidateFunc: validation.StringInSlice([]string{
+							"Equal",
+							"Exists",
+						}, false),
+						Description: "The operator (Equal or Exists)",
+					},
+					constants.FieldTolerationValue: {
+						Type:        schema.TypeString,
+						Optional:    true,
+						Description: "The taint value (only used when operator is Equal)",
+					},
+					constants.FieldTolerationEffect: {
+						Type:     schema.TypeString,
+						Optional: true,
+						ValidateFunc: validation.StringInSlice([]string{
+							"",
+							"NoSchedule",
+							"PreferNoSchedule",
+							"NoExecute",
+						}, false),
+						Description: "The taint effect to match (empty matches all effects)",
+					},
+					constants.FieldTolerationTolerationSeconds: {
+						Type:        schema.TypeInt,
+						Optional:    true,
+						Description: "Period of time the toleration tolerates the taint (only for NoExecute)",
+					},
+				},
+			},
+		},
 	}
 	util.NamespacedSchemaWrap(s, false)
 	s[constants.FieldCommonTags].Description = "The tag is reflected as label on the VM.\n" +

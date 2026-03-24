@@ -28,6 +28,13 @@ const (
 	FieldVirtualMachineIsolateEmulatorThread = "isolate_emulator_thread"
 	FieldVirtualMachineNodeSelector          = "node_selector"
 	FieldVirtualMachineCreateInitialSnapshot = "create_initial_snapshot"
+	FieldVirtualMachineToleration            = "toleration"
+
+	FieldTolerationKey               = "key"
+	FieldTolerationOperator          = "operator"
+	FieldTolerationValue             = "value"
+	FieldTolerationEffect            = "effect"
+	FieldTolerationTolerationSeconds = "toleration_seconds"
 
 	StateVirtualMachineStarting = "Starting"
 	StateVirtualMachineRunning  = "Running"
