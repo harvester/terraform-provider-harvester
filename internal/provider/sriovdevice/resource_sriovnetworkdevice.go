@@ -89,13 +89,30 @@ func resourceSRIOVNetworkDeviceUpdate(ctx context.Context, d *schema.ResourceDat
 		return diag.FromErr(err)
 	}
 
-	return resourceSRIOVNetworkDeviceRead(ctx, d, meta)
+	if d.Get(constants.FieldSRIOVNetworkDeviceNumVFs) == 0 {
+		return diag.FromErr(resourceSRIOVNetworkDeviceWaitForState(ctx, d, meta, schema.TimeoutDelete))
+	}
+
+	return diag.FromErr(resourceSRIOVNetworkDeviceWaitForState(ctx, d, meta, schema.TimeoutCreate))
 }
 
 func resourceSRIOVNetworkDeviceWaitForState(ctx context.Context, d *schema.ResourceData, meta interface{}, timeoutKey string) error {
+	var (
+		pending []string
+		target  []string
+	)
+
+	if timeoutKey == schema.TimeoutDelete {
+		pending = []string{devicesv1.DeviceEnabled}
+		target = []string{devicesv1.DeviceDisabled}
+	} else {
+		pending = []string{devicesv1.DeviceDisabled}
+		target = []string{devicesv1.DeviceEnabled}
+	}
+
 	stateConf := &retry.StateChangeConf{
-		Pending:    []string{},
-		Target:     []string{},
+		Pending:    pending,
+		Target:     target,
 		Refresh:    resourceSRIOVNetworkDeviceRefresh(ctx, d, meta),
 		Timeout:    d.Timeout(timeoutKey),
 		Delay:      1 * time.Second,

@@ -14,4 +14,7 @@ const (
 	FieldPCIDeviceIOMMUGroup        = "iommu_group"
 	FieldPCIDeviceKernelDriver      = "kernel_driver_in_use"
 	FieldPCIDeviceResourceName      = "resource_name"
+
+	StatePassthroughEnabled  = "passthrough_enabled"
+	StatePassthroughDisabled = "passthrough_disabled"
 )
