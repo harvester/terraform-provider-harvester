@@ -2,7 +2,6 @@ package pcidevice
 
 import (
 	"context"
-	"errors"
 	"time"
 
 	devicesv1 "github.com/harvester/pcidevices/pkg/apis/devices.harvesterhci.io/v1beta1"
@@ -85,7 +84,7 @@ func resourcePCIDeviceCreate(ctx context.Context, d *schema.ResourceData, meta i
 		return diag.FromErr(err)
 	}
 
-	return diag.FromErr(resourcePCIDeviceImport(d, obj))
+	return diag.FromErr(resourcePCIDeviceWaitForState(ctx, d, meta, schema.TimeoutCreate))
 }
 
 func resourcePCIDeviceRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -134,7 +133,7 @@ func resourcePCIDeviceDelete(ctx context.Context, d *schema.ResourceData, meta i
 	}
 
 	d.SetId("")
-	return nil
+	return diag.FromErr(resourcePCIDeviceWaitForState(ctx, d, meta, schema.TimeoutDelete))
 }
 
 func resourcePCIDeviceUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -164,9 +163,22 @@ func resourcePCIDeviceUpdate(ctx context.Context, d *schema.ResourceData, meta i
 }
 
 func resourcePCIDeviceWaitForState(ctx context.Context, d *schema.ResourceData, meta interface{}, timeoutKey string) error {
+	var (
+		pending []string
+		target  []string
+	)
+
+	if timeoutKey == schema.TimeoutDelete {
+		pending = []string{constants.StatePassthroughEnabled}
+		target = []string{constants.StatePassthroughDisabled}
+	} else {
+		pending = []string{constants.StatePassthroughDisabled}
+		target = []string{constants.StatePassthroughEnabled}
+	}
+
 	stateConf := &retry.StateChangeConf{
-		Pending:    []string{},
-		Target:     []string{},
+		Pending:    pending,
+		Target:     target,
 		Refresh:    resourcePCIDeviceRefresh(ctx, d, meta),
 		Timeout:    d.Timeout(timeoutKey),
 		Delay:      1 * time.Second,
@@ -193,11 +205,10 @@ func resourcePCIDeviceRefresh(ctx context.Context, d *schema.ResourceData, meta 
 		if err = resourcePCIDeviceImport(d, obj); err != nil {
 			return obj, constants.StateCommonError, err
 		}
-		state := d.Get(constants.FieldCommonState).(string)
-		if state == constants.StateCommonFailed {
-			message := d.Get(constants.FieldCommonMessage).(string)
-			return obj, state, errors.New(message)
+		state := d.Get(constants.FieldPCIDeviceKernelDriver).(string)
+		if state != "" {
+			return obj, constants.StatePassthroughEnabled, err
 		}
-		return obj, state, err
+		return obj, constants.StatePassthroughDisabled, err
 	}
 }
