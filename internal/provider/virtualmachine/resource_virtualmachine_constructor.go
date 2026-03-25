@@ -447,27 +447,7 @@ func (c *Constructor) Setup() util.Processors {
 				v := i.(map[string]interface{})
 				name := v[constants.FieldHostDeviceName].(string)
 				deviceName := v[constants.FieldHostDeviceDeviceName].(string)
-
-				// - - - snip - - -
-				// This logic should live in the VMBuilder interface
-				devices := vmBuilder.VirtualMachine.Spec.Template.Spec.Domain.Devices.HostDevices
-
-				found := false
-				for _, dev := range devices {
-					if dev.Name == name && dev.DeviceName == deviceName {
-						found = true
-						break
-					}
-				}
-				if !found {
-					devices = append(devices, kubevirtv1.HostDevice{
-						Name:       name,
-						DeviceName: deviceName,
-					})
-					vmBuilder.VirtualMachine.Spec.Template.Spec.Domain.Devices.HostDevices = devices
-				}
-				// - - -
-
+				vmBuilder.AddHostDevice(name, deviceName, "")
 				return nil
 			},
 		},
