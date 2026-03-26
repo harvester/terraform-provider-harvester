@@ -441,6 +441,16 @@ func (c *Constructor) Setup() util.Processors {
 				return nil
 			},
 		},
+		{
+			Field: constants.FieldVirtualMachineHostDevice,
+			Parser: func(i interface{}) error {
+				v := i.(map[string]interface{})
+				name := v[constants.FieldHostDeviceName].(string)
+				deviceName := v[constants.FieldHostDeviceDeviceName].(string)
+				vmBuilder.AddHostDevice(name, deviceName, "")
+				return nil
+			},
+		},
 	}
 	return append(processors, customProcessors...)
 }
