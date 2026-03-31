@@ -33,7 +33,10 @@ DOCKERFILE=Dockerfile
 rm -rf ./terraform-provider-harvester-*
 cp ../bin/terraform-provider-harvester-* .
 
-buildx build --load \
+docker buildx build --load \
   --build-arg PROVIDER_VERSION=${PROVIDER_VERSION} \
+  --build-arg TERRAFORM_VERSION=${TERRAFORM_VERSION} \
+  --build-arg TERRAFORM_SUM_amd64=${TERRAFORM_SUM_amd64} \
+  --build-arg TERRAFORM_SUM_arm64=${TERRAFORM_SUM_arm64} \
   -f ${DOCKERFILE} -t ${IMAGE} .
 echo Built ${IMAGE}
