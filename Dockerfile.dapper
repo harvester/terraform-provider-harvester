@@ -4,21 +4,25 @@ ARG DAPPER_HOST_ARCH
 ENV ARCH=$DAPPER_HOST_ARCH
 
 RUN zypper -n rm container-suseconnect && \
-    zypper -n install curl docker gzip tar wget awk zip unzip
+    zypper -n install curl docker gzip tar wget awk zip unzip docker-buildx
 
 # install goimports
 RUN GO111MODULE=on go install golang.org/x/tools/cmd/goimports@v0.1.11
 
-## install golangci-lint
-RUN curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s latest
+# install golangci-lint
+RUN go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.11.4
 
-# The docker version in dapper is too old to have buildx. Install it manually.
-RUN wget --quiet https://github.com/docker/buildx/releases/download/v0.13.1/buildx-v0.13.1.linux-${ARCH} && \
-    wget --quiet https://releases.hashicorp.com/terraform/0.13.4/terraform_0.13.4_linux_${ARCH}.zip &&  \
-    chmod +x buildx-v0.13.1.linux-${ARCH} && \
-    unzip terraform_0.13.4_linux_${ARCH}.zip && \
-    mv buildx-v0.13.1.linux-${ARCH} /usr/local/bin/buildx && \
-    mv terraform /usr/local/bin/terraform
+# install terraform
+ENV TERRAFORM_VERSION=1.4.6
+ENV TERRAFORM_SUM_amd64=e079db1a8945e39b1f8ba4e513946b3ab9f32bd5a2bdf19b9b186d22c5a3d53b
+ENV TERRAFORM_SUM_arm64=b38f5db944ac4942f11ceea465a91e365b0636febd9998c110fbbe95d61c3b26
+
+RUN TERRAFORM_SUM=$([ "${ARCH}" = "amd64" ] && echo "${TERRAFORM_SUM_amd64}" || echo "${TERRAFORM_SUM_arm64}") && \
+    wget --quiet "https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_${ARCH}.zip" && \
+    echo "${TERRAFORM_SUM}  terraform_${TERRAFORM_VERSION}_linux_${ARCH}.zip" | sha256sum -c - && \
+    unzip "terraform_${TERRAFORM_VERSION}_linux_${ARCH}.zip" && \
+    mv terraform /usr/local/bin/terraform && \
+    rm "terraform_${TERRAFORM_VERSION}_linux_${ARCH}.zip"
 
 ENV DAPPER_RUN_ARGS="--network host -v /run/containerd/containerd.sock:/run/containerd/containerd.sock"
 ENV DAPPER_ENV="REPO TAG DRONE_TAG"

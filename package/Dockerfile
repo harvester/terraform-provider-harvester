@@ -16,11 +16,14 @@ RUN zypper -n rm container-suseconnect && \
 ENV ARCH ${TARGETPLATFORM#linux/}
 ENV KERNEL_ARCH linux_${ARCH}
 # install terraform
-ENV TERRAFORM_VERSION 1.4.6
-ENV TERRAFORM_URL https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_${KERNEL_ARCH}.zip
+ARG TERRAFORM_VERSION
+ARG TERRAFORM_SUM_amd64
+ARG TERRAFORM_SUM_arm64
 
-RUN curl -sfL -o terraform.zip ${TERRAFORM_URL} && \
-    unzip terraform.zip -d /tmp/ && mv /tmp/terraform /usr/bin/ && rm -f terraform.zip && \
+RUN curl -sfL -o /tmp/terraform.zip "https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_${KERNEL_ARCH}.zip" && \
+    TERRAFORM_SUM=$([ "${ARCH}" = "amd64" ] && echo "${TERRAFORM_SUM_amd64}" || echo "${TERRAFORM_SUM_arm64}") && \
+    echo "${TERRAFORM_SUM}  /tmp/terraform.zip" | sha256sum -c - && \
+    unzip /tmp/terraform.zip -d /tmp/ && mv /tmp/terraform /usr/bin/ && rm -f /tmp/terraform.zip && \
     terraform version
 
 # place provider into plugins directory
