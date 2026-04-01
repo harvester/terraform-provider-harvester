@@ -84,6 +84,10 @@ jobs:
         platforms: linux/amd64,linux/arm64
         tags: rancher/terraform-provider-harvester:${{ env.branch }}-head
         file: package/Dockerfile
+        build-args: |
+          TERRAFORM_VERSION=1.4.6
+          TERRAFORM_SUM_amd64=e079db1a8945e39b1f8ba4e513946b3ab9f32bd5a2bdf19b9b186d22c5a3d53b
+          TERRAFORM_SUM_arm64=b38f5db944ac4942f11ceea465a91e365b0636febd9998c110fbbe95d61c3b26
 
     - name: docker-publish-with-tag
       if: ${{ startsWith(github.ref, 'refs/tags/') }}
@@ -96,3 +100,6 @@ jobs:
         file: package/Dockerfile
         build-args: |
           VERSION=${{ github.ref_name }}
+          TERRAFORM_VERSION=1.4.6
+          TERRAFORM_SUM_amd64=e079db1a8945e39b1f8ba4e513946b3ab9f32bd5a2bdf19b9b186d22c5a3d53b
+          TERRAFORM_SUM_arm64=b38f5db944ac4942f11ceea465a91e365b0636febd9998c110fbbe95d61c3b26
