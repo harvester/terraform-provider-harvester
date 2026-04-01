@@ -436,6 +436,77 @@ resource harvester_virtualmachine "disk_test" {
 	})
 }
 
+func TestAccVirtualMachine_disk_cache_mode(t *testing.T) {
+	var (
+		testAccImageName         = "test-acc-image-leap-" + uuid.New().String()[:6]
+		testAccImageResourceName = constants.ResourceTypeImage + "." + testAccImageName
+		testAccVMName            = "disk-cache-mode-test"
+		testAccVMResourceName    = constants.ResourceTypeImage + "." + testAccVMName
+		ctx                      = context.Background()
+	)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckVirtualMachineDestroy(ctx),
+		Steps: []resource.TestStep{
+			{
+				Config: fmt.Sprintf(`
+resource harvester_image "%s" {
+  name = "%s"
+	namespace = "default"
+	display_name = "openSUSE-Leap-15.6"
+	source_type = "download"
+	url = "https://download.opensuse.org/repositories/Cloud:/Images:/Leap_15.6/images/openSUSE-Leap-15.6.x86_64-NoCloud.qcow2"
+	storage_class_name = "harvester-longhorn"
+}
+`,
+					testAccImageName,
+					testAccImageName,
+				),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(testAccImageResourceName, constants.FieldCommonName, testAccImageName),
+					resource.TestCheckResourceAttr(testAccImageResourceName, constants.FieldCommonNamespace, "default"),
+				),
+			},
+			{
+				Config: fmt.Sprintf(`
+resource harvester_virtualmachine "%s" {
+	name = "%s"
+
+  cpu = 1
+  memory = "1Gi"
+
+  run_strategy = "RerunOnFailure"
+  machine_type = "q35"
+
+  network_interface {
+    name         = "default"
+  }
+
+  disk {
+    name       = "cdrom-disk"
+    type       = "cd-rom"
+    bus        = "sata"
+		cache_mode = "writeback"
+    boot_order = 1
+		size       = "5Gi"
+    image      = "default/%s"
+  }
+}
+`,
+					testAccVMName,
+					testAccVMName,
+					testAccImageName,
+				),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(testAccVMResourceName, constants.FieldCommonName, testAccVMName),
+				),
+			},
+		},
+	})
+}
+
 func TestAccVirtualMachine_labels(t *testing.T) {
 	var (
 		vm             *kubevirtv1.VirtualMachine

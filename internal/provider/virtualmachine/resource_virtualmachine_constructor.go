@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
 	"strings"
 
 	corev1 "k8s.io/api/core/v1"
@@ -235,6 +236,7 @@ func (c *Constructor) Setup() util.Processors {
 				diskName := r[constants.FieldDiskName].(string)
 				diskSize := r[constants.FieldDiskSize].(string)
 				diskBus := r[constants.FieldDiskBus].(string)
+				diskCacheMode := r[constants.FieldDiskCacheMode].(string)
 				diskType := r[constants.FieldDiskType].(string)
 				bootOrder := r[constants.FieldDiskBootOrder].(int)
 				imageNamespacedName := r[constants.FieldVolumeImage].(string)
@@ -254,6 +256,17 @@ func (c *Constructor) Setup() util.Processors {
 				}
 
 				vmBuilder.Disk(diskName, diskBus, isCDRom, uint(bootOrder)) // nolint: gosec
+				if diskCacheMode != "" {
+					mode := kubevirtv1.DriverCache(diskCacheMode)
+					if !slices.Contains([]kubevirtv1.DriverCache{kubevirtv1.CacheNone, kubevirtv1.CacheWriteThrough, kubevirtv1.CacheWriteBack}, mode) {
+						return fmt.Errorf("invalid disk cache mode for disk %s: %v", diskName, mode)
+					}
+					vmBuilder.DiskCacheMode(diskName, mode)
+					if vmBuilder.Error != nil {
+						return vmBuilder.Error
+					}
+				}
+
 				if existingVolumeName != "" {
 					vmBuilder.ExistingPVCVolume(diskName, existingVolumeName, hotPlug)
 				} else if containerImageName != "" {
