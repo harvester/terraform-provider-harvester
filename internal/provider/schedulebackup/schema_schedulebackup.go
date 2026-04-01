@@ -64,5 +64,9 @@ func Schema() map[string]*schema.Schema {
 }
 
 func DataSourceSchema() map[string]*schema.Schema {
-	return util.DataSourceSchemaWrap(Schema())
+	s := util.DataSourceSchemaWrap(Schema())
+	// AtLeastOneOf is invalid on computed-only fields in data sources
+	s[constants.FieldScheduleBackupVMName].AtLeastOneOf = nil
+	s[constants.FieldScheduleBackupVolumeName].AtLeastOneOf = nil
+	return s
 }
