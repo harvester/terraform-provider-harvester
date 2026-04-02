@@ -140,6 +140,7 @@ func resourceSRIOVNetworkDeviceRefresh(ctx context.Context, d *schema.ResourceDa
 		if err = resourceSRIOVNetworkDeviceImport(d, obj); err != nil {
 			return obj, constants.StateCommonError, err
 		}
+
 		state_raw := d.Get(constants.FieldSRIOVNetworkDeviceEnabled).(bool)
 		if state_raw {
 			state = devicesv1.DeviceEnabled

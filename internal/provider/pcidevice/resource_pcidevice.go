@@ -2,6 +2,7 @@ package pcidevice
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	devicesv1 "github.com/harvester/pcidevices/pkg/apis/devices.harvesterhci.io/v1beta1"
@@ -14,7 +15,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 	"github.com/harvester/terraform-provider-harvester/internal/config"
+	"github.com/harvester/terraform-provider-harvester/internal/util"
 	"github.com/harvester/terraform-provider-harvester/pkg/constants"
+	"github.com/harvester/terraform-provider-harvester/pkg/importer"
 )
 
 func ResourcePCIDevice() *schema.Resource {
@@ -48,7 +51,7 @@ func resourcePCIDeviceCreate(ctx context.Context, d *schema.ResourceData, meta i
 	if err != nil {
 		if apierrors.IsNotFound(err) {
 			d.SetId("")
-			return nil
+			return diag.FromErr(fmt.Errorf("failed to find PCI device %s", name))
 		}
 		return diag.FromErr(err)
 	}
@@ -78,13 +81,13 @@ func resourcePCIDeviceCreate(ctx context.Context, d *schema.ResourceData, meta i
 				if err != nil {
 					return diag.FromErr(err)
 				}
+				return diag.FromErr(resourcePCIDeviceWaitForState(ctx, d, meta, schema.TimeoutCreate))
 			}
-			return diag.FromErr(resourcePCIDeviceImport(d, obj))
 		}
 		return diag.FromErr(err)
 	}
 
-	return diag.FromErr(resourcePCIDeviceWaitForState(ctx, d, meta, schema.TimeoutCreate))
+	return diag.FromErr(resourcePCIDeviceImport(d, obj))
 }
 
 func resourcePCIDeviceRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -205,10 +208,28 @@ func resourcePCIDeviceRefresh(ctx context.Context, d *schema.ResourceData, meta 
 		if err = resourcePCIDeviceImport(d, obj); err != nil {
 			return obj, constants.StateCommonError, err
 		}
-		state := d.Get(constants.FieldPCIDeviceKernelDriver).(string)
-		if state != "" {
-			return obj, constants.StatePassthroughEnabled, err
+
+		claims, err := c.HarvesterDeviceClient.DevicesV1beta1().PCIDeviceClaims().List(ctx, metav1.ListOptions{})
+		if err != nil {
+			return obj, constants.StateCommonError, err
 		}
+
+		for _, claim := range claims.Items {
+			for _, owner := range claim.OwnerReferences {
+				if owner.Name == name && claim.Status.PassthroughEnabled {
+					return obj, constants.StatePassthroughEnabled, err
+				}
+			}
+		}
+
 		return obj, constants.StatePassthroughDisabled, err
 	}
+}
+
+func resourcePCIDeviceImport(d *schema.ResourceData, obj *devicesv1.PCIDevice) error {
+	stateGetter, err := importer.ResourcePCIDeviceStateGetter(obj)
+	if err != nil {
+		return err
+	}
+	return util.ResourceStatesSet(d, stateGetter)
 }
