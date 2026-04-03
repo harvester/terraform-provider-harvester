@@ -28,6 +28,9 @@ const (
 	FieldVirtualMachineIsolateEmulatorThread = "isolate_emulator_thread"
 	FieldVirtualMachineNodeSelector          = "node_selector"
 	FieldVirtualMachineCreateInitialSnapshot = "create_initial_snapshot"
+	FieldVirtualMachineAccessCredentials     = "access_credentials"
+	FieldVirtualMachineDNSPolicy             = "dns_policy"
+	FieldVirtualMachineDNSConfig             = "dns_config"
 
 	StateVirtualMachineStarting = "Starting"
 	StateVirtualMachineRunning  = "Running"
@@ -73,6 +76,8 @@ const (
 	FieldDiskHotPlug            = "hot_plug"
 	FieldDiskAutoDelete         = "auto_delete"
 	FieldDiskVolumeName         = "volume_name"
+	FieldDiskConfigMapName      = "configmap_name"
+	FieldDiskSecretName         = "secret_name"
 
 	AnnotationDiskAutoDelete = "terraform-provider-harvester-auto-delete"
 )
@@ -89,4 +94,20 @@ const (
 
 const (
 	LabelSSHUsername = "ssh-user"
+)
+
+const (
+	FieldAccessCredentialSSHPublicKey      = "ssh_public_key"     // #nosec G101
+	FieldAccessCredentialUserPassword      = "user_password"      // #nosec G101
+	FieldAccessCredentialSecretName        = "secret_name"        // #nosec G101
+	FieldAccessCredentialPropagationMethod = "propagation_method" // #nosec G101
+	FieldAccessCredentialUsers             = "users"
+)
+
+const (
+	FieldDNSConfigNameservers = "nameservers"
+	FieldDNSConfigSearches    = "searches"
+	FieldDNSConfigOptions     = "options"
+	FieldDNSOptionName        = "name"
+	FieldDNSOptionValue       = "value"
 )
