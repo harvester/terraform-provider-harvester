@@ -8,7 +8,7 @@ import (
 	"github.com/harvester/terraform-provider-harvester/pkg/constants"
 )
 
-func resourceInputSchema() map[string]*schema.Schema {
+func ResourceInputSchema() map[string]*schema.Schema {
 	s := map[string]*schema.Schema{
 		constants.FieldInputName: {
 			Type:     schema.TypeString,
