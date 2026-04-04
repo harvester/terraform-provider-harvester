@@ -181,6 +181,32 @@ please use %s instead of this deprecated field:
 			Default:     false,
 			Description: "Create an initial snapshot named {vm-name}-initial after the VM is created and ready",
 		},
+		constants.FieldVirtualMachineHyperv: {
+			Type:     schema.TypeList,
+			Optional: true,
+			MaxItems: 1,
+			Elem: &schema.Resource{
+				Schema: resourceHypervSchema(),
+			},
+			ConflictsWith: []string{constants.FieldVirtualMachineHypervPassthrough},
+			Description:   "Hyper-V enlightenments for Windows guests",
+		},
+		constants.FieldVirtualMachineHypervPassthrough: {
+			Type:          schema.TypeBool,
+			Optional:      true,
+			Default:       false,
+			ConflictsWith: []string{constants.FieldVirtualMachineHyperv},
+			Description:   "Enable all supported Hyper-V flags automatically. Mutually exclusive with hyperv block. VM will be non-migratable",
+		},
+		constants.FieldVirtualMachineClock: {
+			Type:     schema.TypeList,
+			Optional: true,
+			MaxItems: 1,
+			Elem: &schema.Resource{
+				Schema: resourceClockSchema(),
+			},
+			Description: "Clock and timer configuration for the guest",
+		},
 	}
 	util.NamespacedSchemaWrap(s, false)
 	s[constants.FieldCommonTags].Description = "The tag is reflected as label on the VM.\n" +

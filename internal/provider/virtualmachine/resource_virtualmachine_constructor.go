@@ -241,6 +241,8 @@ func (c *Constructor) Setup() util.Processors {
 				volumeName := r[constants.FieldDiskVolumeName].(string)
 				existingVolumeName := r[constants.FieldDiskExistingVolumeName].(string)
 				containerImageName := r[constants.FieldDiskContainerImageName].(string)
+				sysprepSecretName := r[constants.FieldDiskSysprepSecretName].(string)
+				sysprepConfigMapName := r[constants.FieldDiskSysprepConfigMapName].(string)
 				hotPlug := r[constants.FieldDiskHotPlug].(bool)
 				isCDRom := diskType == builder.DiskTypeCDRom
 				if diskBus == "" {
@@ -254,7 +256,25 @@ func (c *Constructor) Setup() util.Processors {
 				}
 
 				vmBuilder.Disk(diskName, diskBus, isCDRom, uint(bootOrder)) // nolint: gosec
-				if existingVolumeName != "" {
+				if sysprepSecretName != "" {
+					vmBuilder.Volume(diskName, kubevirtv1.Volume{
+						Name: diskName,
+						VolumeSource: kubevirtv1.VolumeSource{
+							Sysprep: &kubevirtv1.SysprepSource{
+								Secret: &corev1.LocalObjectReference{Name: sysprepSecretName},
+							},
+						},
+					})
+				} else if sysprepConfigMapName != "" {
+					vmBuilder.Volume(diskName, kubevirtv1.Volume{
+						Name: diskName,
+						VolumeSource: kubevirtv1.VolumeSource{
+							Sysprep: &kubevirtv1.SysprepSource{
+								ConfigMap: &corev1.LocalObjectReference{Name: sysprepConfigMapName},
+							},
+						},
+					})
+				} else if existingVolumeName != "" {
 					vmBuilder.ExistingPVCVolume(diskName, existingVolumeName, hotPlug)
 				} else if containerImageName != "" {
 					vmBuilder.ContainerDiskVolume(diskName, containerImageName, builder.DefaultImagePullPolicy)
@@ -441,6 +461,48 @@ func (c *Constructor) Setup() util.Processors {
 				return nil
 			},
 		},
+		{
+			Field: constants.FieldVirtualMachineHyperv,
+			Parser: func(i interface{}) error {
+				r := i.(map[string]interface{})
+				hv := parseHyperv(r)
+				features := vmBuilder.VirtualMachine.Spec.Template.Spec.Domain.Features
+				if features == nil {
+					features = &kubevirtv1.Features{}
+				}
+				features.Hyperv = hv
+				vmBuilder.VirtualMachine.Spec.Template.Spec.Domain.Features = features
+				return nil
+			},
+		},
+		{
+			Field: constants.FieldVirtualMachineHypervPassthrough,
+			Parser: func(i interface{}) error {
+				if i.(bool) {
+					features := vmBuilder.VirtualMachine.Spec.Template.Spec.Domain.Features
+					if features == nil {
+						features = &kubevirtv1.Features{}
+					}
+					features.HypervPassthrough = &kubevirtv1.HyperVPassthrough{
+						Enabled: ptr.To(true),
+					}
+					vmBuilder.VirtualMachine.Spec.Template.Spec.Domain.Features = features
+				}
+				return nil
+			},
+		},
+		{
+			Field: constants.FieldVirtualMachineClock,
+			Parser: func(i interface{}) error {
+				r := i.(map[string]interface{})
+				clock, err := parseClock(r)
+				if err != nil {
+					return err
+				}
+				vmBuilder.VirtualMachine.Spec.Template.Spec.Domain.Clock = clock
+				return nil
+			},
+		},
 	}
 	return append(processors, customProcessors...)
 }
@@ -477,6 +539,124 @@ func Creator(c *client.Client, ctx context.Context, namespace, name string) util
 	return newVMConstructor(c, ctx, vmBuilder)
 }
 
+func parseHyperv(r map[string]interface{}) *kubevirtv1.FeatureHyperv {
+	hv := &kubevirtv1.FeatureHyperv{}
+	setBool := func(field string) *kubevirtv1.FeatureState {
+		if v, ok := r[field].(bool); ok && v {
+			return &kubevirtv1.FeatureState{Enabled: ptr.To(true)}
+		}
+		return nil
+	}
+	hv.Relaxed = setBool(constants.FieldHypervRelaxed)
+	hv.VAPIC = setBool(constants.FieldHypervVAPIC)
+	hv.VPIndex = setBool(constants.FieldHypervVPIndex)
+	hv.Runtime = setBool(constants.FieldHypervRuntime)
+	hv.SyNIC = setBool(constants.FieldHypervSyNIC)
+	hv.Reset = setBool(constants.FieldHypervReset)
+	hv.Frequencies = setBool(constants.FieldHypervFrequencies)
+	hv.Reenlightenment = setBool(constants.FieldHypervReenlightenment)
+	hv.TLBFlush = setBool(constants.FieldHypervTLBFlush)
+	hv.IPI = setBool(constants.FieldHypervIPI)
+	hv.EVMCS = setBool(constants.FieldHypervEVMCS)
+
+	if v, ok := r[constants.FieldHypervSpinlocks].(bool); ok && v {
+		retries := uint32(r[constants.FieldHypervSpinlocksRetries].(int)) // nolint: gosec
+		hv.Spinlocks = &kubevirtv1.FeatureSpinlocks{
+			Enabled: ptr.To(true),
+			Retries: &retries,
+		}
+	}
+
+	if v, ok := r[constants.FieldHypervSyNICTimer].(bool); ok && v {
+		hv.SyNICTimer = &kubevirtv1.SyNICTimer{
+			Enabled: ptr.To(true),
+		}
+		if direct, ok := r[constants.FieldHypervSyNICTimerDirect].(bool); ok && direct {
+			hv.SyNICTimer.Direct = &kubevirtv1.FeatureState{Enabled: ptr.To(true)}
+		}
+	}
+
+	if v, ok := r[constants.FieldHypervVendorID].(bool); ok && v {
+		hv.VendorID = &kubevirtv1.FeatureVendorID{
+			Enabled:  ptr.To(true),
+			VendorID: r[constants.FieldHypervVendorIDValue].(string),
+		}
+	}
+	return hv
+}
+
+func parseClock(r map[string]interface{}) (*kubevirtv1.Clock, error) {
+	clock := &kubevirtv1.Clock{}
+	tz, hasTZ := r[constants.FieldClockTimezone].(string)
+	offset, hasOffset := r[constants.FieldClockUTCOffsetSeconds].(int)
+	if hasTZ && tz != "" && hasOffset && offset != 0 {
+		return nil, errors.New("clock: timezone and utc_offset_seconds are mutually exclusive")
+	}
+	if hasTZ && tz != "" {
+		timezone := kubevirtv1.ClockOffsetTimezone(tz)
+		clock.Timezone = &timezone
+	} else if hasOffset && offset != 0 {
+		clock.UTC = &kubevirtv1.ClockOffsetUTC{OffsetSeconds: &offset}
+	}
+
+	if timerList, ok := r[constants.FieldClockTimer].([]interface{}); ok && len(timerList) > 0 {
+		clock.Timer = parseClockTimers(timerList[0].(map[string]interface{}))
+	}
+	return clock, nil
+}
+
+// getTimerBlock extracts the first element of a TypeList timer sub-block.
+func getTimerBlock(t map[string]interface{}, key string) (map[string]interface{}, bool) {
+	list, ok := t[key].([]interface{})
+	if !ok || len(list) == 0 {
+		return nil, false
+	}
+	return list[0].(map[string]interface{}), true
+}
+
+func parseClockTimers(t map[string]interface{}) *kubevirtv1.Timer {
+	timer := &kubevirtv1.Timer{}
+
+	if h, ok := getTimerBlock(t, constants.FieldTimerHPET); ok {
+		enabled := h[constants.FieldTimerEnabled].(bool)
+		timer.HPET = &kubevirtv1.HPETTimer{Enabled: &enabled}
+		if tp, _ := h[constants.FieldTimerTickPolicy].(string); tp != "" {
+			timer.HPET.TickPolicy = kubevirtv1.HPETTickPolicy(tp)
+		}
+	}
+
+	if k, ok := getTimerBlock(t, constants.FieldTimerKVM); ok {
+		enabled := k[constants.FieldTimerEnabled].(bool)
+		timer.KVM = &kubevirtv1.KVMTimer{Enabled: &enabled}
+	}
+
+	if p, ok := getTimerBlock(t, constants.FieldTimerPIT); ok {
+		enabled := p[constants.FieldTimerEnabled].(bool)
+		timer.PIT = &kubevirtv1.PITTimer{Enabled: &enabled}
+		if tp, _ := p[constants.FieldTimerTickPolicy].(string); tp != "" {
+			timer.PIT.TickPolicy = kubevirtv1.PITTickPolicy(tp)
+		}
+	}
+
+	if r, ok := getTimerBlock(t, constants.FieldTimerRTC); ok {
+		enabled := r[constants.FieldTimerEnabled].(bool)
+		timer.RTC = &kubevirtv1.RTCTimer{Enabled: &enabled}
+		if tp, _ := r[constants.FieldTimerTickPolicy].(string); tp != "" {
+			timer.RTC.TickPolicy = kubevirtv1.RTCTickPolicy(tp)
+		}
+		if track, _ := r[constants.FieldTimerTrack].(string); track != "" {
+			timer.RTC.Track = kubevirtv1.RTCTimerTrack(track)
+		}
+	}
+
+	if hv, ok := getTimerBlock(t, constants.FieldTimerHyperv); ok {
+		enabled := hv[constants.FieldTimerEnabled].(bool)
+		timer.Hyperv = &kubevirtv1.HypervTimer{Enabled: &enabled}
+	}
+
+	return timer
+}
+
 func Updater(c *client.Client, ctx context.Context, vm *kubevirtv1.VirtualMachine) util.Constructor {
 	vm.Spec.Template.Spec.Networks = []kubevirtv1.Network{}
 	vm.Spec.Template.Spec.Domain.Devices.TPM = nil
@@ -484,6 +664,11 @@ func Updater(c *client.Client, ctx context.Context, vm *kubevirtv1.VirtualMachin
 	vm.Spec.Template.Spec.Domain.Devices.Disks = []kubevirtv1.Disk{}
 	vm.Spec.Template.Spec.Domain.Devices.Inputs = []kubevirtv1.Input{}
 	vm.Spec.Template.Spec.Volumes = []kubevirtv1.Volume{}
+	if vm.Spec.Template.Spec.Domain.Features != nil {
+		vm.Spec.Template.Spec.Domain.Features.Hyperv = nil
+		vm.Spec.Template.Spec.Domain.Features.HypervPassthrough = nil
+	}
+	vm.Spec.Template.Spec.Domain.Clock = nil
 	vm.Annotations[harvesterutil.AnnotationVolumeClaimTemplates] = "[]"
 	return newVMConstructor(c, ctx, &builder.VMBuilder{
 		VirtualMachine: vm,

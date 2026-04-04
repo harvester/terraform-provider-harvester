@@ -28,6 +28,9 @@ const (
 	FieldVirtualMachineIsolateEmulatorThread = "isolate_emulator_thread"
 	FieldVirtualMachineNodeSelector          = "node_selector"
 	FieldVirtualMachineCreateInitialSnapshot = "create_initial_snapshot"
+	FieldVirtualMachineHyperv                = "hyperv"
+	FieldVirtualMachineHypervPassthrough     = "hyperv_passthrough" // #nosec G101
+	FieldVirtualMachineClock                 = "clock"
 
 	StateVirtualMachineStarting = "Starting"
 	StateVirtualMachineRunning  = "Running"
@@ -63,16 +66,18 @@ const (
 )
 
 const (
-	FieldDiskName               = "name"
-	FieldDiskType               = "type"
-	FieldDiskSize               = "size"
-	FieldDiskBus                = "bus"
-	FieldDiskBootOrder          = "boot_order"
-	FieldDiskExistingVolumeName = "existing_volume_name"
-	FieldDiskContainerImageName = "container_image_name"
-	FieldDiskHotPlug            = "hot_plug"
-	FieldDiskAutoDelete         = "auto_delete"
-	FieldDiskVolumeName         = "volume_name"
+	FieldDiskName                 = "name"
+	FieldDiskType                 = "type"
+	FieldDiskSize                 = "size"
+	FieldDiskBus                  = "bus"
+	FieldDiskBootOrder            = "boot_order"
+	FieldDiskExistingVolumeName   = "existing_volume_name"
+	FieldDiskContainerImageName   = "container_image_name"
+	FieldDiskHotPlug              = "hot_plug"
+	FieldDiskAutoDelete           = "auto_delete"
+	FieldDiskVolumeName           = "volume_name"
+	FieldDiskSysprepSecretName    = "sysprep_secret_name" // #nosec G101
+	FieldDiskSysprepConfigMapName = "sysprep_configmap_name"
 
 	AnnotationDiskAutoDelete = "terraform-provider-harvester-auto-delete"
 )
@@ -89,4 +94,38 @@ const (
 
 const (
 	LabelSSHUsername = "ssh-user"
+)
+
+const (
+	FieldHypervRelaxed          = "relaxed"
+	FieldHypervVAPIC            = "vapic"
+	FieldHypervVPIndex          = "vpindex"
+	FieldHypervRuntime          = "runtime"
+	FieldHypervSyNIC            = "synic"
+	FieldHypervReset            = "reset"
+	FieldHypervFrequencies      = "frequencies"
+	FieldHypervReenlightenment  = "reenlightenment"
+	FieldHypervTLBFlush         = "tlbflush"
+	FieldHypervIPI              = "ipi"
+	FieldHypervEVMCS            = "evmcs"
+	FieldHypervSpinlocks        = "spinlocks"
+	FieldHypervSpinlocksRetries = "spinlocks_retries"
+	FieldHypervSyNICTimer       = "synictimer"
+	FieldHypervSyNICTimerDirect = "synictimer_direct"
+	FieldHypervVendorID         = "vendorid"
+	FieldHypervVendorIDValue    = "vendorid_value"
+)
+
+const (
+	FieldClockTimezone         = "timezone"
+	FieldClockUTCOffsetSeconds = "utc_offset_seconds"
+	FieldClockTimer            = "timer"
+	FieldTimerHPET             = "hpet"
+	FieldTimerKVM              = "kvm"
+	FieldTimerPIT              = "pit"
+	FieldTimerRTC              = "rtc"
+	FieldTimerHyperv           = "hyperv"
+	FieldTimerEnabled          = "enabled"
+	FieldTimerTickPolicy       = "tick_policy"
+	FieldTimerTrack            = "track"
 )
