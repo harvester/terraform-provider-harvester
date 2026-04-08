@@ -29,6 +29,8 @@ const (
 	FieldVirtualMachineNodeSelector          = "node_selector"
 	FieldVirtualMachineCreateInitialSnapshot = "create_initial_snapshot"
 
+	FieldVirtualMachineHugepages = "hugepages"
+
 	StateVirtualMachineStarting = "Starting"
 	StateVirtualMachineRunning  = "Running"
 	StateVirtualMachineStopping = "Stopping"
