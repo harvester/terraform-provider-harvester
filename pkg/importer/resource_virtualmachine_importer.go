@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"slices"
+	"strings"
 
 	corev1 "k8s.io/api/core/v1"
 	kubevirtv1 "kubevirt.io/api/core/v1"
@@ -339,6 +340,21 @@ func (v *VMImporter) Volume() ([]map[string]interface{}, []map[string]interface{
 	return diskStates, cloudInitState, nil
 }
 
+func (v *VMImporter) InstallGuestAgent() bool {
+	for _, volume := range v.VirtualMachine.Spec.Template.Spec.Volumes {
+		var userData string
+		if volume.CloudInitNoCloud != nil {
+			userData = volume.CloudInitNoCloud.UserData
+		} else if volume.CloudInitConfigDrive != nil {
+			userData = volume.CloudInitConfigDrive.UserData
+		}
+		if userData != "" && strings.Contains(userData, "qemu-guest-agent") {
+			return true
+		}
+	}
+	return false
+}
+
 func (v *VMImporter) NodeName() string {
 	if v.VirtualMachineInstance == nil {
 		return ""
@@ -432,6 +448,7 @@ func ResourceVirtualMachineStateGetter(vm *kubevirtv1.VirtualMachine, vmi *kubev
 			constants.FieldVirtualMachineCPUPinning:            vmImporter.DedicatedCPUPlacement(),
 			constants.FieldVirtualMachineIsolateEmulatorThread: vmImporter.IsolateEmulatorThread(),
 			constants.FieldVirtualMachineNodeSelector:          vm.Spec.Template.Spec.NodeSelector,
+			constants.FieldVirtualMachineInstallGuestAgent:     vmImporter.InstallGuestAgent(),
 		},
 	}, nil
 }
