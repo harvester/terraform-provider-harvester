@@ -202,6 +202,7 @@ resource "harvester_virtualmachine" "opensuse154" {
 - `create_initial_snapshot` (Boolean) Create an initial snapshot named {vm-name}-initial after the VM is created and ready
 - `description` (String) Any text you want that better describes this resource
 - `efi` (Boolean)
+- `eviction_strategy` (String) Eviction strategy for the VM (None, LiveMigrate, LiveMigrateIfPossible, External)
 - `hostname` (String)
 - `input` (Block List) (see [below for nested schema](#nestedblock--input))
 - `isolate_emulator_thread` (Boolean) To enable isolate emulator thread, ensure that at least one node has the CPU manager enabled, also VM CPU pinning must be enabled. Note that enable option will allocate an additional dedicated CPU.
@@ -210,6 +211,7 @@ resource "harvester_virtualmachine" "opensuse154" {
 - `memory` (String)
 - `namespace` (String)
 - `node_selector` (Map of String) Node selector for scheduling the VM. The key is the label key and the value is the label value.
+- `os_type` (String) OS type annotation for KVM guest optimizations (e.g. linux, windows)
 - `requests` (Block List, Max: 1) Resource requests for the VM. When unset, Harvester's overcommit webhook manages these values. (see [below for nested schema](#nestedblock--requests))
 - `reserved_memory` (String)
 - `restart_after_update` (Boolean) restart vm after the vm is updated
@@ -224,6 +226,7 @@ For example: `sample-tag = sample` adds label `tag.harvesterhci.io/sample-tag: s
 For `ssh-user` tag, the value is added to `cloudinit.user_data` if:
 1. Both `cloudinit.user_data_base64` and `cloudinit.user_data_secret_name` are empty.
 2. There is no `user` field in `cloudinit.user_data`.
+- `termination_grace_period_seconds` (Number) Grace period in seconds before the VM is forcefully terminated
 - `timeouts` (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))
 - `tpm` (Block List, Max: 1) (see [below for nested schema](#nestedblock--tpm))
 
