@@ -450,6 +450,25 @@ func (c *Constructor) Setup() util.Processors {
 				return nil
 			},
 		},
+		{
+			Field: constants.FieldVirtualMachineToleration,
+			Parser: func(i interface{}) error {
+				r := i.(map[string]interface{})
+				toleration := corev1.Toleration{
+					Key:      r[constants.FieldTolerationKey].(string),
+					Operator: corev1.TolerationOperator(r[constants.FieldTolerationOperator].(string)),
+					Value:    r[constants.FieldTolerationValue].(string),
+					Effect:   corev1.TaintEffect(r[constants.FieldTolerationEffect].(string)),
+				}
+				if seconds := r[constants.FieldTolerationTolerationSeconds].(int); seconds != 0 {
+					s := int64(seconds)
+					toleration.TolerationSeconds = &s
+				}
+				vmBuilder.VirtualMachine.Spec.Template.Spec.Tolerations = append(
+					vmBuilder.VirtualMachine.Spec.Template.Spec.Tolerations, toleration)
+				return nil
+			},
+		},
 	}
 	return append(processors, customProcessors...)
 }
@@ -493,6 +512,7 @@ func Updater(c *client.Client, ctx context.Context, vm *kubevirtv1.VirtualMachin
 	vm.Spec.Template.Spec.Domain.Devices.Disks = []kubevirtv1.Disk{}
 	vm.Spec.Template.Spec.Domain.Devices.Inputs = []kubevirtv1.Input{}
 	vm.Spec.Template.Spec.Volumes = []kubevirtv1.Volume{}
+	vm.Spec.Template.Spec.Tolerations = []corev1.Toleration{}
 	vm.Annotations[harvesterutil.AnnotationVolumeClaimTemplates] = "[]"
 	return newVMConstructor(c, ctx, &builder.VMBuilder{
 		VirtualMachine: vm,

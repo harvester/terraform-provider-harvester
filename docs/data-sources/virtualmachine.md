@@ -71,6 +71,7 @@ For example: `sample-tag = sample` adds label `tag.harvesterhci.io/sample-tag: s
 For `ssh-user` tag, the value is added to `cloudinit.user_data` if:
 1. Both `cloudinit.user_data_base64` and `cloudinit.user_data_secret_name` are empty.
 2. There is no `user` field in `cloudinit.user_data`.
+- `toleration` (List of Object) Tolerations allow the VM to be scheduled on nodes with matching taints (see [below for nested schema](#nestedatt--toleration))
 - `tpm` (List of Object) (see [below for nested schema](#nestedatt--tpm))
 
 <a id="nestedatt--cloudinit"></a>
@@ -142,6 +143,18 @@ Read-Only:
 
 - `cpu` (String)
 - `memory` (String)
+
+
+<a id="nestedatt--toleration"></a>
+### Nested Schema for `toleration`
+
+Read-Only:
+
+- `effect` (String)
+- `key` (String)
+- `operator` (String)
+- `toleration_seconds` (Number)
+- `value` (String)
 
 
 <a id="nestedatt--tpm"></a>
