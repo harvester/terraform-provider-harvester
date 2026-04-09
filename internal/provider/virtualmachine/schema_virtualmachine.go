@@ -183,19 +183,19 @@ please use %s instead of this deprecated field:
 		},
 		constants.FieldVirtualMachineHostDevice: {
 			Type:        schema.TypeList,
-			Description: "",
+			Description: "Attaches a host device to the VM",
 			Optional:    true,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					constants.FieldHostDeviceName: {
 						Type:        schema.TypeString,
 						Optional:    true,
-						Description: "",
+						Description: "Name of the host device",
 					},
 					constants.FieldHostDeviceDeviceName: {
 						Type:        schema.TypeString,
 						Optional:    true,
-						Description: "",
+						Description: "Device name (resource name) of the host device",
 					},
 				},
 			},

@@ -45,7 +45,7 @@ data "harvester_virtualmachine" "opensuse154" {
 - `description` (String) Any text you want that better describes this resource
 - `disk` (List of Object) (see [below for nested schema](#nestedatt--disk))
 - `efi` (Boolean)
-- `host_device` (List of Object) (see [below for nested schema](#nestedatt--host_device))
+- `host_device` (List of Object) Attaches a host device to the VM (see [below for nested schema](#nestedatt--host_device))
 - `hostname` (String)
 - `id` (String) The ID of this resource.
 - `input` (List of Object) (see [below for nested schema](#nestedatt--input))

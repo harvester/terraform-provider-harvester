@@ -16,6 +16,7 @@ import (
 	"github.com/harvester/terraform-provider-harvester/internal/config"
 	"github.com/harvester/terraform-provider-harvester/internal/util"
 	"github.com/harvester/terraform-provider-harvester/pkg/constants"
+	"github.com/harvester/terraform-provider-harvester/pkg/importer"
 )
 
 func ResourceSRIOVNetworkDevice() *schema.Resource {
@@ -74,10 +75,6 @@ func resourceSRIOVNetworkDeviceUpdate(ctx context.Context, d *schema.ResourceDat
 	name := d.Get(constants.FieldCommonName).(string)
 	obj, err := c.HarvesterDeviceClient.DevicesV1beta1().SRIOVNetworkDevices().Get(ctx, name, metav1.GetOptions{})
 	if err != nil {
-		if apierrors.IsNotFound(err) {
-			d.SetId("")
-			return nil
-		}
 		return diag.FromErr(err)
 	}
 	toUpdate, err := util.ResourceConstruct(d, Updater(obj))
@@ -141,12 +138,20 @@ func resourceSRIOVNetworkDeviceRefresh(ctx context.Context, d *schema.ResourceDa
 			return obj, constants.StateCommonError, err
 		}
 
-		state_raw := d.Get(constants.FieldSRIOVNetworkDeviceEnabled).(bool)
-		if state_raw {
+		stateRaw := d.Get(constants.FieldSRIOVNetworkDeviceEnabled).(bool)
+		if stateRaw {
 			state = devicesv1.DeviceEnabled
 		} else {
 			state = devicesv1.DeviceDisabled
 		}
 		return obj, state, err
 	}
+}
+
+func resourceSRIOVNetworkDeviceImport(d *schema.ResourceData, obj *devicesv1.SRIOVNetworkDevice) error {
+	stateGetter, err := importer.ResourceSRIOVNetworkDeviceStateGetter(obj)
+	if err != nil {
+		return err
+	}
+	return util.ResourceStatesSet(d, stateGetter)
 }
