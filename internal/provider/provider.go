@@ -8,12 +8,16 @@ import (
 	"github.com/mitchellh/go-homedir"
 
 	"github.com/harvester/terraform-provider-harvester/internal/config"
+	"github.com/harvester/terraform-provider-harvester/internal/provider/addon"
 	"github.com/harvester/terraform-provider-harvester/internal/provider/bootstrap"
 	"github.com/harvester/terraform-provider-harvester/internal/provider/cloudinitsecret"
 	"github.com/harvester/terraform-provider-harvester/internal/provider/clusternetwork"
 	"github.com/harvester/terraform-provider-harvester/internal/provider/image"
 	"github.com/harvester/terraform-provider-harvester/internal/provider/ippool"
 	"github.com/harvester/terraform-provider-harvester/internal/provider/keypair"
+	kubeovnip "github.com/harvester/terraform-provider-harvester/internal/provider/kubeovn_ip"
+	kubeovnsubnet "github.com/harvester/terraform-provider-harvester/internal/provider/kubeovn_subnet"
+	kubeovnvpc "github.com/harvester/terraform-provider-harvester/internal/provider/kubeovn_vpc"
 	"github.com/harvester/terraform-provider-harvester/internal/provider/loadbalancer"
 	"github.com/harvester/terraform-provider-harvester/internal/provider/network"
 	"github.com/harvester/terraform-provider-harvester/internal/provider/schedulebackup"
@@ -47,11 +51,15 @@ func Provider() *schema.Provider {
 			},
 		},
 		DataSourcesMap: map[string]*schema.Resource{
+			constants.ResourceTypeAddon:           addon.DataSourceAddon(),
 			constants.ResourceTypeCloudInitSecret: cloudinitsecret.DataSourceCloudInitSecret(),
 			constants.ResourceTypeClusterNetwork:  clusternetwork.DataSourceClusterNetwork(),
 			constants.ResourceTypeIPPool:          ippool.DataSourceIPPool(),
 			constants.ResourceTypeImage:           image.DataSourceImage(),
 			constants.ResourceTypeKeyPair:         keypair.DataSourceKeypair(),
+			constants.ResourceTypeKubeOVNIP:       kubeovnip.DataSourceKubeOVNIP(),
+			constants.ResourceTypeKubeOVNSubnet:   kubeovnsubnet.DataSourceKubeOVNSubnet(),
+			constants.ResourceTypeKubeOVNVpc:      kubeovnvpc.DataSourceKubeOVNVpc(),
 			constants.ResourceTypeLoadBalancer:    loadbalancer.DataSourceLoadBalancer(),
 			constants.ResourceTypeNetwork:         network.DataSourceNetwork(),
 			constants.ResourceTypeSetting:         setting.DataSourceSetting(),
@@ -62,11 +70,14 @@ func Provider() *schema.Provider {
 			constants.ResourceTypeScheduleBackup:  schedulebackup.DataSourceScheduleBackup(),
 		},
 		ResourcesMap: map[string]*schema.Resource{
+			constants.ResourceTypeAddon:           addon.ResourceAddon(),
 			constants.ResourceTypeCloudInitSecret: cloudinitsecret.ResourceCloudInitSecret(),
 			constants.ResourceTypeClusterNetwork:  clusternetwork.ResourceClusterNetwork(),
 			constants.ResourceTypeIPPool:          ippool.ResourceIPPool(),
 			constants.ResourceTypeImage:           image.ResourceImage(),
 			constants.ResourceTypeKeyPair:         keypair.ResourceKeypair(),
+			constants.ResourceTypeKubeOVNSubnet:   kubeovnsubnet.ResourceKubeOVNSubnet(),
+			constants.ResourceTypeKubeOVNVpc:      kubeovnvpc.ResourceKubeOVNVpc(),
 			constants.ResourceTypeLoadBalancer:    loadbalancer.ResourceLoadBalancer(),
 			constants.ResourceTypeNetwork:         network.ResourceNetwork(),
 			constants.ResourceTypeSetting:         setting.ResourceSetting(),
