@@ -46,7 +46,7 @@ func resourceLoadBalancerCreate(ctx context.Context, data *schema.ResourceData, 
 	}
 	namespace := data.Get(constants.FieldCommonNamespace).(string)
 	name := data.Get(constants.FieldCommonName).(string)
-	toCreate, err := util.ResourceConstruct(data, Creator(namespace, name))
+	toCreate, err := util.ResourceConstruct(ctx, data, Creator(namespace, name))
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -142,7 +142,7 @@ func resourceLoadBalancerUpdate(ctx context.Context, data *schema.ResourceData, 
 		return diag.FromErr(err)
 	}
 
-	toUpdate, err := util.ResourceConstruct(data, Updater(obj))
+	toUpdate, err := util.ResourceConstruct(ctx, data, Updater(obj))
 	if err != nil {
 		return diag.FromErr(err)
 	}

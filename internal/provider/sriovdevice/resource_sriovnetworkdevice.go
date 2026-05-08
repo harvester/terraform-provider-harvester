@@ -2,6 +2,7 @@ package sriovdevice
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -9,6 +10,7 @@ import (
 
 	devicesv1 "github.com/harvester/pcidevices/pkg/apis/devices.harvesterhci.io/v1beta1"
 
+	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -77,20 +79,18 @@ func resourceSRIOVNetworkDeviceUpdate(ctx context.Context, d *schema.ResourceDat
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	toUpdate, err := util.ResourceConstruct(d, Updater(obj))
+	toUpdate, err := util.ResourceConstruct(ctx, d, Updater(ctx, obj))
 	if err != nil {
 		return diag.FromErr(err)
 	}
+
+	tflog.Debug(ctx, fmt.Sprintf("numVFs: %d", toUpdate.(*devicesv1.SRIOVNetworkDevice).Spec.NumVFs))
 	_, err = c.HarvesterDeviceClient.DevicesV1beta1().SRIOVNetworkDevices().Update(ctx, toUpdate.(*devicesv1.SRIOVNetworkDevice), metav1.UpdateOptions{})
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	if d.Get(constants.FieldSRIOVNetworkDeviceNumVFs) == 0 {
-		return diag.FromErr(resourceSRIOVNetworkDeviceWaitForState(ctx, d, meta, schema.TimeoutDelete))
-	}
-
-	return diag.FromErr(resourceSRIOVNetworkDeviceWaitForState(ctx, d, meta, schema.TimeoutCreate))
+	return diag.FromErr(resourceSRIOVNetworkDeviceWaitForState(ctx, d, meta, schema.TimeoutUpdate))
 }
 
 func resourceSRIOVNetworkDeviceWaitForState(ctx context.Context, d *schema.ResourceData, meta interface{}, timeoutKey string) error {
@@ -99,7 +99,8 @@ func resourceSRIOVNetworkDeviceWaitForState(ctx context.Context, d *schema.Resou
 		target  []string
 	)
 
-	if timeoutKey == schema.TimeoutDelete {
+	numVFs := d.Get(constants.FieldSRIOVNetworkDeviceNumVFs).(int)
+	if numVFs == 0 {
 		pending = []string{devicesv1.DeviceEnabled}
 		target = []string{devicesv1.DeviceDisabled}
 	} else {

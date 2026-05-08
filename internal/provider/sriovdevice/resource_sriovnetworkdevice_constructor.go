@@ -1,7 +1,12 @@
 package sriovdevice
 
 import (
+	"context"
+	"fmt"
+
 	devicesv1 "github.com/harvester/pcidevices/pkg/apis/devices.harvesterhci.io/v1beta1"
+
+	"github.com/hashicorp/terraform-plugin-log/tflog"
 
 	"github.com/harvester/terraform-provider-harvester/internal/util"
 	"github.com/harvester/terraform-provider-harvester/pkg/constants"
@@ -12,6 +17,8 @@ var (
 )
 
 type Constructor struct {
+	ctx context.Context
+
 	SRIOVNetworkDevice *devicesv1.SRIOVNetworkDevice
 }
 
@@ -25,9 +32,11 @@ func (c *Constructor) Setup() util.Processors {
 			Field: constants.FieldSRIOVNetworkDeviceNumVFs,
 			Parser: func(i interface{}) error {
 				num := i.(int)
+				tflog.Info(c.ctx, fmt.Sprintf("FOOBAR: %d", num))
 				c.SRIOVNetworkDevice.Spec.NumVFs = num
 				return nil
 			},
+			Required: true,
 		},
 	}
 	return append(processors, customProcessors...)
@@ -38,22 +47,24 @@ func (c *Constructor) Validate() error {
 }
 
 func (c *Constructor) Result() (interface{}, error) {
+	tflog.Info(c.ctx, fmt.Sprintf("BARFOO: %d", c.SRIOVNetworkDevice.Spec.NumVFs))
 	return c.SRIOVNetworkDevice, nil
 }
 
-func newSRIOVNetworkDeviceConstructor(SRIOVNetworkDevice *devicesv1.SRIOVNetworkDevice) util.Constructor {
+func newSRIOVNetworkDeviceConstructor(ctx context.Context, SRIOVNetworkDevice *devicesv1.SRIOVNetworkDevice) util.Constructor {
 	return &Constructor{
+		ctx:                ctx,
 		SRIOVNetworkDevice: SRIOVNetworkDevice,
 	}
 }
 
-func Creator(name string) util.Constructor {
+func Creator(ctx context.Context, name string) util.Constructor {
 	SRIOVNetworkDevice := &devicesv1.SRIOVNetworkDevice{
 		ObjectMeta: util.NewObjectMeta("", name),
 	}
-	return newSRIOVNetworkDeviceConstructor(SRIOVNetworkDevice)
+	return newSRIOVNetworkDeviceConstructor(ctx, SRIOVNetworkDevice)
 }
 
-func Updater(SRIOVNetworkDevice *devicesv1.SRIOVNetworkDevice) util.Constructor {
-	return newSRIOVNetworkDeviceConstructor(SRIOVNetworkDevice)
+func Updater(ctx context.Context, SRIOVNetworkDevice *devicesv1.SRIOVNetworkDevice) util.Constructor {
+	return newSRIOVNetworkDeviceConstructor(ctx, SRIOVNetworkDevice)
 }

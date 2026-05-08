@@ -55,39 +55,18 @@ func resourcePCIDeviceCreate(ctx context.Context, d *schema.ResourceData, meta i
 		}
 		return diag.FromErr(err)
 	}
-	_, err = c.HarvesterDeviceClient.DevicesV1beta1().PCIDeviceClaims().Get(ctx, name, metav1.GetOptions{})
+	toCreate, err := util.ResourceConstruct(ctx, d, Creator(ctx, c, obj))
 	if err != nil {
-		if apierrors.IsNotFound(err) {
-			if enabled {
-				toCreate := &devicesv1.PCIDeviceClaim{
-					ObjectMeta: metav1.ObjectMeta{
-						Name: name,
-						OwnerReferences: []metav1.OwnerReference{
-							{
-								APIVersion: "devices.harvesterhci.io/v1beta1",
-								Kind:       "PCIDevice",
-								Name:       name,
-								UID:        obj.UID,
-							},
-						},
-					},
-					Spec: devicesv1.PCIDeviceClaimSpec{
-						Address:  obj.Status.Address,
-						NodeName: obj.Status.NodeName,
-						UserName: "admin",
-					},
-				}
-				_, err = c.HarvesterDeviceClient.DevicesV1beta1().PCIDeviceClaims().Create(ctx, toCreate, metav1.CreateOptions{})
-				if err != nil {
-					return diag.FromErr(err)
-				}
-				return diag.FromErr(resourcePCIDeviceWaitForState(ctx, d, meta, schema.TimeoutCreate))
-			}
-		}
 		return diag.FromErr(err)
 	}
 
-	return diag.FromErr(resourcePCIDeviceImport(d, obj))
+	if toCreate != nil && enabled {
+		_, err = c.HarvesterDeviceClient.DevicesV1beta1().PCIDeviceClaims().Create(ctx, toCreate.(*devicesv1.PCIDeviceClaim), metav1.CreateOptions{})
+		if err != nil {
+			return diag.FromErr(err)
+		}
+	}
+	return diag.FromErr(resourcePCIDeviceWaitForState(ctx, d, meta, schema.TimeoutCreate))
 }
 
 func resourcePCIDeviceRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -104,19 +83,22 @@ func resourcePCIDeviceRead(ctx context.Context, d *schema.ResourceData, meta int
 		}
 		return diag.FromErr(err)
 	}
-	_, err = c.HarvesterDeviceClient.DevicesV1beta1().PCIDeviceClaims().Get(ctx, name, metav1.GetOptions{})
+	var pciDeviceClaim *devicesv1.PCIDeviceClaim
+	pciDeviceClaim = nil
+
+	claims, err := c.HarvesterDeviceClient.DevicesV1beta1().PCIDeviceClaims().List(ctx, metav1.ListOptions{})
 	if err != nil {
-		if apierrors.IsNotFound(err) {
-			err = d.Set(constants.FieldPCIDevicePassthroughEnabled, false)
-			if err != nil {
-				return diag.FromErr(err)
-			}
-			return diag.FromErr(resourcePCIDeviceImport(d, obj))
-		}
 		return diag.FromErr(err)
 	}
+	for _, claim := range claims.Items {
+		for _, owner := range claim.OwnerReferences {
+			if owner.Name == obj.Name && owner.UID == obj.UID {
+				pciDeviceClaim = &claim
+			}
+		}
+	}
 
-	err = d.Set(constants.FieldPCIDevicePassthroughEnabled, true)
+	err = d.Set(constants.FieldPCIDevicePassthroughEnabled, pciDeviceClaim != nil)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -130,9 +112,23 @@ func resourcePCIDeviceDelete(ctx context.Context, d *schema.ResourceData, meta i
 		return diag.FromErr(err)
 	}
 	name := d.Get(constants.FieldCommonName).(string)
-	err = c.HarvesterDeviceClient.DevicesV1beta1().PCIDeviceClaims().Delete(ctx, name, metav1.DeleteOptions{})
-	if err != nil && !apierrors.IsNotFound(err) {
+	obj, err := c.HarvesterDeviceClient.DevicesV1beta1().PCIDevices().Get(ctx, name, metav1.GetOptions{})
+	if err != nil {
+		if apierrors.IsNotFound(err) {
+			d.SetId("")
+			return diag.FromErr(fmt.Errorf("failed to find PCI device %s", name))
+		}
 		return diag.FromErr(err)
+	}
+	toDelete, err := util.ResourceConstruct(ctx, d, Deleter(ctx, c, obj))
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	err = c.HarvesterDeviceClient.DevicesV1beta1().PCIDeviceClaims().Delete(ctx, toDelete.(*devicesv1.PCIDeviceClaim).Name, metav1.DeleteOptions{})
+	if err != nil {
+		if !apierrors.IsNotFound(err) {
+			return diag.FromErr(err)
+		}
 	}
 
 	d.SetId("")
@@ -146,23 +142,40 @@ func resourcePCIDeviceUpdate(ctx context.Context, d *schema.ResourceData, meta i
 	}
 	name := d.Get(constants.FieldCommonName).(string)
 	enabled := d.Get(constants.FieldPCIDevicePassthroughEnabled).(bool)
-
-	_, err = c.HarvesterDeviceClient.DevicesV1beta1().PCIDeviceClaims().Get(ctx, name, metav1.GetOptions{})
+	obj, err := c.HarvesterDeviceClient.DevicesV1beta1().PCIDevices().Get(ctx, name, metav1.GetOptions{})
 	if err != nil {
 		if apierrors.IsNotFound(err) {
-			if enabled {
-				return resourcePCIDeviceCreate(ctx, d, meta)
-			}
-			return nil
+			d.SetId("")
+			return diag.FromErr(fmt.Errorf("failed to find PCI device %s", name))
 		}
 		return diag.FromErr(err)
 	}
 
-	if !enabled {
-		return resourcePCIDeviceDelete(ctx, d, meta)
+	if enabled {
+		toUpdate, err := util.ResourceConstruct(ctx, d, Updater(ctx, c, obj))
+		if err != nil {
+			return diag.FromErr(err)
+		}
+		_, err = c.HarvesterDeviceClient.DevicesV1beta1().PCIDeviceClaims().Create(ctx, toUpdate.(*devicesv1.PCIDeviceClaim), metav1.CreateOptions{})
+		if err != nil {
+			return diag.FromErr(err)
+		}
+	} else {
+		toDelete, err := util.ResourceConstruct(ctx, d, Deleter(ctx, c, obj))
+		if err != nil {
+			return diag.FromErr(err)
+		}
+		if toDelete != nil {
+			err = c.HarvesterDeviceClient.DevicesV1beta1().PCIDeviceClaims().Delete(ctx, toDelete.(*devicesv1.PCIDeviceClaim).Name, metav1.DeleteOptions{})
+			if err != nil {
+				if !apierrors.IsNotFound(err) {
+					return diag.FromErr(err)
+				}
+			}
+		}
 	}
 
-	return resourcePCIDeviceRead(ctx, d, meta)
+	return diag.FromErr(resourcePCIDeviceWaitForState(ctx, d, meta, schema.TimeoutUpdate))
 }
 
 func resourcePCIDeviceWaitForState(ctx context.Context, d *schema.ResourceData, meta interface{}, timeoutKey string) error {
@@ -171,7 +184,8 @@ func resourcePCIDeviceWaitForState(ctx context.Context, d *schema.ResourceData, 
 		target  []string
 	)
 
-	if timeoutKey == schema.TimeoutDelete {
+	enabled := d.Get(constants.FieldPCIDevicePassthroughEnabled).(bool)
+	if !enabled {
 		pending = []string{constants.StatePassthroughEnabled}
 		target = []string{constants.StatePassthroughDisabled}
 	} else {
@@ -216,7 +230,7 @@ func resourcePCIDeviceRefresh(ctx context.Context, d *schema.ResourceData, meta 
 
 		for _, claim := range claims.Items {
 			for _, owner := range claim.OwnerReferences {
-				if owner.Name == name && claim.Status.PassthroughEnabled {
+				if owner.Name == name && owner.UID == obj.UID && claim.Status.PassthroughEnabled {
 					return obj, constants.StatePassthroughEnabled, err
 				}
 			}
