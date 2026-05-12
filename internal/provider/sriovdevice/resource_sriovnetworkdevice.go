@@ -17,6 +17,7 @@ import (
 
 	"github.com/harvester/terraform-provider-harvester/internal/config"
 	"github.com/harvester/terraform-provider-harvester/internal/util"
+	"github.com/harvester/terraform-provider-harvester/pkg/client"
 	"github.com/harvester/terraform-provider-harvester/pkg/constants"
 	"github.com/harvester/terraform-provider-harvester/pkg/importer"
 )
@@ -135,18 +136,42 @@ func resourceSRIOVNetworkDeviceRefresh(ctx context.Context, d *schema.ResourceDa
 			}
 			return obj, constants.StateCommonError, err
 		}
+
+		numPCIDevicesReady, err := countPCIDevices(ctx, c, obj)
+		if err != nil {
+			return obj, constants.StateCommonError, err
+		}
+
 		if err = resourceSRIOVNetworkDeviceImport(d, obj); err != nil {
 			return obj, constants.StateCommonError, err
 		}
 
 		stateRaw := d.Get(constants.FieldSRIOVNetworkDeviceEnabled).(bool)
-		if stateRaw {
+		numVFsRaw := d.Get(constants.FieldSRIOVNetworkDeviceNumVFs).(int)
+		if stateRaw && numPCIDevicesReady >= numVFsRaw {
 			state = devicesv1.DeviceEnabled
 		} else {
 			state = devicesv1.DeviceDisabled
 		}
 		return obj, state, err
 	}
+}
+
+func countPCIDevices(ctx context.Context, client *client.Client, sriovNetworkDevice *devicesv1.SRIOVNetworkDevice) (int, error) {
+	numDevicesReady := 0
+	for _, pcideviceName := range sriovNetworkDevice.Status.VFPCIDevices {
+		_, err := client.HarvesterDeviceClient.DevicesV1beta1().PCIDevices().Get(ctx, pcideviceName, metav1.GetOptions{})
+		if err != nil && !apierrors.IsNotFound(err) {
+			return 0, err
+		}
+		if err == nil {
+			tflog.Info(ctx, fmt.Sprintf("found VF for %s", pcideviceName))
+			numDevicesReady += 1
+		}
+	}
+
+	tflog.Info(ctx, fmt.Sprintf("found %d VFs", numDevicesReady))
+	return numDevicesReady, nil
 }
 
 func resourceSRIOVNetworkDeviceImport(d *schema.ResourceData, obj *devicesv1.SRIOVNetworkDevice) error {

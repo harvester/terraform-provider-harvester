@@ -46,7 +46,7 @@ func (c *Constructor) Setup() util.Processors {
 
 func (c *Constructor) Validate() error {
 	if c.Enabled && c.PCIDeviceClaim == nil {
-		return fmt.Errorf("Can't enable PCI passthrough for PCI device %s", c.PCIDevice.Name)
+		return fmt.Errorf("can't enable PCI passthrough for PCI device %s", c.PCIDevice.Name)
 	}
 
 	return c.Error

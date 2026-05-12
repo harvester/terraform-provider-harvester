@@ -124,13 +124,14 @@ func resourcePCIDeviceDelete(ctx context.Context, d *schema.ResourceData, meta i
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	err = c.HarvesterDeviceClient.DevicesV1beta1().PCIDeviceClaims().Delete(ctx, toDelete.(*devicesv1.PCIDeviceClaim).Name, metav1.DeleteOptions{})
-	if err != nil {
-		if !apierrors.IsNotFound(err) {
-			return diag.FromErr(err)
+	if toDelete.(*devicesv1.PCIDeviceClaim) != nil {
+		err = c.HarvesterDeviceClient.DevicesV1beta1().PCIDeviceClaims().Delete(ctx, toDelete.(*devicesv1.PCIDeviceClaim).Name, metav1.DeleteOptions{})
+		if err != nil {
+			if !apierrors.IsNotFound(err) {
+				return diag.FromErr(err)
+			}
 		}
 	}
-
 	d.SetId("")
 	return diag.FromErr(resourcePCIDeviceWaitForState(ctx, d, meta, schema.TimeoutDelete))
 }
