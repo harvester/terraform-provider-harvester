@@ -158,20 +158,19 @@ func resourceSRIOVNetworkDeviceRefresh(ctx context.Context, d *schema.ResourceDa
 }
 
 func countPCIDevices(ctx context.Context, client *client.Client, sriovNetworkDevice *devicesv1.SRIOVNetworkDevice) (int, error) {
-	numDevicesReady := 0
-	for _, pcideviceName := range sriovNetworkDevice.Status.VFPCIDevices {
-		_, err := client.HarvesterDeviceClient.DevicesV1beta1().PCIDevices().Get(ctx, pcideviceName, metav1.GetOptions{})
-		if err != nil && !apierrors.IsNotFound(err) {
-			return 0, err
-		}
-		if err == nil {
-			tflog.Info(ctx, fmt.Sprintf("found VF for %s", pcideviceName))
-			numDevicesReady += 1
-		}
+	list, err := client.HarvesterDeviceClient.
+		DevicesV1beta1().
+		PCIDevices().
+		List(ctx, metav1.ListOptions{
+			LabelSelector: fmt.Sprintf("harvesterhci.io/parent-sriov-network-device=%s", sriovNetworkDevice.Name),
+		})
+	if err != nil {
+		return 0, err
 	}
+	numDevicesReady := len(list.Items)
 
 	tflog.Info(ctx, fmt.Sprintf("found %d VFs", numDevicesReady))
-	return numDevicesReady, nil
+	return numDevicesReady, err
 }
 
 func resourceSRIOVNetworkDeviceImport(d *schema.ResourceData, obj *devicesv1.SRIOVNetworkDevice) error {
