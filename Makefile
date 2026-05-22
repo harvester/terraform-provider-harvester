@@ -1,26 +1,88 @@
-TARGETS := $(shell ls scripts)
+ROOT := $(realpath $(dir $(realpath $(firstword $(MAKEFILE_LIST)))))
+DOCKER_BUILDKIT := 1
+export DOCKER_BUILDKIT
 
-SHA512SUM_Linux_aarch64 := 781951b31e5ff018a04e755c6da7163b31a81edda61f1bed4def8d0e24229865c58a3d26aa0cc4184058d91ebcae300ead2cad16d3c46ccb1098419e3e41a016
-SHA512SUM_Linux_x86_64 := d2ec27ecf9362e2fafd27d76d85a5c5b92b53aefe07cffa76bf9887db6bee07b1023cca8fc32a2c9bdd2ecfadaee71397066b41bd37c9ebbbbce09913f0884d4
-SHA512SUM_Darwin_arm64 := 8a356c89ad32af1698ae8615a6e303773a8ac58b114368454d59965ec2aa8282e780d1e228d37c301ce6f87596f68bfe7f204eb5f4c019c386a58dd94153ddcf
-SHA512SUM_Darwin_x86_64 := dbab05de04dda26793f4ae7875d0fba96ee54b0228e192fd40c0b2116ed345b5444047fc2e0c90cb481f28cbe0e0452bcecb268c8d074cd8615eb2f5463c30b6
-SHA512SUM_Windows_x86_64 := 807aee2f68b6da35cb0885558f5cbc9a6c8747a56c7a200f0e1fcac9e2fd0da570cbb39e48b3192bd1a71805f2ab38fd19d77faebba97a89e5d9a8b430ee429e
+ifdef CI
+	BOLD  :=
+	CYAN  :=
+	RESET :=
+else
+	BOLD  := \033[1m
+	CYAN  := \033[36m
+	RESET := \033[0m
+endif
+BANNER = @printf "$(BOLD)$(CYAN)[target: $@]$(RESET)\n"
 
-.dapper:
-	@echo Downloading dapper
-	@curl -sL https://releases.rancher.com/dapper/v0.6.0/dapper-`uname -s`-`uname -m` > .dapper.tmp
-	@CHECKSUM=$$(shasum -a 512 .dapper.tmp | awk '{print $$1}'); \
-	if [ "$$CHECKSUM" != "$(SHA512SUM_$(shell uname -s)_$(shell uname -m))" ]; then \
-		echo "Checksum verification failed!"; \
-		exit 1; \
-	fi
-	@@chmod +x .dapper.tmp
-	@./.dapper.tmp -v
-	@mv .dapper.tmp .dapper
+MK_HOST_ARCH := $(shell uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/')
+export MK_HOST_ARCH
 
-$(TARGETS): .dapper
-	./.dapper $@
+MK_SYSTEM_ID := $(strip $(shell \
+		if [ -s /etc/machine-id ]; then \
+				cat /etc/machine-id 2>/dev/null; \
+		elif command -v hostname >/dev/null 2>&1; then \
+				hostname 2>/dev/null; \
+		else \
+				echo -n "unknown"; \
+		fi))
+
+MK_REPO             := github.com/harvester/terraform-provider-harvester
+MK_REPO_ID          := $(shell printf '%s' "$(ROOT)$(MK_SYSTEM_ID)" | sha256sum | cut -c1-8)
+MK_PROVIDER_VERSION := $(shell git describe --tags --always --dirty)
+MK_CODECOV_TOKEN    ?=
+MK_DOCKER_PROGRESS  ?= plain
+
+MK_CODECOV_SECRET_ARG  := --secret id=codecov_token_$(MK_REPO_ID),env=MK_CODECOV_TOKEN --no-cache-filter=test
+MK_GOLANGCI_LINT_IMAGE := golangci/golangci-lint:v2.8.0-alpine@sha256:1194f3bfcbaeeb92d8d159fdfbe2a79d18ec0a222d9d984b1438906bca416b51
+MK_TERRAFORM_VERSION   := 1.4.6
+MK_TERRAFORM_SUM_amd64 := e079db1a8945e39b1f8ba4e513946b3ab9f32bd5a2bdf19b9b186d22c5a3d53b
+MK_TERRAFORM_SUM_arm64 := b38f5db944ac4942f11ceea465a91e365b0636febd9998c110fbbe95d61c3b26
+MK_PACKAGE_BASE        := registry.suse.com/bci/bci-base:16.0
+
+DOCKER_BUILD := \
+	docker build \
+		--progress=$(MK_DOCKER_PROGRESS) \
+		--build-arg MK_REPO=$(MK_REPO) \
+		--build-arg MK_REPO_ID=$(MK_REPO_ID) \
+		--build-arg MK_HOST_ARCH=$(MK_HOST_ARCH) \
+		--build-arg PROVIDER_VERSION=$(MK_PROVIDER_VERSION) \
+		--build-arg TERRAFORM_VERSION=$(MK_TERRAFORM_VERSION) \
+		--build-arg TERRAFORM_SUM_amd64=${MK_TERRAFORM_SUM_amd64} \
+		--build-arg TERRAFORM_SUM_arm64=${MK_TERRAFORM_SUM_arm64} \
+		--build-arg MK_GOLANGCI_LINT_IMAGE=$(MK_GOLANGCI_LINT_IMAGE) \
+		--build-arg MK_PACKAGE_BASE=$(MK_PACKAGE_BASE) \
+		-f $(ROOT)/Dockerfile $(ROOT)
+
+.PHONY: ci validate build test package
+
+# ---- Directories ----
+$(ROOT)/bin:
+	@mkdir -p $@
+
+$(ROOT)/docs:
+	@mkdir -p $@
+
+# ---- Validate with static analysis ----
+validate:
+	$(BANNER)
+	$(DOCKER_BUILD) --target validate
+
+# ---- Compile harvester-terraform-provider binaries ----
+build: $(ROOT)/bin $(ROOT)/docs
+	$(BANNER)
+	$(DOCKER_BUILD) --target build-output --output type=local,dest=.
+
+# ---- Test ----
+test: validate
+	$(BANNER)
+	$(DOCKER_BUILD) $(if $(MK_CODECOV_TOKEN),$(MK_CODECOV_SECRET_ARG)) --target test
+
+# ---- Package harvester-terraform-provider image ----
+package: build
+	$(BANNER)
+	$(DOCKER_BUILD) --target package -t terraform-provider-harvester:$(MK_PROVIDER_VERSION)
+
+ci: validate build test package
+	$(BANNER)
 
 .DEFAULT_GOAL := default
-
-.PHONY: $(TARGETS)
+default: build test package
