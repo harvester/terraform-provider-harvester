@@ -26,7 +26,7 @@ func (c *Constructor) Setup() util.Processors {
 			Field:    constants.FieldKubeOVNVpcDnsReplicas,
 			Required: true,
 			Parser: func(i interface{}) error {
-				c.VpcDns.Spec.Replicas = int32(i.(int))
+				c.VpcDns.Spec.Replicas = int32(i.(int)) //nolint:gosec
 				return nil
 			},
 		},
