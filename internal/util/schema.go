@@ -82,13 +82,22 @@ func DataSourceSchemaWrap(s map[string]*schema.Schema) map[string]*schema.Schema
 				}
 			}
 		}
+		// Make the field computed-only and strip every attribute the
+		// terraform-plugin-sdk rejects on a computed-only field (see
+		// (*schema.Schema).InternalValidate); otherwise the data source fails
+		// the provider's InternalValidate at startup.
 		v.ForceNew = false
 		v.Computed = true
-		v.Default = nil
-		v.DefaultFunc = nil
 		v.Optional = false
 		v.Required = false
+		v.Default = nil
+		v.DefaultFunc = nil
+		v.InputDefault = ""
+		v.StateFunc = nil
 		v.ValidateFunc = nil
+		v.ValidateDiagFunc = nil
+		v.DiffSuppressFunc = nil
+		v.DiffSuppressOnRefresh = false
 		v.ConflictsWith = nil
 		v.AtLeastOneOf = nil
 		v.ExactlyOneOf = nil
