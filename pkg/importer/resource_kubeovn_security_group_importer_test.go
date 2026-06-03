@@ -27,7 +27,7 @@ func TestResourceKubeOVNSecurityGroupStateGetter(t *testing.T) {
 				},
 				Spec: kubeovnv1.SecurityGroupSpec{
 					AllowSameGroupTraffic: true,
-					IngressRules: []*kubeovnv1.SgRule{
+					IngressRules: []kubeovnv1.SecurityGroupRule{
 						{
 							IPVersion:     "ipv4",
 							Protocol:      "tcp",
@@ -39,7 +39,7 @@ func TestResourceKubeOVNSecurityGroupStateGetter(t *testing.T) {
 							Policy:        "allow",
 						},
 					},
-					EgressRules: []*kubeovnv1.SgRule{
+					EgressRules: []kubeovnv1.SecurityGroupRule{
 						{
 							IPVersion:     "ipv4",
 							Protocol:      "all",
