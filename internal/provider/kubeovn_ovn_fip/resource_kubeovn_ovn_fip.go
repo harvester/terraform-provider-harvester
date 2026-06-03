@@ -43,7 +43,7 @@ func resourceKubeOVNOvnFipCreate(ctx context.Context, d *schema.ResourceData, me
 		return diag.FromErr(err)
 	}
 	name := d.Get(constants.FieldCommonName).(string)
-	toCreate, err := util.ResourceConstruct(d, Creator(name))
+	toCreate, err := util.ResourceConstruct(ctx, d, Creator(name))
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -92,7 +92,7 @@ func resourceKubeOVNOvnFipUpdate(ctx context.Context, d *schema.ResourceData, me
 		}
 		return diag.FromErr(err)
 	}
-	toUpdate, err := util.ResourceConstruct(d, Updater(obj))
+	toUpdate, err := util.ResourceConstruct(ctx, d, Updater(obj))
 	if err != nil {
 		return diag.FromErr(err)
 	}
