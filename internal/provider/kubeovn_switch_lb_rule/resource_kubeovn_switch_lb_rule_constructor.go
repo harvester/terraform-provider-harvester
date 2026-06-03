@@ -17,8 +17,8 @@ func parseSlrPort(i interface{}) kubeovnv1.SwitchLBRulePort {
 	m := i.(map[string]interface{})
 	return kubeovnv1.SwitchLBRulePort{
 		Name:       m[constants.FieldKubeOVNSlrPortName].(string),
-		Port:       int32(m[constants.FieldKubeOVNSlrPortPort].(int)),
-		TargetPort: int32(m[constants.FieldKubeOVNSlrPortTargetPort].(int)),
+		Port:       int32(m[constants.FieldKubeOVNSlrPortPort].(int)),       //nolint:gosec
+		TargetPort: int32(m[constants.FieldKubeOVNSlrPortTargetPort].(int)), //nolint:gosec
 		Protocol:   m[constants.FieldKubeOVNSlrPortProtocol].(string),
 	}
 }
