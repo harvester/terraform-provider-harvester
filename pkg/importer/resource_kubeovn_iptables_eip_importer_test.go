@@ -24,12 +24,12 @@ func TestResourceKubeOVNIptablesEIPStateGetter(t *testing.T) {
 			name: "eip with all fields",
 			eip: &kubeovnv1.IptablesEIP{
 				ObjectMeta: metav1.ObjectMeta{Name: "test-eip"},
-				Spec: kubeovnv1.IptablesEipSpec{
+				Spec: kubeovnv1.IptablesEIPSpec{
 					V4ip:           "192.168.1.100",
 					NatGwDp:        "test-gw",
 					ExternalSubnet: "external-subnet",
 				},
-				Status: kubeovnv1.IptablesEipStatus{
+				Status: kubeovnv1.IptablesEIPStatus{
 					Ready: true,
 					IP:    "192.168.1.100",
 					Nat:   "test-gw",
