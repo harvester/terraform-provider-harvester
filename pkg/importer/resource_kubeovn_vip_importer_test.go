@@ -41,7 +41,6 @@ func TestResourceKubeOVNVipStateGetter(t *testing.T) {
 		expectedSubnet        string
 		expectedV4IP          string
 		expectedType          string
-		expectedReady         bool
 		expectedStatusV4IP    string
 		expectedSelector      []string
 		expectedAttachSubnets []string
@@ -57,18 +56,14 @@ func TestResourceKubeOVNVipStateGetter(t *testing.T) {
 					V4ip:          "10.0.0.100",
 					V6ip:          "fd00::100",
 					MacAddress:    "00:11:22:33:44:55",
-					ParentV4ip:    "10.0.0.1",
-					ParentV6ip:    "fd00::1",
-					ParentMac:     "00:11:22:33:44:00",
 					Selector:      []string{"a", "b"},
 					AttachSubnets: []string{"sub1"},
 				},
 				Status: kubeovnv1.VipStatus{
-					Ready: true,
-					V4ip:  "10.0.0.100",
-					V6ip:  "fd00::100",
-					Mac:   "00:11:22:33:44:55",
-					Type:  "allowed_address_pair",
+					V4ip: "10.0.0.100",
+					V6ip: "fd00::100",
+					Mac:  "00:11:22:33:44:55",
+					Type: "allowed_address_pair",
 				},
 			},
 			expectedID:            helper.BuildID("", "test-vip"),
@@ -76,7 +71,6 @@ func TestResourceKubeOVNVipStateGetter(t *testing.T) {
 			expectedSubnet:        "test-subnet",
 			expectedV4IP:          "10.0.0.100",
 			expectedType:          "allowed_address_pair",
-			expectedReady:         true,
 			expectedStatusV4IP:    "10.0.0.100",
 			expectedSelector:      []string{"a", "b"},
 			expectedAttachSubnets: []string{"sub1"},
@@ -91,7 +85,6 @@ func TestResourceKubeOVNVipStateGetter(t *testing.T) {
 			expectedSubnet:        "",
 			expectedV4IP:          "",
 			expectedType:          "",
-			expectedReady:         false,
 			expectedStatusV4IP:    "",
 			expectedSelector:      nil,
 			expectedAttachSubnets: nil,
@@ -125,10 +118,6 @@ func TestResourceKubeOVNVipStateGetter(t *testing.T) {
 			vipType := getter.States[constants.FieldKubeOVNVipType].(string)
 			if vipType != tc.expectedType {
 				t.Errorf("Type: expected %q, got %q", tc.expectedType, vipType)
-			}
-			ready := getter.States[constants.FieldKubeOVNVipStatusReady].(bool)
-			if ready != tc.expectedReady {
-				t.Errorf("Ready: expected %v, got %v", tc.expectedReady, ready)
 			}
 			statusV4IP := getter.States[constants.FieldKubeOVNVipStatusV4IP].(string)
 			if statusV4IP != tc.expectedStatusV4IP {

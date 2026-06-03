@@ -37,18 +37,6 @@ func Schema() map[string]*schema.Schema {
 			Optional: true,
 			Computed: true,
 		},
-		constants.FieldKubeOVNVipParentV4IP: {
-			Type:     schema.TypeString,
-			Optional: true,
-		},
-		constants.FieldKubeOVNVipParentV6IP: {
-			Type:     schema.TypeString,
-			Optional: true,
-		},
-		constants.FieldKubeOVNVipParentMac: {
-			Type:     schema.TypeString,
-			Optional: true,
-		},
 		constants.FieldKubeOVNVipSelector: {
 			Type:     schema.TypeList,
 			Optional: true,
@@ -62,10 +50,6 @@ func Schema() map[string]*schema.Schema {
 			Elem: &schema.Schema{
 				Type: schema.TypeString,
 			},
-		},
-		constants.FieldKubeOVNVipStatusReady: {
-			Type:     schema.TypeBool,
-			Computed: true,
 		},
 		constants.FieldKubeOVNVipStatusV4IP: {
 			Type:     schema.TypeString,

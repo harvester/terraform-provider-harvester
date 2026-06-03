@@ -13,9 +13,9 @@ type Constructor struct {
 	SwitchLBRule *kubeovnv1.SwitchLBRule
 }
 
-func parseSlrPort(i interface{}) kubeovnv1.SlrPort {
+func parseSlrPort(i interface{}) kubeovnv1.SwitchLBRulePort {
 	m := i.(map[string]interface{})
-	return kubeovnv1.SlrPort{
+	return kubeovnv1.SwitchLBRulePort{
 		Name:       m[constants.FieldKubeOVNSlrPortName].(string),
 		Port:       int32(m[constants.FieldKubeOVNSlrPortPort].(int)),
 		TargetPort: int32(m[constants.FieldKubeOVNSlrPortTargetPort].(int)),
