@@ -1,12 +1,17 @@
 package util
 
 import (
+	"context"
+	"fmt"
 	"reflect"
 	"strings"
 
-	"github.com/harvester/harvester/pkg/builder"
+	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/harvester/harvester/pkg/builder"
 
 	"github.com/harvester/terraform-provider-harvester/pkg/constants"
 )
@@ -103,7 +108,7 @@ func NewProcessors() Processors {
 	return []Processor{}
 }
 
-func ResourceConstruct(d *schema.ResourceData, c Constructor) (interface{}, error) {
+func ResourceConstruct(ctx context.Context, d *schema.ResourceData, c Constructor) (interface{}, error) {
 	for _, processor := range c.Setup() {
 		var (
 			value interface{}
@@ -114,6 +119,7 @@ func ResourceConstruct(d *schema.ResourceData, c Constructor) (interface{}, erro
 		} else {
 			value, ok = d.GetOk(processor.Field)
 			if !ok {
+				tflog.Info(ctx, fmt.Sprintf("skipping field: %s", processor.Field))
 				continue
 			}
 		}

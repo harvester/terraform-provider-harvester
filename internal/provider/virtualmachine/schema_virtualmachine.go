@@ -181,6 +181,25 @@ please use %s instead of this deprecated field:
 			Default:     false,
 			Description: "Create an initial snapshot named {vm-name}-initial after the VM is created and ready",
 		},
+		constants.FieldVirtualMachineHostDevice: {
+			Type:        schema.TypeList,
+			Description: "Attaches a host device to the VM",
+			Optional:    true,
+			Elem: &schema.Resource{
+				Schema: map[string]*schema.Schema{
+					constants.FieldHostDeviceName: {
+						Type:        schema.TypeString,
+						Optional:    true,
+						Description: "Name of the host device",
+					},
+					constants.FieldHostDeviceDeviceName: {
+						Type:        schema.TypeString,
+						Optional:    true,
+						Description: "Device name (resource name) of the host device",
+					},
+				},
+			},
+		},
 	}
 	util.NamespacedSchemaWrap(s, false)
 	s[constants.FieldCommonTags].Description = "The tag is reflected as label on the VM.\n" +

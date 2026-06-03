@@ -44,7 +44,7 @@ func resourceIPPoolCreate(ctx context.Context, data *schema.ResourceData, meta i
 		return diag.FromErr(err)
 	}
 	name := data.Get(constants.FieldCommonName).(string)
-	toCreate, err := util.ResourceConstruct(data, Creator(name))
+	toCreate, err := util.ResourceConstruct(ctx, data, Creator(name))
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -98,7 +98,7 @@ func resourceIPPoolUpdate(ctx context.Context, data *schema.ResourceData, meta i
 		return diag.FromErr(err)
 	}
 
-	toUpdate, err := util.ResourceConstruct(data, Updater(obj))
+	toUpdate, err := util.ResourceConstruct(ctx, data, Updater(obj))
 	if err != nil {
 		return diag.FromErr(err)
 	}

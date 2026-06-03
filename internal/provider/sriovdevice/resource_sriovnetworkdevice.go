@@ -1,0 +1,182 @@
+package sriovdevice
+
+import (
+	"context"
+	"fmt"
+	"time"
+
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	devicesv1 "github.com/harvester/pcidevices/pkg/apis/devices.harvesterhci.io/v1beta1"
+
+	"github.com/hashicorp/terraform-plugin-log/tflog"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+
+	"github.com/harvester/terraform-provider-harvester/internal/config"
+	"github.com/harvester/terraform-provider-harvester/internal/util"
+	"github.com/harvester/terraform-provider-harvester/pkg/client"
+	"github.com/harvester/terraform-provider-harvester/pkg/constants"
+	"github.com/harvester/terraform-provider-harvester/pkg/importer"
+)
+
+func ResourceSRIOVNetworkDevice() *schema.Resource {
+	return &schema.Resource{
+		CreateContext: resourceSRIOVNetworkDeviceCreate,
+		ReadContext:   resourceSRIOVNetworkDeviceRead,
+		DeleteContext: resourceSRIOVNetworkDeviceDelete,
+		UpdateContext: resourceSRIOVNetworkDeviceUpdate,
+		Importer: &schema.ResourceImporter{
+			StateContext: schema.ImportStatePassthroughContext,
+		},
+		Schema: Schema(),
+		Timeouts: &schema.ResourceTimeout{
+			Create:  schema.DefaultTimeout(5 * time.Minute),
+			Read:    schema.DefaultTimeout(2 * time.Minute),
+			Update:  schema.DefaultTimeout(5 * time.Minute),
+			Delete:  schema.DefaultTimeout(2 * time.Minute),
+			Default: schema.DefaultTimeout(2 * time.Minute),
+		},
+	}
+}
+
+func resourceSRIOVNetworkDeviceCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	// SR-IOV device resources are created by the PCI Device controller. Therefore,
+	// configuring an SR-IOV device with the Harvester Terraform provider is
+	// always an update operation.
+	return resourceSRIOVNetworkDeviceUpdate(ctx, d, meta)
+}
+
+func resourceSRIOVNetworkDeviceRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	c, err := meta.(*config.Config).K8sClient()
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	name := d.Get(constants.FieldCommonName).(string)
+	obj, err := c.HarvesterDeviceClient.DevicesV1beta1().SRIOVNetworkDevices().Get(ctx, name, metav1.GetOptions{})
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	return diag.FromErr(resourceSRIOVNetworkDeviceImport(d, obj))
+}
+
+func resourceSRIOVNetworkDeviceDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	err := d.Set(constants.FieldSRIOVNetworkDeviceNumVFs, 0)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	return resourceSRIOVNetworkDeviceUpdate(ctx, d, meta)
+}
+
+func resourceSRIOVNetworkDeviceUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	c, err := meta.(*config.Config).K8sClient()
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	name := d.Get(constants.FieldCommonName).(string)
+	obj, err := c.HarvesterDeviceClient.DevicesV1beta1().SRIOVNetworkDevices().Get(ctx, name, metav1.GetOptions{})
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	toUpdate, err := util.ResourceConstruct(ctx, d, Updater(ctx, obj))
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	tflog.Debug(ctx, fmt.Sprintf("numVFs: %d", toUpdate.(*devicesv1.SRIOVNetworkDevice).Spec.NumVFs))
+	_, err = c.HarvesterDeviceClient.DevicesV1beta1().SRIOVNetworkDevices().Update(ctx, toUpdate.(*devicesv1.SRIOVNetworkDevice), metav1.UpdateOptions{})
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	return diag.FromErr(resourceSRIOVNetworkDeviceWaitForState(ctx, d, meta, schema.TimeoutUpdate))
+}
+
+func resourceSRIOVNetworkDeviceWaitForState(ctx context.Context, d *schema.ResourceData, meta interface{}, timeoutKey string) error {
+	var (
+		pending []string
+		target  []string
+	)
+
+	numVFs := d.Get(constants.FieldSRIOVNetworkDeviceNumVFs).(int)
+	if numVFs == 0 {
+		pending = []string{devicesv1.DeviceEnabled}
+		target = []string{devicesv1.DeviceDisabled}
+	} else {
+		pending = []string{devicesv1.DeviceDisabled}
+		target = []string{devicesv1.DeviceEnabled}
+	}
+
+	stateConf := &retry.StateChangeConf{
+		Pending:    pending,
+		Target:     target,
+		Refresh:    resourceSRIOVNetworkDeviceRefresh(ctx, d, meta),
+		Timeout:    d.Timeout(timeoutKey),
+		Delay:      1 * time.Second,
+		MinTimeout: 3 * time.Second,
+	}
+	_, err := stateConf.WaitForStateContext(ctx)
+	return err
+}
+
+func resourceSRIOVNetworkDeviceRefresh(ctx context.Context, d *schema.ResourceData, meta interface{}) retry.StateRefreshFunc {
+	return func() (interface{}, string, error) {
+		var state string
+		c, err := meta.(*config.Config).K8sClient()
+		if err != nil {
+			return nil, "", err
+		}
+		name := d.Get(constants.FieldCommonName).(string)
+		obj, err := c.HarvesterDeviceClient.DevicesV1beta1().SRIOVNetworkDevices().Get(ctx, name, metav1.GetOptions{})
+		if err != nil {
+			if apierrors.IsNotFound(err) {
+				return obj, constants.StateCommonRemoved, nil
+			}
+			return obj, constants.StateCommonError, err
+		}
+
+		numPCIDevicesReady, err := countPCIDevices(ctx, c, obj)
+		if err != nil {
+			return obj, constants.StateCommonError, err
+		}
+
+		if err = resourceSRIOVNetworkDeviceImport(d, obj); err != nil {
+			return obj, constants.StateCommonError, err
+		}
+
+		stateRaw := d.Get(constants.FieldSRIOVNetworkDeviceEnabled).(bool)
+		numVFsRaw := d.Get(constants.FieldSRIOVNetworkDeviceNumVFs).(int)
+		if stateRaw && numPCIDevicesReady >= numVFsRaw {
+			state = devicesv1.DeviceEnabled
+		} else {
+			state = devicesv1.DeviceDisabled
+		}
+		return obj, state, err
+	}
+}
+
+func countPCIDevices(ctx context.Context, client *client.Client, sriovNetworkDevice *devicesv1.SRIOVNetworkDevice) (int, error) {
+	list, err := client.HarvesterDeviceClient.
+		DevicesV1beta1().
+		PCIDevices().
+		List(ctx, metav1.ListOptions{
+			LabelSelector: fmt.Sprintf("harvesterhci.io/parent-sriov-network-device=%s", sriovNetworkDevice.Name),
+		})
+	if err != nil {
+		return 0, err
+	}
+	numDevicesReady := len(list.Items)
+
+	tflog.Info(ctx, fmt.Sprintf("found %d VFs", numDevicesReady))
+	return numDevicesReady, err
+}
+
+func resourceSRIOVNetworkDeviceImport(d *schema.ResourceData, obj *devicesv1.SRIOVNetworkDevice) error {
+	stateGetter, err := importer.ResourceSRIOVNetworkDeviceStateGetter(obj)
+	if err != nil {
+		return err
+	}
+	return util.ResourceStatesSet(d, stateGetter)
+}

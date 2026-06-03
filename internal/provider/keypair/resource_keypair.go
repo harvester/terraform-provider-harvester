@@ -44,7 +44,7 @@ func resourceKeypairCreate(ctx context.Context, d *schema.ResourceData, meta int
 	}
 	namespace := d.Get(constants.FieldCommonNamespace).(string)
 	name := d.Get(constants.FieldCommonName).(string)
-	toCreate, err := util.ResourceConstruct(d, Creator(namespace, name))
+	toCreate, err := util.ResourceConstruct(ctx, d, Creator(namespace, name))
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -74,7 +74,7 @@ func resourceKeypairUpdate(ctx context.Context, d *schema.ResourceData, meta int
 		}
 		return diag.FromErr(err)
 	}
-	toUpdate, err := util.ResourceConstruct(d, Updater(obj))
+	toUpdate, err := util.ResourceConstruct(ctx, d, Updater(obj))
 	if err != nil {
 		return diag.FromErr(err)
 	}

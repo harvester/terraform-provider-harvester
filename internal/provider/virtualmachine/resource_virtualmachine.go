@@ -52,7 +52,7 @@ func resourceVirtualMachineCreate(ctx context.Context, d *schema.ResourceData, m
 	}
 	namespace := d.Get(constants.FieldCommonNamespace).(string)
 	name := d.Get(constants.FieldCommonName).(string)
-	toCreate, err := util.ResourceConstruct(d, Creator(c, ctx, namespace, name))
+	toCreate, err := util.ResourceConstruct(ctx, d, Creator(c, ctx, namespace, name))
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -106,7 +106,7 @@ func resourceVirtualMachineUpdate(ctx context.Context, d *schema.ResourceData, m
 		}
 		return diag.FromErr(err)
 	}
-	toUpdate, err := util.ResourceConstruct(d, Updater(c, ctx, obj))
+	toUpdate, err := util.ResourceConstruct(ctx, d, Updater(c, ctx, obj))
 	if err != nil {
 		return diag.FromErr(err)
 	}

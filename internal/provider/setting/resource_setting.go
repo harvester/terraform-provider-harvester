@@ -180,7 +180,7 @@ func handleStorageNetworkSetting(newSetting *harvsterv1.Setting, oldValue string
 func updateSetting(ctx context.Context, harvesterClient *harvclient.Clientset, d *schema.ResourceData, oldSetting *harvsterv1.Setting) diag.Diagnostics {
 	oldValue := oldSetting.Value
 
-	toUpdate, err := util.ResourceConstruct(d, Updater(oldSetting))
+	toUpdate, err := util.ResourceConstruct(ctx, d, Updater(oldSetting))
 	if err != nil {
 		return diag.FromErr(err)
 	}
