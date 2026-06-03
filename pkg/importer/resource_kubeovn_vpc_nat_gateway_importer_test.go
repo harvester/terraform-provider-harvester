@@ -24,7 +24,7 @@ func TestResourceKubeOVNVpcNatGatewayStateGetter(t *testing.T) {
 			name: "gateway with all fields",
 			gw: &kubeovnv1.VpcNatGateway{
 				ObjectMeta: metav1.ObjectMeta{Name: "test-gw"},
-				Spec: kubeovnv1.VpcNatSpec{
+				Spec: kubeovnv1.VpcNatGatewaySpec{
 					Vpc:             "test-vpc",
 					Subnet:          "test-subnet",
 					LanIP:           "10.0.0.100",
@@ -32,7 +32,7 @@ func TestResourceKubeOVNVpcNatGatewayStateGetter(t *testing.T) {
 					Selector:        []string{"kubernetes.io/os=linux"},
 					QoSPolicy:       "test-qos",
 				},
-				Status: kubeovnv1.VpcNatStatus{
+				Status: kubeovnv1.VpcNatGatewayStatus{
 					QoSPolicy:       "test-qos",
 					ExternalSubnets: []string{"ext-sub-1", "ext-sub-2"},
 				},
