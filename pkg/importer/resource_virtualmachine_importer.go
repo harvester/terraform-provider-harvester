@@ -298,40 +298,41 @@ func (v *VMImporter) Volume() ([]map[string]interface{}, []map[string]interface{
 	}
 
 	for _, disk := range disks {
-		diskState := make(map[string]interface{})
-		var (
-			diskType string
-			diskBus  string
-		)
-		if disk.CDRom != nil {
-			diskType = builder.DiskTypeCDRom
-			diskBus = string(disk.CDRom.Bus)
-		} else if disk.Disk != nil {
-			diskType = builder.DiskTypeDisk
-			diskBus = string(disk.Disk.Bus)
-		} else {
-			return nil, nil, fmt.Errorf("unsupported volume type found on volume %s. ", disk.Name)
+		volume, hasVolume := volumesMap[disk.Name]
+
+		// The cloud-init disk is represented by the cloudinit block, not by an
+		// explicit disk block, so handle it separately and do not report it as a
+		// disk (otherwise it would drift on every plan).
+		if hasVolume && (volume.CloudInitNoCloud != nil || volume.CloudInitConfigDrive != nil) {
+			cloudInitState = v.cloudInit(volume)
+			continue
 		}
 
+		diskState := make(map[string]interface{})
+		switch {
+		case disk.CDRom != nil:
+			diskState[constants.FieldDiskType] = builder.DiskTypeCDRom
+			diskState[constants.FieldDiskBus] = string(disk.CDRom.Bus)
+		case disk.Disk != nil:
+			diskState[constants.FieldDiskType] = builder.DiskTypeDisk
+			diskState[constants.FieldDiskBus] = string(disk.Disk.Bus)
+		default:
+			return nil, nil, fmt.Errorf("unsupported disk type found on disk %s. ", disk.Name)
+		}
 		diskState[constants.FieldDiskName] = disk.Name
 		diskState[constants.FieldDiskBootOrder] = disk.BootOrder
-		diskState[constants.FieldDiskType] = diskType
-		diskState[constants.FieldDiskBus] = diskBus
 		diskState[constants.FieldDiskCacheMode] = disk.Cache
 
-		if volume, hasVolume := volumesMap[disk.Name]; hasVolume {
-			if volume.CloudInitNoCloud != nil || volume.CloudInitConfigDrive != nil {
-				cloudInitState = v.cloudInit(volume)
-			} else {
-				if volume.PersistentVolumeClaim != nil {
-					if err := v.pvcVolume(volume, diskState); err != nil {
-						return nil, nil, err
-					}
-				} else if volume.ContainerDisk != nil {
-					diskState[constants.FieldDiskContainerImageName] = volume.ContainerDisk.Image
-				} else {
-					return nil, nil, fmt.Errorf("unsupported volume type found on volume %s. ", volume.Name)
+		if hasVolume {
+			switch {
+			case volume.PersistentVolumeClaim != nil:
+				if err := v.pvcVolume(volume, diskState); err != nil {
+					return nil, nil, err
 				}
+			case volume.ContainerDisk != nil:
+				diskState[constants.FieldDiskContainerImageName] = volume.ContainerDisk.Image
+			default:
+				return nil, nil, fmt.Errorf("unsupported volume type found on volume %s. ", volume.Name)
 			}
 		}
 		diskStates = append(diskStates, diskState)
