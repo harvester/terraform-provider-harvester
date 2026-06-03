@@ -72,6 +72,9 @@ func NewClient(kubeConfig, kubeContext string) (*Client, error) {
 		return nil, err
 	}
 	harvDeviceClient, err := harvdeviceclient.NewForConfig(restConfig)
+	if err != nil {
+		return nil, err
+	}
 	kubeOVNClient, err := kubeovnclient.NewForConfig(restConfig)
 	if err != nil {
 		return nil, err
