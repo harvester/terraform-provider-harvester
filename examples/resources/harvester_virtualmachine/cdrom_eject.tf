@@ -33,9 +33,9 @@ resource "harvester_virtualmachine" "install_from_iso" {
 
     image = harvester_image.install_iso.id
 
-    # Set to "open" to eject the disc after installation
-    # Set to "closed" (default) to keep the disc inserted
-    eject = "closed"
+    # Set to true to eject the disc (open the tray) after installation
+    # Set to false (default) to keep the disc inserted
+    eject = false
   }
 }
 
