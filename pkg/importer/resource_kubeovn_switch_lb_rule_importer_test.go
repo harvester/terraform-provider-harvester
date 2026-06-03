@@ -30,7 +30,7 @@ func TestResourceKubeOVNSwitchLBRuleStateGetter(t *testing.T) {
 					Namespace: "default",
 					Selector:  []string{"app=web"},
 					Endpoints: []string{"10.0.0.1", "10.0.0.2"},
-					Ports: []kubeovnv1.SlrPort{
+					Ports: []kubeovnv1.SwitchLBRulePort{
 						{
 							Name:       "http",
 							Port:       80,

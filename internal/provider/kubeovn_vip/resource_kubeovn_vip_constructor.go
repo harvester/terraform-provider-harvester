@@ -23,10 +23,7 @@ func (c *Constructor) Setup() util.Processors {
 		String(constants.FieldKubeOVNVipType, &c.Vip.Spec.Type, false).
 		String(constants.FieldKubeOVNVipV4IP, &c.Vip.Spec.V4ip, false).
 		String(constants.FieldKubeOVNVipV6IP, &c.Vip.Spec.V6ip, false).
-		String(constants.FieldKubeOVNVipMacAddress, &c.Vip.Spec.MacAddress, false).
-		String(constants.FieldKubeOVNVipParentV4IP, &c.Vip.Spec.ParentV4ip, false).
-		String(constants.FieldKubeOVNVipParentV6IP, &c.Vip.Spec.ParentV6ip, false).
-		String(constants.FieldKubeOVNVipParentMac, &c.Vip.Spec.ParentMac, false)
+		String(constants.FieldKubeOVNVipMacAddress, &c.Vip.Spec.MacAddress, false)
 
 	customProcessors := []util.Processor{
 		{
