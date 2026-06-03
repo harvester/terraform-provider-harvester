@@ -46,18 +46,19 @@ func (c *Constructor) Setup() util.Processors {
 		String(constants.FieldVirtualMachineTemplateVersionTemplateID, &c.Version.Spec.TemplateID, true).
 		String(constants.FieldVirtualMachineTemplateVersionImageID, &c.Version.Spec.ImageID, false)
 
-	customProcessors := []util.Processor{
-		{
-			Field: constants.FieldVirtualMachineTemplateVersionKeyPairIDs,
-			Parser: func(i interface{}) error {
-				c.Version.Spec.KeyPairIDs = append(c.Version.Spec.KeyPairIDs, i.(string))
-				return nil
-			},
+	vmSpecProcessors := c.vmSpecProcessors()
+	deviceProcessors := c.deviceProcessors()
+	customProcessors := make([]util.Processor, 0, 1+len(vmSpecProcessors)+3+len(deviceProcessors))
+	customProcessors = append(customProcessors, util.Processor{
+		Field: constants.FieldVirtualMachineTemplateVersionKeyPairIDs,
+		Parser: func(i interface{}) error {
+			c.Version.Spec.KeyPairIDs = append(c.Version.Spec.KeyPairIDs, i.(string))
+			return nil
 		},
-	}
-	customProcessors = append(customProcessors, c.vmSpecProcessors()...)
+	})
+	customProcessors = append(customProcessors, vmSpecProcessors...)
 	customProcessors = append(customProcessors, c.diskProcessor(), c.networkInterfaceProcessor(), c.cloudInitProcessor())
-	customProcessors = append(customProcessors, c.deviceProcessors()...)
+	customProcessors = append(customProcessors, deviceProcessors...)
 	return append(processors, customProcessors...)
 }
 
