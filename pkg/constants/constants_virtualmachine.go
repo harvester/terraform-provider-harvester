@@ -42,6 +42,11 @@ const (
 	SubresourceRestart     = "restart"
 )
 
+// GuestAgentCloudInitSnippet is appended to cloudinit.user_data when
+// install_guest_agent is enabled. It is also used to strip the injection back
+// out on read so the user_data field stays idempotent.
+const GuestAgentCloudInitSnippet = "package_update: true\npackages:\n  - qemu-guest-agent\nruncmd:\n  - - systemctl\n    - enable\n    - '--now'\n    - qemu-ga"
+
 const (
 	FieldCloudInitType                  = "type"
 	FieldCloudInitNetworkData           = "network_data"

@@ -251,12 +251,26 @@ func (v *VMImporter) pvcVolume(volume kubevirtv1.Volume, state map[string]interf
 	return nil
 }
 
+// stripGuestAgentSnippet reverses the install_guest_agent injection so the
+// user_data field remains idempotent across reads. The snippet is either set as
+// the whole user_data (when the configured user_data was empty) or appended with
+// a leading newline to the configured user_data.
+func stripGuestAgentSnippet(userData string) string {
+	if userData == "#cloud-config\n"+constants.GuestAgentCloudInitSnippet {
+		return ""
+	}
+	if suffix := "\n" + constants.GuestAgentCloudInitSnippet; strings.HasSuffix(userData, suffix) {
+		return strings.TrimSuffix(userData, suffix)
+	}
+	return userData
+}
+
 func (v *VMImporter) cloudInit(volume kubevirtv1.Volume) []map[string]interface{} {
 	var cloudInitState = make([]map[string]interface{}, 0, 1)
 	if volume.CloudInitNoCloud != nil {
 		cloudInitState = append(cloudInitState, map[string]interface{}{
 			constants.FieldCloudInitType:              builder.CloudInitTypeNoCloud,
-			constants.FieldCloudInitUserData:          volume.CloudInitNoCloud.UserData,
+			constants.FieldCloudInitUserData:          stripGuestAgentSnippet(volume.CloudInitNoCloud.UserData),
 			constants.FieldCloudInitUserDataBase64:    volume.CloudInitNoCloud.UserDataBase64,
 			constants.FieldCloudInitNetworkData:       volume.CloudInitNoCloud.NetworkData,
 			constants.FieldCloudInitNetworkDataBase64: volume.CloudInitNoCloud.NetworkDataBase64,
@@ -270,7 +284,7 @@ func (v *VMImporter) cloudInit(volume kubevirtv1.Volume) []map[string]interface{
 	} else if volume.CloudInitConfigDrive != nil {
 		cloudInitState = append(cloudInitState, map[string]interface{}{
 			constants.FieldCloudInitType:              builder.CloudInitTypeConfigDrive,
-			constants.FieldCloudInitUserData:          volume.CloudInitConfigDrive.UserData,
+			constants.FieldCloudInitUserData:          stripGuestAgentSnippet(volume.CloudInitConfigDrive.UserData),
 			constants.FieldCloudInitUserDataBase64:    volume.CloudInitConfigDrive.UserDataBase64,
 			constants.FieldCloudInitNetworkData:       volume.CloudInitConfigDrive.NetworkData,
 			constants.FieldCloudInitNetworkDataBase64: volume.CloudInitConfigDrive.NetworkDataBase64,
