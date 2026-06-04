@@ -565,3 +565,65 @@ func TestResourceRequestsImport(t *testing.T) {
 		t.Errorf("Requests() nil memory = %q, want empty", got)
 	}
 }
+
+func TestVMRuntimeImport(t *testing.T) {
+	// Test with explicit values
+	strategy := kubevirtv1.EvictionStrategy("LiveMigrate")
+	grace := int64(60)
+	vm := &kubevirtv1.VirtualMachine{
+		ObjectMeta: metav1.ObjectMeta{
+			Annotations: map[string]string{
+				constants.AnnotationOSType: "linux",
+			},
+		},
+		Spec: kubevirtv1.VirtualMachineSpec{
+			Template: &kubevirtv1.VirtualMachineInstanceTemplateSpec{
+				Spec: kubevirtv1.VirtualMachineInstanceSpec{
+					EvictionStrategy:              &strategy,
+					TerminationGracePeriodSeconds: &grace,
+					Domain: kubevirtv1.DomainSpec{
+						CPU: &kubevirtv1.CPU{},
+					},
+				},
+			},
+		},
+	}
+	importer := &VMImporter{VirtualMachine: vm}
+
+	if got := importer.EvictionStrategy(); got != "LiveMigrate" {
+		t.Errorf("EvictionStrategy() = %q, want %q", got, "LiveMigrate")
+	}
+	if got := importer.TerminationGracePeriodSeconds(); got != 60 {
+		t.Errorf("TerminationGracePeriodSeconds() = %d, want 60", got)
+	}
+	if got := importer.OSType(); got != "linux" {
+		t.Errorf("OSType() = %q, want %q", got, "linux")
+	}
+
+	// Test with nil values (defaults)
+	vmNil := &kubevirtv1.VirtualMachine{
+		ObjectMeta: metav1.ObjectMeta{
+			Annotations: map[string]string{},
+		},
+		Spec: kubevirtv1.VirtualMachineSpec{
+			Template: &kubevirtv1.VirtualMachineInstanceTemplateSpec{
+				Spec: kubevirtv1.VirtualMachineInstanceSpec{
+					Domain: kubevirtv1.DomainSpec{
+						CPU: &kubevirtv1.CPU{},
+					},
+				},
+			},
+		},
+	}
+	importerNil := &VMImporter{VirtualMachine: vmNil}
+
+	if got := importerNil.EvictionStrategy(); got != constants.DefaultEvictionStrategy {
+		t.Errorf("EvictionStrategy() nil = %q, want %q", got, constants.DefaultEvictionStrategy)
+	}
+	if got := importerNil.TerminationGracePeriodSeconds(); got != constants.DefaultTerminationGracePeriodSeconds {
+		t.Errorf("TerminationGracePeriodSeconds() nil = %d, want %d", got, constants.DefaultTerminationGracePeriodSeconds)
+	}
+	if got := importerNil.OSType(); got != "" {
+		t.Errorf("OSType() nil = %q, want %q", got, "")
+	}
+}
