@@ -26,6 +26,8 @@ resource "harvester_virtualmachine" "k3os" {
   cpu    = 4
   memory = "4Gi"
 
+  install_guest_agent = true
+
   efi         = true
   secure_boot = false
 
@@ -205,6 +207,7 @@ resource "harvester_virtualmachine" "opensuse154" {
 - `host_device` (Block List) Attaches a host device to the VM (see [below for nested schema](#nestedblock--host_device))
 - `hostname` (String)
 - `input` (Block List) (see [below for nested schema](#nestedblock--input))
+- `install_guest_agent` (Boolean) Install qemu-guest-agent via cloud-init. The agent is injected into cloudinit.user_data when user_data_base64 and user_data_secret_name are not set.
 - `isolate_emulator_thread` (Boolean) To enable isolate emulator thread, ensure that at least one node has the CPU manager enabled, also VM CPU pinning must be enabled. Note that enable option will allocate an additional dedicated CPU.
 - `labels` (Map of String)
 - `machine_type` (String)
