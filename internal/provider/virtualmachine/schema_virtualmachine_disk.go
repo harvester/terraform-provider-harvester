@@ -9,7 +9,7 @@ import (
 	"github.com/harvester/terraform-provider-harvester/pkg/constants"
 )
 
-func resourceDiskSchema() map[string]*schema.Schema {
+func ResourceDiskSchema() map[string]*schema.Schema {
 	s := map[string]*schema.Schema{
 		constants.FieldDiskName: {
 			Type:     schema.TypeString,

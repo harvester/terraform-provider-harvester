@@ -109,7 +109,7 @@ please use %s instead of this deprecated field:
 			Optional: true,
 			MaxItems: 1,
 			Elem: &schema.Resource{
-				Schema: resourceCloudInitSchema(),
+				Schema: ResourceCloudInitSchema(),
 			},
 		},
 		constants.FieldVirtualMachineDisk: {
@@ -117,7 +117,7 @@ please use %s instead of this deprecated field:
 			Required: true,
 			MinItems: 1,
 			Elem: &schema.Resource{
-				Schema: resourceDiskSchema(),
+				Schema: ResourceDiskSchema(),
 			},
 		},
 		constants.FieldVirtualMachineNetworkInterface: {
@@ -125,14 +125,14 @@ please use %s instead of this deprecated field:
 			Required: true,
 			MinItems: 1,
 			Elem: &schema.Resource{
-				Schema: resourceNetworkInterfaceSchema(),
+				Schema: ResourceNetworkInterfaceSchema(),
 			},
 		},
 		constants.FieldVirtualMachineInput: {
 			Type:     schema.TypeList,
 			Optional: true,
 			Elem: &schema.Resource{
-				Schema: resourceInputSchema(),
+				Schema: ResourceInputSchema(),
 			},
 		},
 		constants.FieldVirtualMachineTPM: {
@@ -140,7 +140,7 @@ please use %s instead of this deprecated field:
 			Optional: true,
 			MaxItems: 1,
 			Elem: &schema.Resource{
-				Schema: resourceTPMSchema(),
+				Schema: ResourceTPMSchema(),
 			},
 		},
 		constants.FieldVirtualMachineInstanceNodeName: {
