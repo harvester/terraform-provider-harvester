@@ -34,12 +34,12 @@ resource "harvester_kubeovn_ovn_eip" "example" {
 - `mac_address` (String)
 - `tags` (Map of String)
 - `timeouts` (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))
-- `type` (String)
 - `v4_ip` (String)
 - `v6_ip` (String)
 
 ### Read-Only
 
+- `eip_type` (String)
 - `id` (String) The ID of this resource.
 - `message` (String)
 - `state` (String)
