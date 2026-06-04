@@ -89,6 +89,8 @@ func DataSourceSchemaWrap(s map[string]*schema.Schema) map[string]*schema.Schema
 		v.Optional = false
 		v.Required = false
 		v.ValidateFunc = nil
+		v.ValidateDiagFunc = nil
+		v.DiffSuppressFunc = nil
 		v.ConflictsWith = nil
 		v.AtLeastOneOf = nil
 		v.ExactlyOneOf = nil
