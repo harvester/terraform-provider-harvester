@@ -23,8 +23,6 @@ import (
 
 const (
 	vmCreator = "terraform-provider-harvester"
-
-	guestAgentSnippet = "package_update: true\npackages:\n  - qemu-guest-agent\nruncmd:\n  - - systemctl\n    - enable\n    - '--now'\n    - qemu-ga"
 )
 
 var (
@@ -415,9 +413,9 @@ func (c *Constructor) Setup() util.Processors {
 				if c.InstallGuestAgent && cloudInitSource.UserDataBase64 == "" && cloudInitSource.UserDataSecretName == "" {
 					if !strings.Contains(cloudInitSource.UserData, "qemu-guest-agent") {
 						if cloudInitSource.UserData == "" {
-							cloudInitSource.UserData = "#cloud-config\n" + guestAgentSnippet
+							cloudInitSource.UserData = "#cloud-config\n" + constants.GuestAgentCloudInitSnippet
 						} else {
-							cloudInitSource.UserData += "\n" + guestAgentSnippet
+							cloudInitSource.UserData += "\n" + constants.GuestAgentCloudInitSnippet
 						}
 					}
 				}

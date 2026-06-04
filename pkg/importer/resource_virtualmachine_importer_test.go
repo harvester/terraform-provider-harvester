@@ -670,3 +670,38 @@ func TestResourceRequestsImport(t *testing.T) {
 		t.Errorf("Requests() nil memory = %q, want empty", got)
 	}
 }
+
+func TestStripGuestAgentSnippet(t *testing.T) {
+	snippet := constants.GuestAgentCloudInitSnippet
+	testcases := []struct {
+		name     string
+		input    string
+		expected string
+	}{
+		{
+			name:     "no injection is left untouched",
+			input:    "#cloud-config\npackages:\n  - vim\n",
+			expected: "#cloud-config\npackages:\n  - vim\n",
+		},
+		{
+			name:     "injection appended to existing user_data is removed",
+			input:    "#cloud-config\npackages:\n  - vim\n\n" + snippet,
+			expected: "#cloud-config\npackages:\n  - vim\n",
+		},
+		{
+			name:     "injection into empty user_data returns empty",
+			input:    "#cloud-config\n" + snippet,
+			expected: "",
+		},
+		{
+			name:     "empty user_data stays empty",
+			input:    "",
+			expected: "",
+		},
+	}
+	for _, tc := range testcases {
+		if got := stripGuestAgentSnippet(tc.input); got != tc.expected {
+			t.Errorf("%s: stripGuestAgentSnippet(%q) = %q, want %q", tc.name, tc.input, got, tc.expected)
+		}
+	}
+}
