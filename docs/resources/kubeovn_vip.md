@@ -33,9 +33,6 @@ resource "harvester_kubeovn_vip" "example" {
 - `description` (String) Any text you want that better describes this resource
 - `labels` (Map of String)
 - `mac_address` (String)
-- `parent_mac` (String)
-- `parent_v4_ip` (String)
-- `parent_v6_ip` (String)
 - `selector` (List of String)
 - `tags` (Map of String)
 - `timeouts` (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))
@@ -50,7 +47,6 @@ resource "harvester_kubeovn_vip" "example" {
 - `message` (String)
 - `state` (String)
 - `status_mac` (String)
-- `status_ready` (Boolean)
 - `status_type` (String)
 - `status_v4_ip` (String)
 - `status_v6_ip` (String)
