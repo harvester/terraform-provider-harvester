@@ -28,6 +28,7 @@ data "harvester_kubeovn_ovn_eip" "example" {
 ### Read-Only
 
 - `description` (String) Any text you want that better describes this resource
+- `eip_type` (String)
 - `external_subnet` (String)
 - `id` (String) The ID of this resource.
 - `labels` (Map of String)
@@ -41,6 +42,5 @@ data "harvester_kubeovn_ovn_eip" "example" {
 - `status_v4_ip` (String)
 - `status_v6_ip` (String)
 - `tags` (Map of String)
-- `type` (String)
 - `v4_ip` (String)
 - `v6_ip` (String)
