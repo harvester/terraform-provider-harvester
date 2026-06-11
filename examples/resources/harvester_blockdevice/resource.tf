@@ -14,7 +14,7 @@ resource "harvester_blockdevice" "nvme_data" {
   }
 
   # Provisioned = device is formatted and used by Longhorn
-  provisioned = true
+  provision = true
 
   # Force formatting even if the device has an existing filesystem
   # force_formatted = true
@@ -27,5 +27,5 @@ resource "harvester_blockdevice" "spare_disk" {
 
   description = "Spare disk - not yet provisioned"
 
-  provisioned = false
+  provision = false
 }
