@@ -1,11 +1,5 @@
 {
-    "extends": [
-        "github>harvester/renovate:renovate-default"
-    ],
-    "baseBranches": [
-        "master"
-    ],
-    "ignorePaths": [
-        "**/package/**"
-    ]
+  "extends": [
+    "github>harvester/dependency-automation:renovate"
+  ]
 }
