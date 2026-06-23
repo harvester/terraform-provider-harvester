@@ -1,5 +1,5 @@
 ARG MK_GOLANGCI_LINT_IMAGE
-ARG MK_PACKAGE_BASE registry.suse.com/bci/bci-base:16.0
+ARG MK_PACKAGE_BASE registry.suse.com/bci/bci-base:16.1
 FROM ${MK_GOLANGCI_LINT_IMAGE} AS golangci-lint
 
 FROM golang:1.25-bookworm AS buildenv
