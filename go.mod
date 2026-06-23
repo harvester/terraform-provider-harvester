@@ -30,7 +30,7 @@ require (
 	github.com/harvester/harvester-network-controller v1.8.0
 	github.com/harvester/pcidevices v1.7.1
 	github.com/hashicorp/terraform-plugin-docs v0.25.0
-	github.com/hashicorp/terraform-plugin-log v0.9.0
+	github.com/hashicorp/terraform-plugin-log v0.10.0
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.37.0
 	github.com/k8snetworkplumbingwg/network-attachment-definition-client v1.7.7
 	github.com/mitchellh/go-homedir v1.1.0
