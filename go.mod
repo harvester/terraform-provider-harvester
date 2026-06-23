@@ -28,7 +28,7 @@ require (
 	github.com/harvester/harvester v1.8.0
 	github.com/harvester/harvester-load-balancer v1.7.1
 	github.com/harvester/harvester-network-controller v1.8.0
-	github.com/harvester/pcidevices v1.7.1
+	github.com/harvester/pcidevices v1.8.0
 	github.com/hashicorp/terraform-plugin-docs v0.25.0
 	github.com/hashicorp/terraform-plugin-log v0.9.0
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.37.0
