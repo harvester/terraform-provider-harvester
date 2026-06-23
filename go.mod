@@ -33,7 +33,7 @@ require (
 	github.com/hashicorp/terraform-plugin-docs v0.22.0
 	github.com/hashicorp/terraform-plugin-log v0.9.0
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.37.0
-	github.com/k8snetworkplumbingwg/network-attachment-definition-client v1.7.5
+	github.com/k8snetworkplumbingwg/network-attachment-definition-client v1.7.7
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/rancher/wrangler/v3 v3.2.2
 	github.com/sirupsen/logrus v1.9.3
