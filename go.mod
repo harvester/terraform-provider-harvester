@@ -27,7 +27,7 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/harvester/harvester v1.8.0-dev-20260301.0.20260306082615-2f8e741d99e9
 	github.com/harvester/harvester-load-balancer v1.7.1
-	github.com/harvester/harvester-network-controller v1.7.1
+	github.com/harvester/harvester-network-controller v1.8.0
 	github.com/harvester/pcidevices v1.7.1
 	github.com/hashicorp/terraform-plugin-docs v0.22.0
 	github.com/hashicorp/terraform-plugin-log v0.9.0

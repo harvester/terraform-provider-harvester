@@ -243,8 +243,8 @@ github.com/harvester/harvester v0.0.0-20260325065442-726ea76ce461 h1:jNN78SCXVVX
 github.com/harvester/harvester v0.0.0-20260325065442-726ea76ce461/go.mod h1:1vlg1+mB8OHb9Meu+kMVOO/sG9130RE6+y3V1u1TXk4=
 github.com/harvester/harvester-load-balancer v1.7.1 h1:IEQx3bdOAN4XsnFDPFf4hAn07NQN4Q3Kt7MkTrlPY9k=
 github.com/harvester/harvester-load-balancer v1.7.1/go.mod h1:W8pwH7qdgewE/GAdwckyTOhAnCZi7MtkVBu0SdkgWMU=
-github.com/harvester/harvester-network-controller v1.7.1 h1:3YPh8xnua00UsOW2Gv+waeTP9IyCsTu9j2VyYxMFAGM=
-github.com/harvester/harvester-network-controller v1.7.1/go.mod h1:ybEc8oGfrwauV9tJOyeSQHjlBZxrgr5o6oG9PpdtxFY=
+github.com/harvester/harvester-network-controller v1.8.0 h1:TyBvL++KThjO4l4pZzANRkFXK6OlBCaZkS5DxjmrAF8=
+github.com/harvester/harvester-network-controller v1.8.0/go.mod h1:s0cjfCLs9bfoNdCtT2wqd5resZMK0+8fBpOuj2OhI8Q=
 github.com/harvester/pcidevices v0.0.0-20260317225112-9a141ebabdb0 h1:BM7NpCL5L3/5GGfI/FO6SDhNJJb0aPPeKiGFOZopwuk=
 github.com/harvester/pcidevices v0.0.0-20260317225112-9a141ebabdb0/go.mod h1:Rb6uwBzwnV5Mw/QLI9G92vWKdaL3UQVpiq+vb8pQy7k=
 github.com/hashicorp/cli v1.1.7 h1:/fZJ+hNdwfTSfsxMBa9WWMlfjUZbX8/LnUxgAd7lCVU=
