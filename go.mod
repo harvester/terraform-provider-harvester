@@ -3,7 +3,7 @@ module github.com/harvester/terraform-provider-harvester
 go 1.25.7
 
 replace (
-	github.com/google/gnostic-models => github.com/google/gnostic-models v0.6.9
+	github.com/google/gnostic-models => github.com/google/gnostic-models v0.7.1
 
 	github.com/harvester/harvester => github.com/harvester/harvester v0.0.0-20260325065442-726ea76ce461
 	github.com/harvester/pcidevices => github.com/harvester/pcidevices v0.0.0-20260317225112-9a141ebabdb0
