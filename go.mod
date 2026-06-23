@@ -26,7 +26,7 @@ replace (
 require (
 	github.com/google/uuid v1.6.0
 	github.com/harvester/harvester v1.8.0
-	github.com/harvester/harvester-load-balancer v1.7.1
+	github.com/harvester/harvester-load-balancer v1.8.0
 	github.com/harvester/harvester-network-controller v1.8.0
 	github.com/harvester/pcidevices v1.7.1
 	github.com/hashicorp/terraform-plugin-docs v0.25.0
