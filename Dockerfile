@@ -2,11 +2,12 @@ ARG MK_GOLANGCI_LINT_IMAGE
 ARG MK_PACKAGE_BASE registry.suse.com/bci/bci-base:16.0
 FROM ${MK_GOLANGCI_LINT_IMAGE} AS golangci-lint
 
-FROM golang:1.25.7-bookworm AS buildenv
+FROM golang:1.25-bookworm AS buildenv
 ARG TERRAFORM_VERSION
 ARG TERRAFORM_SUM_amd64
 ARG TERRAFORM_SUM_arm64
 ARG TARGETPLATFORM
+ENV GOTOOLCHAIN=auto
 
 RUN --mount=type=cache,target=/var/lib/apt/lists apt-get update -qq \
  && apt-get install -y --no-install-recommends \
