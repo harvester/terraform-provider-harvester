@@ -1,6 +1,6 @@
 module github.com/harvester/terraform-provider-harvester
 
-go 1.25
+go 1.26.4
 
 replace (
 	github.com/google/gnostic-models => github.com/google/gnostic-models v0.6.9
