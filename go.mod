@@ -206,7 +206,7 @@ require (
 	k8s.io/klog/v2 v2.130.1 // indirect
 	k8s.io/kube-aggregator v0.33.1 // indirect
 	k8s.io/kube-openapi v0.31.9 // indirect
-	k8s.io/kubernetes v1.32.2 // indirect
+	k8s.io/kubernetes v1.32.10 // indirect
 	kubevirt.io/client-go v1.6.2 // indirect
 	kubevirt.io/containerized-data-importer-api v1.61.0 // indirect
 	kubevirt.io/controller-lifecycle-operator-sdk/api v0.0.0-20220329064328-f3cc58c6ed90 // indirect
