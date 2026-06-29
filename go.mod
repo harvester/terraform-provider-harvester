@@ -210,7 +210,7 @@ require (
 	kubevirt.io/client-go v1.6.2 // indirect
 	kubevirt.io/containerized-data-importer-api v1.61.0 // indirect
 	kubevirt.io/controller-lifecycle-operator-sdk/api v0.0.0-20220329064328-f3cc58c6ed90 // indirect
-	kubevirt.io/kubevirt v1.6.0 // indirect
+	kubevirt.io/kubevirt v1.8.2 // indirect
 	sigs.k8s.io/cluster-api v1.9.5 // indirect
 	sigs.k8s.io/controller-runtime v0.20.4 // indirect
 	sigs.k8s.io/json v0.0.0-20241014173422-cfa47c3a1cc8 // indirect
