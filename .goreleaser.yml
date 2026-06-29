@@ -5,6 +5,10 @@ before:
   hooks:
     # this is just an example and not a requirement for provider building/publishing
     - go mod tidy
+git:
+  # What should be used to specify prerelease suffix while sorting tags when gathering
+  # the current and previous tags if there are more than one tag in the same commit.
+  prerelease_suffix: "-"
 builds:
 - env:
     # goreleaser does not work with CGO, it could also complicate
