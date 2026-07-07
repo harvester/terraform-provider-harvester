@@ -14,6 +14,13 @@ resource "harvester_virtualmachine" "k3os" {
   efi         = true
   secure_boot = false
 
+  toleration {
+    key      = "key1"
+    operator = "Equal"
+    value    = "value1"
+    effect   = "NoSchedule"
+  }
+
   network_interface {
     name         = "nic-1"
     network_name = harvester_network.mgmt-vlan1.id
