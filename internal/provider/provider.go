@@ -22,6 +22,7 @@ import (
 	"github.com/harvester/terraform-provider-harvester/internal/provider/sriovgpudevice"
 	"github.com/harvester/terraform-provider-harvester/internal/provider/sriovnetworkdevice"
 	"github.com/harvester/terraform-provider-harvester/internal/provider/storageclass"
+	"github.com/harvester/terraform-provider-harvester/internal/provider/vgpudevice"
 	"github.com/harvester/terraform-provider-harvester/internal/provider/virtualmachine"
 	"github.com/harvester/terraform-provider-harvester/internal/provider/vlanconfig"
 	"github.com/harvester/terraform-provider-harvester/internal/provider/volume"
@@ -63,6 +64,7 @@ func Provider() *schema.Provider {
 			constants.ResourceTypeScheduleBackup:     schedulebackup.DataSourceScheduleBackup(),
 			constants.ResourceTypeSetting:            setting.DataSourceSetting(),
 			constants.ResourceTypeStorageClass:       storageclass.DataSourceStorageClass(),
+			constants.ResourceTypeVGPUDevice:         vgpudevice.DataSourceVGPUDevice(),
 			constants.ResourceTypeVLANConfig:         vlanconfig.DataSourceVLANConfig(),
 			constants.ResourceTypeVirtualMachine:     virtualmachine.DataSourceVirtualMachine(),
 			constants.ResourceTypeVolume:             volume.DataSourceVolume(),
@@ -82,6 +84,7 @@ func Provider() *schema.Provider {
 			constants.ResourceTypeScheduleBackup:     schedulebackup.ResourceScheduleBackup(),
 			constants.ResourceTypeSetting:            setting.ResourceSetting(),
 			constants.ResourceTypeStorageClass:       storageclass.ResourceStorageClass(),
+			constants.ResourceTypeVGPUDevice:         vgpudevice.ResourceVGPUDevice(),
 			constants.ResourceTypeVLANConfig:         vlanconfig.ResourceVLANConfig(),
 			constants.ResourceTypeVirtualMachine:     virtualmachine.ResourceVirtualMachine(),
 			constants.ResourceTypeVolume:             volume.ResourceVolume(),

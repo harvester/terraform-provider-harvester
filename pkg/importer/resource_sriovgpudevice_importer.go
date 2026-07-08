@@ -9,10 +9,10 @@ import (
 
 func ResourceSRIOVGPUDeviceStateGetter(obj *devicesv1.SRIOVGPUDevice) (*StateGetter, error) {
 	states := map[string]any{
-		constants.FieldCommonName:                      obj.Name,
-		constants.FieldSRIOVNetworkDeviceEnabled:       obj.Spec.Enabled,
-		constants.FieldSRIOVNetworkDeviceVFAddresses:   obj.Status.VFAddresses,
-		constants.FieldSRIOVNetworkDeviceVFDeviceNames: obj.Status.VGPUDevices,
+		constants.FieldCommonName:                  obj.Name,
+		constants.FieldSRIOVGPUDeviceEnabled:       obj.Spec.Enabled,
+		constants.FieldSRIOVGPUDeviceVFAddresses:   obj.Status.VFAddresses,
+		constants.FieldSRIOVGPUDeviceVFDeviceNames: obj.Status.VGPUDevices,
 	}
 	return &StateGetter{
 		ID:           helper.BuildID("", obj.Name),
