@@ -1,0 +1,10 @@
+# To enhance the review process, we have designated specific teams as code owners for different parts of the repository.
+
+# We setup the codeowners with the following rules:
+# Top 3 contributors of each directory are assigned as code owners, if don't have enough contributors, dev team will be assigned.
+# If the number of commits of a contributor is less than 2, that contributor will be ignored.
+
+# The corresponding git commit is used to determine the code owners.
+# git log --since="24 months ago" --pretty=format:'%an' -- <path> | sort | uniq -c | sort -nr | head -n 3
+
+* @m-ildefons @brandboat @harvester/dev
