@@ -1,0 +1,11 @@
+# To enhance the review process, specific teams and individuals are designated as code owners for different parts of the repository.
+#
+# Ownership rules:
+# 1. The top three contributors to a directory are assigned as owners.
+# 2. If a directory lacks active contributors, the dev team is assigned as a fallback.
+# 3. Contributors with fewer than two commits are ignored.
+#
+# Ownership is determined dynamically using the following command:
+# git log --since="24 months ago" --pretty=format:'%an' -- <path> | sort | uniq -c | sort -nr | head -n 3
+
+* @m-ildefons @brandboat @harvester/dev
