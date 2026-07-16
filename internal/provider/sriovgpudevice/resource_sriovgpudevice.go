@@ -142,7 +142,7 @@ func resourceSRIOVGPUDeviceRefresh(ctx context.Context, d *schema.ResourceData, 
 		}
 
 		vfAddresses, ok := d.GetOk(constants.FieldSRIOVGPUDeviceVFAddresses)
-		if !ok || (ok && len(vfAddresses.([]any)) < 1) {
+		if !ok || (ok && (vfAddresses.(*schema.Set).Len()) < 1) {
 			return obj, devicesv1.DeviceDisabled, nil
 		}
 
@@ -152,7 +152,7 @@ func resourceSRIOVGPUDeviceRefresh(ctx context.Context, d *schema.ResourceData, 
 		}
 
 		stateRaw := d.Get(constants.FieldSRIOVGPUDeviceEnabled).(bool)
-		if stateRaw && len(vfAddresses.([]any)) != 0 && numPCIDevicesReady == len(vfAddresses.([]any)) {
+		if stateRaw && (vfAddresses.(*schema.Set).Len()) != 0 && numPCIDevicesReady == (vfAddresses.(*schema.Set).Len()) {
 			state = devicesv1.DeviceEnabled
 		} else {
 			state = devicesv1.DeviceDisabled

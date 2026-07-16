@@ -21,7 +21,7 @@ description: |-
 
 ### Read-Only
 
-- `available_types` (Set of String) Available vGPU types for this vGPU device
+- `available_types` (Map of String) Available vGPU types for this vGPU device
 - `configured_vgpu_type` (String) Current configured vGPU device type
 - `description` (String) Any text you want that better describes this resource
 - `enabled` (Boolean) Enable vGPU for passthrough

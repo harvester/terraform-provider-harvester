@@ -32,7 +32,7 @@ description: |-
 
 ### Read-Only
 
-- `available_types` (Set of String) Available vGPU types for this vGPU device
+- `available_types` (Map of String) Available vGPU types for this vGPU device
 - `configured_vgpu_type` (String) Current configured vGPU device type
 - `id` (String) The ID of this resource.
 - `message` (String)

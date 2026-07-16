@@ -48,7 +48,7 @@ func Schema() map[string]*schema.Schema {
 			Computed:    true,
 		},
 		constants.FieldVGPUDeviceAvailableTypes: {
-			Type:        schema.TypeSet,
+			Type:        schema.TypeMap,
 			Computed:    true,
 			Description: "Available vGPU types for this vGPU device",
 			Elem: &schema.Schema{
