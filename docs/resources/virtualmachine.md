@@ -250,6 +250,7 @@ Optional:
 - `bus` (String)
 - `cache_mode` (String)
 - `container_image_name` (String)
+- `eject` (Boolean) Eject the CD-ROM disk by opening the tray. Only applies to cd-rom type disks.
 - `existing_volume_name` (String)
 - `hot_plug` (Boolean)
 - `image` (String)
