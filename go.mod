@@ -29,6 +29,7 @@ require (
 	github.com/harvester/harvester-load-balancer v1.8.0
 	github.com/harvester/harvester-network-controller v1.8.0
 	github.com/harvester/pcidevices v1.8.0
+	github.com/hashicorp/go-cty v1.5.0
 	github.com/hashicorp/terraform-plugin-docs v0.25.0
 	github.com/hashicorp/terraform-plugin-log v0.10.0
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.40.1
@@ -100,7 +101,6 @@ require (
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-checkpoint v0.5.0 // indirect
 	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
-	github.com/hashicorp/go-cty v1.5.0 // indirect
 	github.com/hashicorp/go-hclog v1.6.3 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
 	github.com/hashicorp/go-plugin v1.7.0 // indirect
@@ -185,8 +185,8 @@ require (
 	github.com/yusufpapurcu/wmi v1.2.4 // indirect
 	github.com/zclconf/go-cty v1.18.1 // indirect
 	go.abhg.dev/goldmark/frontmatter v0.2.0 // indirect
-	go.opentelemetry.io/otel v1.43.0 // indirect
-	go.opentelemetry.io/otel/trace v1.43.0 // indirect
+	go.opentelemetry.io/otel v1.44.0 // indirect
+	go.opentelemetry.io/otel/trace v1.44.0 // indirect
 	go.uber.org/mock v0.5.2 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	go.yaml.in/yaml/v2 v2.4.3 // indirect
