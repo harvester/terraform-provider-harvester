@@ -357,8 +357,11 @@ func (v *VMImporter) State(networkInterfaces []map[string]interface{}, oldInstan
 		if string(v.VirtualMachineInstance.UID) == oldInstanceUID {
 			return constants.StateVirtualMachineRunning
 		}
+
 		for _, networkInterface := range networkInterfaces {
-			if networkInterface[constants.FieldNetworkInterfaceWaitForLease].(bool) && networkInterface[constants.FieldNetworkInterfaceIPAddress] == "" {
+			wait_for_lease := networkInterface[constants.FieldNetworkInterfaceWaitForLease].(bool)
+			ip_string, has_ip_string := networkInterface[constants.FieldNetworkInterfaceIPAddress].(string)
+			if wait_for_lease && (!has_ip_string || ip_string == "") {
 				return constants.StateVirtualMachineRunning
 			}
 		}
