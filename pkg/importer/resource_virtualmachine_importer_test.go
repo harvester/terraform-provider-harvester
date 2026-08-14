@@ -1,11 +1,15 @@
 package importer
 
 import (
+	"reflect"
 	"testing"
+
+	assert "github.com/stretchr/testify/assert"
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/utils/ptr"
 	kubevirtv1 "kubevirt.io/api/core/v1"
 
 	"github.com/harvester/harvester/pkg/builder"
@@ -573,5 +577,292 @@ func TestResourceRequestsImport(t *testing.T) {
 	}
 	if got := reqsNil[0][constants.FieldRequestsMemory]; got != "" {
 		t.Errorf("Requests() nil memory = %q, want empty", got)
+	}
+}
+
+func TestStateRunningNetworkInterfaceNoIP(t *testing.T) {
+	// Ensure that of `wait_for_lease` is set on a network interface, the state isn't reported as
+	// `ready` as long as there is no IP address
+	oldInstanceUID := "oldUid"
+	networkInterfaces := []map[string]any{
+		{
+			constants.FieldNetworkInterfaceWaitForLease: true,
+		},
+	}
+	vmi := kubevirtv1.VirtualMachineInstance{
+		ObjectMeta: metav1.ObjectMeta{
+			UID: "newUid",
+		},
+		Status: kubevirtv1.VirtualMachineInstanceStatus{
+			Phase: "Running",
+		},
+	}
+
+	vmImporter := NewVMImporter(nil, &vmi)
+	state := vmImporter.State(networkInterfaces, oldInstanceUID)
+	assert.Equal(t, state, constants.StateVirtualMachineRunning, "IP address not set results in state running")
+
+	networkInterfaces[0][constants.FieldNetworkInterfaceIPAddress] = ""
+	state = vmImporter.State(networkInterfaces, oldInstanceUID)
+	assert.Equal(t, state, constants.StateVirtualMachineRunning, "IP address set to empty string results in state running")
+
+	networkInterfaces[0][constants.FieldNetworkInterfaceIPAddress] = "123.123.123.123"
+	state = vmImporter.State(networkInterfaces, oldInstanceUID)
+	assert.Equal(t, state, constants.StateCommonReady, "IP address set to non-empty string results in state ready")
+}
+
+func TestVirtualMachineFeatures(t *testing.T) {
+	make_importer := func(features *kubevirtv1.Features) *VMImporter {
+		importer := VMImporter{
+			VirtualMachine: &kubevirtv1.VirtualMachine{
+				Spec: kubevirtv1.VirtualMachineSpec{
+					Template: &kubevirtv1.VirtualMachineInstanceTemplateSpec{
+						Spec: kubevirtv1.VirtualMachineInstanceSpec{
+							Domain: kubevirtv1.DomainSpec{
+								Features: features,
+							},
+						},
+					},
+				},
+			},
+		}
+		return &importer
+	}
+
+	type testcase struct {
+		importer *VMImporter
+		expected map[string]any
+	}
+
+	testcases := []testcase{
+		{
+			importer: make_importer(&kubevirtv1.Features{}),
+			expected: map[string]any{},
+		},
+		{
+			importer: make_importer(
+				&kubevirtv1.Features{
+					ACPI: kubevirtv1.FeatureState{
+						Enabled: ptr.To(true),
+					}}),
+			expected: map[string]any{
+				constants.FieldFeatureACPI: true,
+			},
+		},
+		{
+			importer: make_importer(
+				&kubevirtv1.Features{
+					APIC: &kubevirtv1.FeatureAPIC{
+						Enabled:        ptr.To(true),
+						EndOfInterrupt: true,
+					}}),
+			expected: map[string]any{
+				constants.FieldFeatureAPIC: map[string]any{
+					constants.FieldFeatureAPICEnabled:        true,
+					constants.FieldFeatureAPICEndOfInterrupt: true,
+				}},
+		},
+		{
+			importer: make_importer(
+				&kubevirtv1.Features{
+					Hyperv: &kubevirtv1.FeatureHyperv{
+						EVMCS: &kubevirtv1.FeatureState{
+							Enabled: ptr.To(true),
+						}}}),
+			expected: map[string]any{
+				constants.FieldFeatureHyperV: map[string]any{
+					constants.FieldFeatureHyperVEVMCS: true,
+				}},
+		},
+		{
+			importer: make_importer(
+				&kubevirtv1.Features{
+					Hyperv: &kubevirtv1.FeatureHyperv{
+						Frequencies: &kubevirtv1.FeatureState{
+							Enabled: ptr.To(true),
+						}}}),
+			expected: map[string]any{
+				constants.FieldFeatureHyperV: map[string]any{
+					constants.FieldFeatureHyperVFrequencies: true,
+				}},
+		},
+		{
+			importer: make_importer(
+				&kubevirtv1.Features{
+					Hyperv: &kubevirtv1.FeatureHyperv{
+						IPI: &kubevirtv1.FeatureState{
+							Enabled: ptr.To(true),
+						}}}),
+			expected: map[string]any{
+				constants.FieldFeatureHyperV: map[string]any{
+					constants.FieldFeatureHyperVIPI: true,
+				}},
+		},
+		{
+			importer: make_importer(
+				&kubevirtv1.Features{
+					Hyperv: &kubevirtv1.FeatureHyperv{
+						Reenlightenment: &kubevirtv1.FeatureState{
+							Enabled: ptr.To(true),
+						}}}),
+			expected: map[string]any{
+				constants.FieldFeatureHyperV: map[string]any{
+					constants.FieldFeatureHyperVReenlightenment: true,
+				}},
+		},
+		{
+			importer: make_importer(
+				&kubevirtv1.Features{
+					Hyperv: &kubevirtv1.FeatureHyperv{
+						Relaxed: &kubevirtv1.FeatureState{
+							Enabled: ptr.To(true),
+						}}}),
+			expected: map[string]any{
+				constants.FieldFeatureHyperV: map[string]any{
+					constants.FieldFeatureHyperVRelaxed: true,
+				}},
+		},
+		{
+			importer: make_importer(
+				&kubevirtv1.Features{
+					Hyperv: &kubevirtv1.FeatureHyperv{
+						Runtime: &kubevirtv1.FeatureState{
+							Enabled: ptr.To(true),
+						}}}),
+			expected: map[string]any{
+				constants.FieldFeatureHyperV: map[string]any{
+					constants.FieldFeatureHyperVRuntime: true,
+				}},
+		},
+		{
+			importer: make_importer(
+				&kubevirtv1.Features{
+					Hyperv: &kubevirtv1.FeatureHyperv{
+						Spinlocks: &kubevirtv1.FeatureSpinlocks{
+							Enabled: ptr.To(true),
+							Retries: func() *uint32 { v := uint32(8192); return &v }(),
+						}}}),
+			expected: map[string]any{
+				constants.FieldFeatureHyperV: map[string]any{
+					constants.FieldFeatureHyperVSpinlocks: map[string]any{
+						constants.FieldFeatureHyperVSpinlocksEnabled: true,
+						constants.FieldFeatureHyperVSpinlocksRetries: uint32(8192),
+					}}},
+		},
+		{
+			importer: make_importer(
+				&kubevirtv1.Features{
+					Hyperv: &kubevirtv1.FeatureHyperv{
+						SyNIC: &kubevirtv1.FeatureState{
+							Enabled: ptr.To(true),
+						}}}),
+			expected: map[string]any{
+				constants.FieldFeatureHyperV: map[string]any{
+					constants.FieldFeatureHyperVSyNIC: true,
+				}},
+		},
+		{
+			importer: make_importer(
+				&kubevirtv1.Features{
+					Hyperv: &kubevirtv1.FeatureHyperv{
+						SyNICTimer: &kubevirtv1.SyNICTimer{
+							Enabled: ptr.To(true),
+							Direct: &kubevirtv1.FeatureState{
+								Enabled: ptr.To(true),
+							}}}}),
+			expected: map[string]any{
+				constants.FieldFeatureHyperV: map[string]any{
+					constants.FieldFeatureHyperVSyNICTimer: map[string]any{
+						constants.FieldFeatureHyperVSyNICTimerEnabled: true,
+						constants.FieldFeatureHyperVSyNICTimerDirect:  true,
+					}}},
+		},
+		{
+			importer: make_importer(
+				&kubevirtv1.Features{
+					Hyperv: &kubevirtv1.FeatureHyperv{
+						TLBFlush: &kubevirtv1.FeatureState{
+							Enabled: ptr.To(true),
+						}}}),
+			expected: map[string]any{
+				constants.FieldFeatureHyperV: map[string]any{
+					constants.FieldFeatureHyperVTLBFlush: true,
+				}},
+		},
+		{
+			importer: make_importer(
+				&kubevirtv1.Features{
+					Hyperv: &kubevirtv1.FeatureHyperv{
+						VAPIC: &kubevirtv1.FeatureState{
+							Enabled: ptr.To(true),
+						}}}),
+			expected: map[string]any{
+				constants.FieldFeatureHyperV: map[string]any{
+					constants.FieldFeatureHyperVVAPIC: true,
+				}},
+		},
+		{
+			importer: make_importer(
+				&kubevirtv1.Features{
+					Hyperv: &kubevirtv1.FeatureHyperv{
+						VPIndex: &kubevirtv1.FeatureState{
+							Enabled: ptr.To(true),
+						}}}),
+			expected: map[string]any{
+				constants.FieldFeatureHyperV: map[string]any{
+					constants.FieldFeatureHyperVVPIndex: true,
+				}},
+		},
+		{
+			importer: make_importer(
+				&kubevirtv1.Features{
+					HypervPassthrough: &kubevirtv1.HyperVPassthrough{
+						Enabled: ptr.To(true),
+					}}),
+			expected: map[string]any{
+				constants.FieldFeatureHyperVPassthrough: true,
+			},
+		},
+		{
+			importer: make_importer(
+				&kubevirtv1.Features{
+					KVM: &kubevirtv1.FeatureKVM{
+						Hidden: true,
+					}}),
+			expected: map[string]any{
+				constants.FieldFeatureKVM: map[string]any{
+					constants.FieldFeatureKVMHidden: true,
+				}},
+		},
+		{
+			importer: make_importer(
+				&kubevirtv1.Features{
+					Pvspinlock: &kubevirtv1.FeatureState{
+						Enabled: ptr.To(true),
+					}}),
+			expected: map[string]any{
+				constants.FieldFeaturePVSpinLock: true,
+			},
+		},
+		{
+			importer: make_importer(
+				&kubevirtv1.Features{
+					SMM: &kubevirtv1.FeatureState{
+						Enabled: ptr.To(true),
+					}}),
+			expected: map[string]any{
+				constants.FieldFeatureSMM: true,
+			},
+		},
+	}
+
+	for _, tc := range testcases {
+		features, err := tc.importer.Features()
+		if err != nil {
+			t.Errorf("Error while importing VM features")
+		}
+		if !reflect.DeepEqual(features, tc.expected) {
+			t.Errorf("Unexpected features returned: %v, expected: %v", features, tc.expected)
+		}
 	}
 }

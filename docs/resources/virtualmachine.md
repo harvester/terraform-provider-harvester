@@ -202,6 +202,7 @@ resource "harvester_virtualmachine" "opensuse154" {
 - `create_initial_snapshot` (Boolean) Create an initial snapshot named {vm-name}-initial after the VM is created and ready
 - `description` (String) Any text you want that better describes this resource
 - `efi` (Boolean)
+- `features` (Block List, Max: 1) (see [below for nested schema](#nestedblock--features))
 - `host_device` (Block List) Attaches a host device to the VM (see [below for nested schema](#nestedblock--host_device))
 - `hostname` (String)
 - `input` (Block List) (see [below for nested schema](#nestedblock--input))
@@ -294,6 +295,76 @@ Optional:
 - `user_data` (String)
 - `user_data_base64` (String)
 - `user_data_secret_name` (String)
+
+
+<a id="nestedblock--features"></a>
+### Nested Schema for `features`
+
+Optional:
+
+- `acpi` (Boolean) ACPI enables/disables ACPI inside the guest. Defaults to enabled.
+- `apic` (Block List, Max: 1) APIC settings for the guest VM. (see [below for nested schema](#nestedblock--features--apic))
+- `hyperv` (Block List, Max: 1) Defaults to the machine type setting. (see [below for nested schema](#nestedblock--features--hyperv))
+- `hyperv_passthrough` (Boolean) This enables all supported hyperv flags automatically. Bear in mind that if this enabled hyperV features cannot be enabled explicitly. In addition, a Virtual Machine using it will be non-migratable.
+- `kvm` (Block List, Max: 1) Configure how KVM presence is exposed to the guest. (see [below for nested schema](#nestedblock--features--kvm))
+- `pvspinlock` (Boolean) Notify the guest that the host supports paravirtual spinlocks. For older kernels this feature should be explicitly disabled.
+- `smm` (Boolean) SMM enables/disables System Management Mode. TSEG not yet implemented.
+
+<a id="nestedblock--features--apic"></a>
+### Nested Schema for `features.apic`
+
+Optional:
+
+- `enabled` (Boolean) Enabled determines if the feature should be enabled or disabled on theguest. Defaults to true.
+- `end_of_interrupt` (Boolean) EndOfInterrupt enables the end of interrupt notification in the guest. Defaults to false.
+
+
+<a id="nestedblock--features--hyperv"></a>
+### Nested Schema for `features.hyperv`
+
+Optional:
+
+- `evmcs` (Boolean) EVMCS Speeds up L2 vmexits, but disables other virtualization features. Requires vapic. Defaults to the machine type setting.
+- `frequencies` (Boolean) Frequencies improves the TSC clock source handling for Hyper-V on KVM. Defaults to the machine type setting.
+- `ipi` (Boolean) IPI improves performances in overcommited environments. Requires vpindex. Defaults to the machine type setting.
+- `reenlightenment` (Boolean) Reenlightenment enables the notifications on TSC frequency changes. Defaults to the machine type setting.
+- `relaxed` (Boolean) Relaxed instructs the guest OS to disable watchdog timeouts. Defaults to the machine type setting.
+- `reset` (Boolean) Reset enables Hyperv reboot/reset for the vmi. Requires synic. Defaults to the machine type setting.
+- `runtime` (Boolean) Runtime improves the time accounting to improve scheduling in the guest. Defaults to the machine type setting.
+- `spinlocks` (Block List, Max: 1) Spinlocks allows to configure the spinlock retry attempts. (see [below for nested schema](#nestedblock--features--hyperv--spinlocks))
+- `synic` (Boolean) SyNIC enables the Synthetic Interrupt Controller. Defaults to the machine type setting.
+- `synic_timer` (Block List, Max: 1) SyNICTimer enables Synthetic Interrupt Controller Timers, reducing CPU load. Defaults to the machine type setting. (see [below for nested schema](#nestedblock--features--hyperv--synic_timer))
+- `tlb_flush` (Boolean) TLBFlush improves performances in overcommited environments. Requires vpindex. Defaults to the machine type setting.
+- `vapic` (Boolean) VAPIC improves the paravirtualized handling of interrupts. Defaults to the machine type setting.
+- `vendorid` (String) VendorID sets the hypervisor vendor id, visible to the vmi. String up to twelve characters.
+- `vpindex` (Boolean) VPIndex enables the Virtual Processor Index to help windows identifying virtual processors. Defaults to the machine type setting.
+
+<a id="nestedblock--features--hyperv--spinlocks"></a>
+### Nested Schema for `features.hyperv.spinlocks`
+
+Optional:
+
+- `enabled` (Boolean) Enabled determines if the feature should be enabled or disabled on the guest. Defaults to true.
+- `retries` (Number) Retries indicates the number of retries. Must be a value greater or equal 4096. Defaults to 4096.
+
+
+<a id="nestedblock--features--hyperv--synic_timer"></a>
+### Nested Schema for `features.hyperv.synic_timer`
+
+Optional:
+
+- `direct` (Boolean)
+- `enabled` (Boolean)
+
+
+
+<a id="nestedblock--features--kvm"></a>
+### Nested Schema for `features.kvm`
+
+Optional:
+
+- `hidden` (Boolean) Hide the KVM hypervisor from standard MSR based discovery. Defaults to false
+
 
 
 <a id="nestedblock--host_device"></a>

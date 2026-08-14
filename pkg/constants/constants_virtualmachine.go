@@ -29,6 +29,7 @@ const (
 	FieldVirtualMachineNodeSelector          = "node_selector"
 	FieldVirtualMachineCreateInitialSnapshot = "create_initial_snapshot"
 	FieldVirtualMachineHostDevice            = "host_device"
+	FieldVirtualMachineFeatures              = "features"
 
 	StateVirtualMachineStarting = "Starting"
 	StateVirtualMachineRunning  = "Running"
@@ -102,4 +103,46 @@ const (
 const (
 	FieldHostDeviceName       = "name"
 	FieldHostDeviceDeviceName = "device_name"
+)
+
+const (
+	FieldFeatureACPI = "acpi" // enabled/disabled
+
+	FieldFeatureAPIC               = "apic"
+	FieldFeatureAPICEnabled        = "enabled"
+	FieldFeatureAPICEndOfInterrupt = "end_of_interrupt"
+
+	FieldFeatureHyperV                = "hyperv"
+	FieldFeatureHyperVEVMCS           = "evmcs"           //enabled/disabled
+	FieldFeatureHyperVFrequencies     = "frequencies"     //enabled/disabled
+	FieldFeatureHyperVIPI             = "ipi"             //enabled/disabled
+	FieldFeatureHyperVReenlightenment = "reenlightenment" //enabled/disabled
+	FieldFeatureHyperVRelaxed         = "relaxed"         //enabled/disabled
+	FieldFeatureHyperVReset           = "reset"           //enabled/disabled
+	FieldFeatureHyperVRuntime         = "runtime"         //enabled/disabled
+
+	FieldFeatureHyperVSpinlocks        = "spinlocks"
+	FieldFeatureHyperVSpinlocksEnabled = "enabled"
+	FieldFeatureHyperVSpinlocksRetries = "retries"
+
+	FieldFeatureHyperVSyNIC = "synic" //enabled/disabled
+
+	FieldFeatureHyperVSyNICTimer        = "synic_timer"
+	FieldFeatureHyperVSyNICTimerEnabled = "enabled"
+	FieldFeatureHyperVSyNICTimerDirect  = "direct"
+
+	FieldFeatureHyperVTLBFlush = "tlb_flush" //enabled/disabled
+	FieldFeatureHyperVVAPIC    = "vapic"     //enabled/disabled
+
+	FieldFeatureHyperVVendorId = "vendorid" // string, enabled if given
+
+	FieldFeatureHyperVVPIndex = "vpindex" //enabled/disabled
+
+	FieldFeatureHyperVPassthrough = "hyperv_passthrough" //gosec:disable G101 -- false positive, enable/disable
+
+	FieldFeatureKVM       = "kvm"
+	FieldFeatureKVMHidden = "hidden"
+
+	FieldFeaturePVSpinLock = "pvspinlock"
+	FieldFeatureSMM        = "smm"
 )
