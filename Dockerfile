@@ -86,7 +86,15 @@ EOF
 FROM base AS validate
 ARG MK_REPO
 ARG MK_REPO_ID
-ARG PROVIDER_VERSION v0.0.0-dev
+# Create a temporary Git baseline inside the image so the dirty check only
+# reports files changed by validation commands.
+RUN rm -rf .git \
+ && git config --global user.email "ci@example.com" \
+ && git config --global user.name "ci" \
+ && git init 2>/dev/null \
+ && echo ".cache/" >> .git/info/exclude \
+ && git add . \
+ && git commit -q -m "commit for validate"
 RUN --mount=type=cache,target=/go/pkg/mod,id=harvester-go-mod-${MK_REPO_ID} \
     --mount=type=cache,target=/go/src/${MK_REPO}/.cache/go-build,id=harvester-go-build-${MK_REPO_ID} \
     <<EOF
@@ -100,15 +108,14 @@ echo Running validation: golangci-lint
 golangci-lint run --timeout 5m
 
 echo Running validation: go fmt
-test -z "$(go fmt ${PACKAGES} | tee /dev/stderr)"
+go fmt ${PACKAGES}
 
 echo "Running dirty check"
 
 go generate
 
-if echo "$PROVIDER_VERSION" | grep dirty ; then
+if [ -n "$(git status --porcelain | tee /dev/stderr)" ]; then
     echo "Git is dirty"
-    git status
     git diff
     exit 1
 fi
