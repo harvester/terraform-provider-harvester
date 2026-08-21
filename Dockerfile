@@ -124,7 +124,7 @@ ARG PROVIDER_VERSION v0.0.0-dev
 ARG MK_REPO
 ARG TARGETARCH
 
-ENV ARCH=${TARGETPLATFORM#linux/}
+ENV ARCH=${TARGETARCH}
 ENV PROVIDERS_DIR /root/.terraform.d/plugins/terraform.local/local/harvester
 ENV PROVIDER_DIR ${PROVIDERS_DIR}/${PROVIDER_VERSION}/linux_${ARCH}
 # hadolint ignore=DL3037
