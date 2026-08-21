@@ -27,7 +27,7 @@ MK_SYSTEM_ID := $(strip $(shell \
 
 MK_REPO             := github.com/harvester/terraform-provider-harvester
 MK_REPO_ID          := $(shell printf '%s' "$(ROOT)$(MK_SYSTEM_ID)" | sha256sum | cut -c1-8)
-MK_PROVIDER_VERSION := $(shell git describe --tags --always --dirty)
+MK_IMAGE_TAG        := $(shell git describe --tags --always --dirty)
 MK_CODECOV_TOKEN    ?=
 MK_DOCKER_PROGRESS  ?= plain
 
@@ -44,7 +44,6 @@ DOCKER_BUILD := \
 		--build-arg MK_REPO=$(MK_REPO) \
 		--build-arg MK_REPO_ID=$(MK_REPO_ID) \
 		--build-arg MK_HOST_ARCH=$(MK_HOST_ARCH) \
-		--build-arg PROVIDER_VERSION=$(MK_PROVIDER_VERSION) \
 		--build-arg TERRAFORM_VERSION=$(MK_TERRAFORM_VERSION) \
 		--build-arg TERRAFORM_SUM_amd64=${MK_TERRAFORM_SUM_amd64} \
 		--build-arg TERRAFORM_SUM_arm64=${MK_TERRAFORM_SUM_arm64} \
@@ -79,7 +78,7 @@ test: validate
 # ---- Package harvester-terraform-provider image ----
 package: build
 	$(BANNER)
-	$(DOCKER_BUILD) --target package -t terraform-provider-harvester:$(MK_PROVIDER_VERSION)
+	$(DOCKER_BUILD) --target package -t terraform-provider-harvester:$(MK_IMAGE_TAG)
 
 ci: validate build test package
 	$(BANNER)
