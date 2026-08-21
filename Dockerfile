@@ -120,7 +120,7 @@ COPY --from=build /go/src/${MK_REPO}/docs/ /docs/
 
 # ---- package output ----
 FROM ${MK_PACKAGE_BASE} as package
-ARG PROVIDER_VERSION v0.0.0-dev
+ARG PROVIDER_VERSION 0.0.0-dev
 ARG MK_REPO
 ARG TARGETARCH
 
