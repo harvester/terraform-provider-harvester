@@ -1,5 +1,11 @@
-ARG MK_GOLANGCI_LINT_IMAGE
-ARG MK_PACKAGE_BASE registry.suse.com/bci/bci-base:16.1
+ARG MK_GOLANGCI_LINT_IMAGE=golangci/golangci-lint:v2.8.0-alpine@sha256:1194f3bfcbaeeb92d8d159fdfbe2a79d18ec0a222d9d984b1438906bca416b51
+ARG MK_PACKAGE_BASE=registry.suse.com/bci/bci-base:16.1
+ARG MK_REPO=github.com/harvester/terraform-provider-harvester
+ARG MK_REPO_ID=default
+ARG PROVIDER_VERSION=0.0.0-dev
+ARG TERRAFORM_VERSION=1.4.6
+ARG TERRAFORM_SUM_amd64=e079db1a8945e39b1f8ba4e513946b3ab9f32bd5a2bdf19b9b186d22c5a3d53b
+ARG TERRAFORM_SUM_arm64=b38f5db944ac4942f11ceea465a91e365b0636febd9998c110fbbe95d61c3b26
 FROM ${MK_GOLANGCI_LINT_IMAGE} AS golangci-lint
 
 FROM golang:1.25-bookworm AS buildenv
@@ -24,7 +30,6 @@ COPY --from=golangci-lint /usr/bin/golangci-lint /usr/local/bin/golangci-lint
 # ---- base ----
 FROM buildenv AS base
 ARG MK_REPO
-ARG MK_REPO_ID
 WORKDIR /go/src/${MK_REPO}
 # to exclude some files, add them in .dockerignore
 COPY . .
@@ -118,8 +123,8 @@ COPY --from=build /go/src/${MK_REPO}/bin/ /bin/
 COPY --from=build /go/src/${MK_REPO}/docs/ /docs/
 
 # ---- package output ----
-FROM ${MK_PACKAGE_BASE} as package
-ARG PROVIDER_VERSION 0.0.0-dev
+FROM ${MK_PACKAGE_BASE} AS package
+ARG PROVIDER_VERSION
 ARG MK_REPO
 ARG TARGETARCH
 
@@ -148,4 +153,7 @@ terraform {
 }
 provider "harvester" {
   kubeconfig = "kubeconfig"
+}
 EOF
+
+WORKDIR /data
