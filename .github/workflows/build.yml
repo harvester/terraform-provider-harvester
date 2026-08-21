@@ -19,6 +19,10 @@ jobs:
     - name: Run ci
       run: make ci
 
+    - name: Validate package image
+      run: |
+        docker run --rm --entrypoint sh "terraform-provider-harvester:$(make version)" -c 'terraform init'
+
     - name: Upload binaries
       uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
       with:
@@ -37,20 +41,6 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
 
-    - name: Download binaries
-      uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
-      with:
-        name: binaries_artifact
-        path: ./bin/
-
-    - name: Add executable permission
-      run: |
-        chmod +x ./bin/*
-
-    - name: Copy binaries to package
-      run: |
-        cp -r ./bin/* ./package/
-
     - name: Read Secrets
       uses: rancher-eio/read-vault-secrets@0da85151ad1f19ed7986c41587e45aac1ace74b6 # v3
       with:
@@ -66,7 +56,7 @@ jobs:
 
     - name: Declare branch
       run: |
-        echo "branch=${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}" >> "$GITHUB_ENV"
+        echo "BRANCH=${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}" >> "$GITHUB_ENV"
 
     - name: Login to Docker Hub
       uses: docker/login-action@650006c6eb7dba73a995cc03b0b2d7f5ca915bee # v4
@@ -79,27 +69,20 @@ jobs:
       if: ${{ startsWith(github.ref, 'refs/heads/') }}
       uses: docker/build-push-action@f9f3042f7e2789586610d6e8b85c8f03e5195baf # v7
       with:
-        context: package/
+        context: .
         push: true
         platforms: linux/amd64,linux/arm64
-        tags: rancher/terraform-provider-harvester:${{ env.branch }}-head
-        file: package/Dockerfile
-        build-args: |
-          TERRAFORM_VERSION=1.4.6
-          TERRAFORM_SUM_amd64=e079db1a8945e39b1f8ba4e513946b3ab9f32bd5a2bdf19b9b186d22c5a3d53b
-          TERRAFORM_SUM_arm64=b38f5db944ac4942f11ceea465a91e365b0636febd9998c110fbbe95d61c3b26
+        tags: rancher/terraform-provider-harvester:${{ env.BRANCH }}-head
+        file: Dockerfile
+        target: package
 
     - name: docker-publish-with-tag
       if: ${{ startsWith(github.ref, 'refs/tags/') }}
       uses: docker/build-push-action@f9f3042f7e2789586610d6e8b85c8f03e5195baf # v7
       with:
-        context: package/
+        context: .
         push: true
         platforms: linux/amd64,linux/arm64
         tags: rancher/terraform-provider-harvester:${{ github.ref_name }}
-        file: package/Dockerfile
-        build-args: |
-          VERSION=${{ github.ref_name }}
-          TERRAFORM_VERSION=1.4.6
-          TERRAFORM_SUM_amd64=e079db1a8945e39b1f8ba4e513946b3ab9f32bd5a2bdf19b9b186d22c5a3d53b
-          TERRAFORM_SUM_arm64=b38f5db944ac4942f11ceea465a91e365b0636febd9998c110fbbe95d61c3b26
+        file: Dockerfile
+        target: package
