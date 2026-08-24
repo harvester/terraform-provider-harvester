@@ -9,9 +9,10 @@ ARG TERRAFORM_SUM_arm64
 ARG TARGETPLATFORM
 ENV GOTOOLCHAIN=auto
 
-RUN --mount=type=cache,target=/var/lib/apt/lists apt-get update -qq \
+RUN apt-get update -qq \
  && apt-get install -y --no-install-recommends \
-  unzip
+  unzip \
+ && rm -rf /var/lib/apt/lists/*
 
 ENV ARCH=${TARGETPLATFORM#linux/}
 RUN curl -sfL -o /tmp/terraform.zip "https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_${ARCH}.zip" \
