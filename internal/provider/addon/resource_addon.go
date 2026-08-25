@@ -109,6 +109,18 @@ func waitForAddonDisabled(ctx context.Context, c *client.Client, d *schema.Resou
 	return waitForAddonState(ctx, c, d, namespace, name, timeoutKey, pending, target)
 }
 
+// waitForAddonRemoved waits until an addon object created by this provider is
+// actually gone after deletion.
+func waitForAddonRemoved(ctx context.Context, c *client.Client, d *schema.ResourceData, namespace, name, timeoutKey string) error {
+	pending := []string{
+		string(harvsterv1.AddonDisabled),
+		string(harvsterv1.AddonDisabling),
+		constants.StateAddonInit,
+	}
+	target := []string{constants.StateCommonRemoved}
+	return waitForAddonState(ctx, c, d, namespace, name, timeoutKey, pending, target)
+}
+
 func waitForAddonState(ctx context.Context, c *client.Client, d *schema.ResourceData, namespace, name, timeoutKey string, pending, target []string) error {
 	stateConf := &retry.StateChangeConf{
 		Pending: pending,
@@ -125,7 +137,9 @@ func waitForAddonState(ctx context.Context, c *client.Client, d *schema.Resource
 	return err
 }
 
-// The addon cannot be created. It can only be updated (enabled/configured).
+// Built-in addons already exist on the cluster and are adopted (then
+// enabled/configured). When no addon with the given name exists, a custom
+// experimental addon is created from repo/chart/version.
 func resourceAddonCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	c, err := meta.(*config.Config).K8sClient()
 	if err != nil {
@@ -134,16 +148,34 @@ func resourceAddonCreate(ctx context.Context, d *schema.ResourceData, meta inter
 	namespace := d.Get(constants.FieldCommonNamespace).(string)
 	name := d.Get(constants.FieldCommonName).(string)
 	obj, err := c.HarvesterClient.HarvesterhciV1beta1().Addons(namespace).Get(ctx, name, metav1.GetOptions{})
-	if err != nil {
+	switch {
+	case err == nil:
+		if diags := updateAddon(ctx, c, d, namespace, obj); diags.HasError() {
+			return diags
+		}
+	case apierrors.IsNotFound(err):
+		if diags := createAddon(ctx, c, d, namespace, name); diags.HasError() {
+			return diags
+		}
+	default:
 		return diag.FromErr(err)
-	}
-	if diags := updateAddon(ctx, c, d, namespace, obj); diags.HasError() {
-		return diags
 	}
 	if err := waitForAddonApplied(ctx, c, d, namespace, name, schema.TimeoutCreate); err != nil {
 		return diag.FromErr(err)
 	}
 	return resourceAddonRead(ctx, d, meta)
+}
+
+func createAddon(ctx context.Context, c *client.Client, d *schema.ResourceData, namespace, name string) diag.Diagnostics {
+	toCreate, err := util.ResourceConstruct(ctx, d, Creator(namespace, name))
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	created, err := c.HarvesterClient.HarvesterhciV1beta1().Addons(namespace).Create(ctx, toCreate.(*harvsterv1.Addon), metav1.CreateOptions{})
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	return diag.FromErr(resourceAddonImport(d, created))
 }
 
 func resourceAddonRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -192,7 +224,9 @@ func resourceAddonUpdate(ctx context.Context, d *schema.ResourceData, meta inter
 	return resourceAddonRead(ctx, d, meta)
 }
 
-// The addon cannot be deleted. It can only be disabled.
+// Built-in (adopted) addons cannot be deleted, destroying them only disables
+// the addon. Addons created by this provider (marked with the auto-delete
+// annotation) are disabled and then actually deleted.
 func resourceAddonDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	c, err := meta.(*config.Config).K8sClient()
 	if err != nil {
@@ -220,6 +254,14 @@ func resourceAddonDelete(ctx context.Context, d *schema.ResourceData, meta inter
 			return diag.FromErr(err)
 		}
 		if err := waitForAddonDisabled(ctx, c, d, namespace, name, schema.TimeoutDelete); err != nil {
+			return diag.FromErr(err)
+		}
+	}
+	if obj.Annotations[constants.AnnotationAddonAutoDelete] == enabledLabelValue {
+		if err := c.HarvesterClient.HarvesterhciV1beta1().Addons(namespace).Delete(ctx, name, metav1.DeleteOptions{}); err != nil && !apierrors.IsNotFound(err) {
+			return diag.FromErr(err)
+		}
+		if err := waitForAddonRemoved(ctx, c, d, namespace, name, schema.TimeoutDelete); err != nil {
 			return diag.FromErr(err)
 		}
 	}
