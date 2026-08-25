@@ -1,4 +1,4 @@
-ARG MK_GOLANGCI_LINT_IMAGE=golangci/golangci-lint:v2.8.0-alpine@sha256:1194f3bfcbaeeb92d8d159fdfbe2a79d18ec0a222d9d984b1438906bca416b51
+ARG MK_GOLANGCI_LINT_IMAGE=golangci/golangci-lint:v2.12.2-alpine@sha256:91b27804074a0bacea298707f016911e60cf0cdbc6c7bf5ccacb5f0606d18d60
 ARG MK_PACKAGE_BASE=registry.suse.com/bci/bci-base:16.1
 ARG MK_REPO=github.com/harvester/terraform-provider-harvester
 ARG MK_REPO_ID=default
@@ -8,17 +8,17 @@ ARG TERRAFORM_SUM_amd64=e079db1a8945e39b1f8ba4e513946b3ab9f32bd5a2bdf19b9b186d22
 ARG TERRAFORM_SUM_arm64=b38f5db944ac4942f11ceea465a91e365b0636febd9998c110fbbe95d61c3b26
 FROM ${MK_GOLANGCI_LINT_IMAGE} AS golangci-lint
 
-FROM golang:1.25-bookworm AS buildenv
+FROM registry.suse.com/bci/golang:1.26 AS buildenv
 ARG TERRAFORM_VERSION
 ARG TERRAFORM_SUM_amd64
 ARG TERRAFORM_SUM_arm64
 ARG TARGETPLATFORM
 ENV GOTOOLCHAIN=auto
 
-RUN apt-get update -qq \
- && apt-get install -y --no-install-recommends \
-  unzip \
- && rm -rf /var/lib/apt/lists/*
+RUN zypper -n rm container-suseconnect \
+ && zypper -n install git curl unzip \
+ && zypper -n clean -a \
+ && rm -rf /tmp/* /var/tmp/* /usr/share/doc/packages/*
 
 ENV ARCH=${TARGETPLATFORM#linux/}
 RUN curl -sfL -o /tmp/terraform.zip "https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_${ARCH}.zip" \
