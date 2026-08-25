@@ -20,7 +20,10 @@ func (c *Constructor) Setup() util.Processors {
 		Tags(&c.Addon.Labels).
 		Labels(&c.Addon.Labels).
 		Description(&c.Addon.Annotations).
-		Bool(constants.FieldAddonEnabled, &c.Addon.Spec.Enabled, false).
+		// enabled must be a required processor: non-required processors are read
+		// with GetOk, which skips zero values, so `enabled = false` would never
+		// be applied on update and the addon could not be disabled in place.
+		Bool(constants.FieldAddonEnabled, &c.Addon.Spec.Enabled, true).
 		String(constants.FieldAddonValuesContent, &c.Addon.Spec.ValuesContent, false)
 }
 

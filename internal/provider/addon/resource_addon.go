@@ -123,7 +123,7 @@ func resourceAddonDelete(ctx context.Context, d *schema.ResourceData, meta inter
 }
 
 func updateAddon(ctx context.Context, c *client.Client, d *schema.ResourceData, namespace string, oldAddon *harvsterv1.Addon) diag.Diagnostics {
-	toUpdate, err := util.ResourceConstruct(ctx, d, Updater(oldAddon))
+	toUpdate, err := util.ResourceConstruct(ctx, d, Updater(oldAddon.DeepCopy()))
 	if err != nil {
 		return diag.FromErr(err)
 	}
