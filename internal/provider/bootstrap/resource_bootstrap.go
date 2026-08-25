@@ -22,6 +22,7 @@ const (
 	bootstrapDefaultUser        = "admin"
 	bootstrapDefaultTTL         = 60000
 	bootstrapDefaultSessionDesc = "Terraform bootstrap admin session"
+	authorizationHeader         = "Authorization"
 )
 
 type loginRequestPayload struct {
@@ -94,7 +95,7 @@ func resourceBootstrapCreate(ctx context.Context, d *schema.ResourceData, meta i
 		if err != nil {
 			return diag.FromErr(fmt.Errorf("failed to marshal change password data: %v", err))
 		}
-		changePasswordResp, err := util.DoPost(changePasswordURL, string(changePasswordData), "", true, map[string]string{"Authorization": fmt.Sprintf("Bearer %s", token)})
+		changePasswordResp, err := util.DoPost(changePasswordURL, string(changePasswordData), "", true, map[string]string{authorizationHeader: fmt.Sprintf("Bearer %s", token)})
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -106,7 +107,7 @@ func resourceBootstrapCreate(ctx context.Context, d *schema.ResourceData, meta i
 	// get kubeconfig
 	log.Printf("Doing generate kubeconfig")
 	genKubeConfigURL := fmt.Sprintf("%s/%s", apiURL, "v1/management.cattle.io.clusters/local?action=generateKubeconfig")
-	genKubeConfigResp, err := util.DoPost(genKubeConfigURL, "", "", true, map[string]string{"Authorization": fmt.Sprintf("Bearer %s", token)})
+	genKubeConfigResp, err := util.DoPost(genKubeConfigURL, "", "", true, map[string]string{authorizationHeader: fmt.Sprintf("Bearer %s", token)})
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -157,7 +158,7 @@ func resourceBootstrapRead(ctx context.Context, d *schema.ResourceData, meta int
 
 	log.Printf("Doing generate kubeconfig")
 	genKubeConfigURL := fmt.Sprintf("%s/%s", apiURL, "v1/management.cattle.io.clusters/local?action=generateKubeconfig")
-	genKubeConfigResp, err := util.DoPost(genKubeConfigURL, "", "", true, map[string]string{"Authorization": fmt.Sprintf("Bearer %s", token)})
+	genKubeConfigResp, err := util.DoPost(genKubeConfigURL, "", "", true, map[string]string{authorizationHeader: fmt.Sprintf("Bearer %s", token)})
 	if err != nil {
 		return diag.FromErr(err)
 	}

@@ -20,6 +20,16 @@ func TestNetworkInterface(t *testing.T) {
 		expectError error
 	}
 
+	const (
+		networkName0   = "net0"
+		networkName1   = "net1"
+		networkName2   = "net2"
+		interfaceName0 = "eth0"
+		linkLocalIPv60 = "fe80::21f:bcff:fe13:405/64"
+		ipv4Address0   = "192.168.178.64/24"
+		ipv4Address1   = "192.168.180.64/24"
+	)
+
 	properties := []string{
 		constants.FieldNetworkInterfaceName,
 		constants.FieldNetworkInterfaceType,
@@ -114,7 +124,7 @@ func TestNetworkInterface(t *testing.T) {
 									Devices: kubevirtv1.Devices{
 										Interfaces: []kubevirtv1.Interface{
 											{
-												Name: "net0",
+												Name: networkName0,
 												InterfaceBindingMethod: kubevirtv1.InterfaceBindingMethod{
 													Bridge: &kubevirtv1.InterfaceBridge{},
 												},
@@ -131,9 +141,9 @@ func TestNetworkInterface(t *testing.T) {
 					Status: kubevirtv1.VirtualMachineInstanceStatus{
 						Interfaces: []kubevirtv1.VirtualMachineInstanceNetworkInterface{
 							{
-								Name:          "net0",
-								InterfaceName: "eth0",
-								IPs:           []string{"169.254.10.140/24", "fe80::21f:bcff:fe13:405/64"},
+								Name:          networkName0,
+								InterfaceName: interfaceName0,
+								IPs:           []string{"169.254.10.140/24", linkLocalIPv60},
 							},
 						},
 					},
@@ -141,7 +151,7 @@ func TestNetworkInterface(t *testing.T) {
 			},
 			expectation: []map[string]interface{}{
 				{
-					constants.FieldNetworkInterfaceName:         "net0",
+					constants.FieldNetworkInterfaceName:         networkName0,
 					constants.FieldNetworkInterfaceType:         builder.NetworkInterfaceTypeBridge,
 					constants.FieldNetworkInterfaceModel:        "",
 					constants.FieldNetworkInterfaceMACAddress:   "",
@@ -167,7 +177,7 @@ func TestNetworkInterface(t *testing.T) {
 									Devices: kubevirtv1.Devices{
 										Interfaces: []kubevirtv1.Interface{
 											{
-												Name: "net0",
+												Name: networkName0,
 												InterfaceBindingMethod: kubevirtv1.InterfaceBindingMethod{
 													Bridge: &kubevirtv1.InterfaceBridge{},
 												},
@@ -184,9 +194,9 @@ func TestNetworkInterface(t *testing.T) {
 					Status: kubevirtv1.VirtualMachineInstanceStatus{
 						Interfaces: []kubevirtv1.VirtualMachineInstanceNetworkInterface{
 							{
-								Name:          "net0",
-								InterfaceName: "eth0",
-								IPs:           []string{"192.168.178.64/24", "fe80::21f:bcff:fe13:405/64"},
+								Name:          networkName0,
+								InterfaceName: interfaceName0,
+								IPs:           []string{ipv4Address0, linkLocalIPv60},
 							},
 						},
 					},
@@ -194,15 +204,15 @@ func TestNetworkInterface(t *testing.T) {
 			},
 			expectation: []map[string]interface{}{
 				{
-					constants.FieldNetworkInterfaceName:          "net0",
+					constants.FieldNetworkInterfaceName:          networkName0,
 					constants.FieldNetworkInterfaceType:          builder.NetworkInterfaceTypeBridge,
 					constants.FieldNetworkInterfaceModel:         "",
 					constants.FieldNetworkInterfaceMACAddress:    "",
 					constants.FieldNetworkInterfaceNetworkName:   "",
 					constants.FieldNetworkInterfaceBootOrder:     &[]uint{1}[0],
 					constants.FieldNetworkInterfaceWaitForLease:  false,
-					constants.FieldNetworkInterfaceIPAddress:     "192.168.178.64/24",
-					constants.FieldNetworkInterfaceInterfaceName: "eth0",
+					constants.FieldNetworkInterfaceIPAddress:     ipv4Address0,
+					constants.FieldNetworkInterfaceInterfaceName: interfaceName0,
 				},
 			},
 			expectError: nil,
@@ -222,21 +232,21 @@ func TestNetworkInterface(t *testing.T) {
 									Devices: kubevirtv1.Devices{
 										Interfaces: []kubevirtv1.Interface{
 											{
-												Name: "net0",
+												Name: networkName0,
 												InterfaceBindingMethod: kubevirtv1.InterfaceBindingMethod{
 													Bridge: &kubevirtv1.InterfaceBridge{},
 												},
 												BootOrder: &[]uint{1}[0],
 											},
 											{
-												Name: "net1",
+												Name: networkName1,
 												InterfaceBindingMethod: kubevirtv1.InterfaceBindingMethod{
 													Bridge: &kubevirtv1.InterfaceBridge{},
 												},
 												BootOrder: &[]uint{2}[0],
 											},
 											{
-												Name: "net2",
+												Name: networkName2,
 												InterfaceBindingMethod: kubevirtv1.InterfaceBindingMethod{
 													Bridge: &kubevirtv1.InterfaceBridge{},
 												},
@@ -253,19 +263,19 @@ func TestNetworkInterface(t *testing.T) {
 					Status: kubevirtv1.VirtualMachineInstanceStatus{
 						Interfaces: []kubevirtv1.VirtualMachineInstanceNetworkInterface{
 							{
-								Name:          "net0",
-								InterfaceName: "eth0",
-								IPs:           []string{"192.168.178.64/24", "fe80::21f:bcff:fe13:405/64"},
+								Name:          networkName0,
+								InterfaceName: interfaceName0,
+								IPs:           []string{ipv4Address0, linkLocalIPv60},
 							},
 							{
-								Name:          "net1",
+								Name:          networkName1,
 								InterfaceName: "eth1",
 								IPs:           []string{"fe80::21f:bcff:fe13:406/64"},
 							},
 							{
-								Name:          "net2",
+								Name:          networkName2,
 								InterfaceName: "eth2",
-								IPs:           []string{"192.168.180.64/24", "169.254.180.64/24", "201.168.180.64/24"},
+								IPs:           []string{ipv4Address1, "169.254.180.64/24", "201.168.180.64/24"},
 							},
 						},
 					},
@@ -273,18 +283,18 @@ func TestNetworkInterface(t *testing.T) {
 			},
 			expectation: []map[string]interface{}{
 				{
-					constants.FieldNetworkInterfaceName:          "net0",
+					constants.FieldNetworkInterfaceName:          networkName0,
 					constants.FieldNetworkInterfaceType:          builder.NetworkInterfaceTypeBridge,
 					constants.FieldNetworkInterfaceModel:         "",
 					constants.FieldNetworkInterfaceMACAddress:    "",
 					constants.FieldNetworkInterfaceNetworkName:   "",
 					constants.FieldNetworkInterfaceBootOrder:     &[]uint{1}[0],
 					constants.FieldNetworkInterfaceWaitForLease:  false,
-					constants.FieldNetworkInterfaceIPAddress:     "192.168.178.64/24",
-					constants.FieldNetworkInterfaceInterfaceName: "eth0",
+					constants.FieldNetworkInterfaceIPAddress:     ipv4Address0,
+					constants.FieldNetworkInterfaceInterfaceName: interfaceName0,
 				},
 				{
-					constants.FieldNetworkInterfaceName:         "net1",
+					constants.FieldNetworkInterfaceName:         networkName1,
 					constants.FieldNetworkInterfaceType:         builder.NetworkInterfaceTypeBridge,
 					constants.FieldNetworkInterfaceModel:        "",
 					constants.FieldNetworkInterfaceMACAddress:   "",
@@ -293,14 +303,14 @@ func TestNetworkInterface(t *testing.T) {
 					constants.FieldNetworkInterfaceWaitForLease: false,
 				},
 				{
-					constants.FieldNetworkInterfaceName:          "net2",
+					constants.FieldNetworkInterfaceName:          networkName2,
 					constants.FieldNetworkInterfaceType:          builder.NetworkInterfaceTypeBridge,
 					constants.FieldNetworkInterfaceModel:         "",
 					constants.FieldNetworkInterfaceMACAddress:    "",
 					constants.FieldNetworkInterfaceNetworkName:   "",
 					constants.FieldNetworkInterfaceBootOrder:     &[]uint{3}[0],
 					constants.FieldNetworkInterfaceWaitForLease:  false,
-					constants.FieldNetworkInterfaceIPAddress:     "192.168.180.64/24",
+					constants.FieldNetworkInterfaceIPAddress:     ipv4Address1,
 					constants.FieldNetworkInterfaceInterfaceName: "eth2",
 				},
 			},
@@ -321,7 +331,7 @@ func TestNetworkInterface(t *testing.T) {
 									Devices: kubevirtv1.Devices{
 										Interfaces: []kubevirtv1.Interface{
 											{
-												Name: "net0",
+												Name: networkName0,
 												InterfaceBindingMethod: kubevirtv1.InterfaceBindingMethod{
 													Bridge: &kubevirtv1.InterfaceBridge{},
 												},
@@ -338,9 +348,9 @@ func TestNetworkInterface(t *testing.T) {
 					Status: kubevirtv1.VirtualMachineInstanceStatus{
 						Interfaces: []kubevirtv1.VirtualMachineInstanceNetworkInterface{
 							{
-								Name:          "net0",
-								InterfaceName: "eth0",
-								IPs:           []string{"201.168.180.64/24", "169.254.180.64/24", "192.168.180.64/24"},
+								Name:          networkName0,
+								InterfaceName: interfaceName0,
+								IPs:           []string{"201.168.180.64/24", "169.254.180.64/24", ipv4Address1},
 							},
 						},
 					},
@@ -348,15 +358,15 @@ func TestNetworkInterface(t *testing.T) {
 			},
 			expectation: []map[string]interface{}{
 				{
-					constants.FieldNetworkInterfaceName:          "net0",
+					constants.FieldNetworkInterfaceName:          networkName0,
 					constants.FieldNetworkInterfaceType:          builder.NetworkInterfaceTypeBridge,
 					constants.FieldNetworkInterfaceModel:         "",
 					constants.FieldNetworkInterfaceMACAddress:    "",
 					constants.FieldNetworkInterfaceNetworkName:   "",
 					constants.FieldNetworkInterfaceBootOrder:     &[]uint{1}[0],
 					constants.FieldNetworkInterfaceWaitForLease:  false,
-					constants.FieldNetworkInterfaceIPAddress:     "192.168.180.64/24",
-					constants.FieldNetworkInterfaceInterfaceName: "eth0",
+					constants.FieldNetworkInterfaceIPAddress:     ipv4Address1,
+					constants.FieldNetworkInterfaceInterfaceName: interfaceName0,
 				},
 			},
 			expectError: nil,
