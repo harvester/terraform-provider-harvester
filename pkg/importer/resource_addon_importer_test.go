@@ -4,6 +4,8 @@ import (
 	"testing"
 
 	harvsterv1 "github.com/harvester/harvester/pkg/apis/harvesterhci.io/v1beta1"
+	"github.com/rancher/wrangler/v3/pkg/condition"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/harvester/terraform-provider-harvester/pkg/constants"
@@ -145,6 +147,61 @@ func TestResourceAddonStateGetter(t *testing.T) {
 				if tags[key] != val {
 					t.Errorf("Tag %q: expected %q, got %q", key, val, tags[key])
 				}
+			}
+		})
+	}
+}
+
+// TestAddonMessage verifies the message surfaced in state follows the
+// failure > in-progress > completed priority.
+func TestAddonMessage(t *testing.T) {
+	cond := func(t condition.Cond, status corev1.ConditionStatus, message string) harvsterv1.Condition {
+		return harvsterv1.Condition{Type: t, Status: status, Message: message}
+	}
+	testcases := []struct {
+		name     string
+		addon    *harvsterv1.Addon
+		expected string
+	}{
+		{
+			name:     "no conditions yields empty message",
+			addon:    &harvsterv1.Addon{},
+			expected: "",
+		},
+		{
+			name: "failed operation wins over other conditions",
+			addon: &harvsterv1.Addon{
+				Status: harvsterv1.AddonStatus{Conditions: []harvsterv1.Condition{
+					cond(harvsterv1.AddonOperationInProgress, corev1.ConditionTrue, "installing"),
+					cond(harvsterv1.AddonOperationFailed, corev1.ConditionTrue, "helm install failed"),
+				}},
+			},
+			expected: "helm install failed",
+		},
+		{
+			name: "in-progress message when no failure",
+			addon: &harvsterv1.Addon{
+				Status: harvsterv1.AddonStatus{Conditions: []harvsterv1.Condition{
+					cond(harvsterv1.AddonOperationInProgress, corev1.ConditionTrue, "installing"),
+				}},
+			},
+			expected: "installing",
+		},
+		{
+			name: "completed message as fallback",
+			addon: &harvsterv1.Addon{
+				Status: harvsterv1.AddonStatus{Conditions: []harvsterv1.Condition{
+					cond(harvsterv1.AddonOperationFailed, corev1.ConditionFalse, ""),
+					cond(harvsterv1.AddonOperationCompleted, corev1.ConditionTrue, "addon deployed"),
+				}},
+			},
+			expected: "addon deployed",
+		},
+	}
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			if got := addonMessage(tc.addon); got != tc.expected {
+				t.Errorf("addonMessage() = %q, want %q", got, tc.expected)
 			}
 		})
 	}
