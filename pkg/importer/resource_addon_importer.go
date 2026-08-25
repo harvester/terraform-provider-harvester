@@ -21,10 +21,23 @@ func ResourceAddonStateGetter(obj *harvsterv1.Addon) (*StateGetter, error) {
 		constants.FieldAddonVersion:       obj.Spec.Version,
 	}
 	states[constants.FieldCommonState] = string(obj.Status.Status)
+	states[constants.FieldCommonMessage] = addonMessage(obj)
 	return &StateGetter{
 		ID:           helper.BuildID(obj.Namespace, obj.Name),
 		Name:         obj.Name,
 		ResourceType: constants.ResourceTypeAddon,
 		States:       states,
 	}, nil
+}
+
+// addonMessage surfaces the most relevant operation condition message:
+// a failure first, then an operation in progress, then the last completion.
+func addonMessage(obj *harvsterv1.Addon) string {
+	if harvsterv1.AddonOperationFailed.IsTrue(obj) {
+		return harvsterv1.AddonOperationFailed.GetMessage(obj)
+	}
+	if harvsterv1.AddonOperationInProgress.IsTrue(obj) {
+		return harvsterv1.AddonOperationInProgress.GetMessage(obj)
+	}
+	return harvsterv1.AddonOperationCompleted.GetMessage(obj)
 }
