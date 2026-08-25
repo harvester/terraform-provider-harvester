@@ -44,20 +44,29 @@ func ResourceAddon() *schema.Resource {
 	}
 }
 
+// failedConditionGrace is how long a wait tolerates an OperationFailed
+// condition left over from a previous operation: the controller only clears
+// it once it picks up the new operation, which can lag behind our update on a
+// busy cluster.
+const failedConditionGrace = 45 * time.Second
+
 // addonCurrentState maps an addon to a retry.StateChangeConf state. It fails
 // fast when the last operation failed, surfacing the controller's message.
 func addonCurrentState(obj *harvsterv1.Addon) (string, error) {
+	state := string(obj.Status.Status)
+	if obj.Status.Status == harvsterv1.AddonInitState {
+		state = constants.StateAddonInit
+	}
 	if harvsterv1.AddonOperationFailed.IsTrue(obj) {
-		return string(obj.Status.Status), fmt.Errorf("addon %s/%s operation failed: %s",
+		return state, fmt.Errorf("addon %s/%s operation failed: %s",
 			obj.Namespace, obj.Name, harvsterv1.AddonOperationFailed.GetMessage(obj))
 	}
-	if obj.Status.Status == harvsterv1.AddonInitState {
-		return constants.StateAddonInit, nil
-	}
-	return string(obj.Status.Status), nil
+	return state, nil
 }
 
 func addonStateRefresh(ctx context.Context, c *client.Client, namespace, name string) retry.StateRefreshFunc {
+	var sawProgress bool
+	graceDeadline := time.Now().Add(failedConditionGrace)
 	return func() (interface{}, string, error) {
 		obj, err := c.HarvesterClient.HarvesterhciV1beta1().Addons(namespace).Get(ctx, name, metav1.GetOptions{})
 		if err != nil {
@@ -66,7 +75,17 @@ func addonStateRefresh(ctx context.Context, c *client.Client, namespace, name st
 			}
 			return obj, constants.StateCommonError, err
 		}
+		if harvsterv1.AddonOperationInProgress.IsTrue(obj) {
+			sawProgress = true
+		}
 		state, err := addonCurrentState(obj)
+		if err != nil && !sawProgress && time.Now().Before(graceDeadline) {
+			// The failure predates our operation: keep waiting, the
+			// controller clears the condition when it starts processing the
+			// new spec. If nothing happens within the grace window the
+			// failure is surfaced as-is.
+			return obj, state, nil
+		}
 		return obj, state, err
 	}
 }
