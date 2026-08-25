@@ -31,14 +31,14 @@ data "harvester_addon" "pcidevices_controller" {
 
 ### Read-Only
 
-- `chart` (String)
+- `chart` (String) Helm chart name of the addon. Immutable on an existing addon (enforced by the Harvester webhook).
 - `description` (String) Any text you want that better describes this resource
-- `enabled` (Boolean)
+- `enabled` (Boolean) Whether the addon is deployed. This is declarative: adopting an already enabled addon without setting enabled = true disables it.
 - `id` (String) The ID of this resource.
 - `labels` (Map of String)
 - `message` (String)
-- `repo` (String)
+- `repo` (String) Helm repository URL of the addon chart. Read from the cluster for built-in addons; required together with chart and version to create a custom addon.
 - `state` (String)
 - `tags` (Map of String)
-- `values_content` (String)
-- `version` (String)
+- `values_content` (String) Helm values (YAML) applied to the addon chart. Once set it cannot be reset to empty from Terraform, overwrite it with new values instead.
+- `version` (String) Helm chart version of the addon. Read from the cluster for built-in addons; required together with repo and chart to create a custom addon.

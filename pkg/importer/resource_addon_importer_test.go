@@ -148,6 +148,18 @@ func TestResourceAddonStateGetter(t *testing.T) {
 					t.Errorf("Tag %q: expected %q, got %q", key, val, tags[key])
 				}
 			}
+
+			// repo/chart/version must round-trip now that they are
+			// user-configurable for custom addons.
+			if repo := getter.States[constants.FieldAddonRepo].(string); repo != tc.addon.Spec.Repo {
+				t.Errorf("Repo: expected %q, got %q", tc.addon.Spec.Repo, repo)
+			}
+			if chart := getter.States[constants.FieldAddonChart].(string); chart != tc.addon.Spec.Chart {
+				t.Errorf("Chart: expected %q, got %q", tc.addon.Spec.Chart, chart)
+			}
+			if version := getter.States[constants.FieldAddonVersion].(string); version != tc.addon.Spec.Version {
+				t.Errorf("Version: expected %q, got %q", tc.addon.Spec.Version, version)
+			}
 		})
 	}
 }
@@ -204,5 +216,30 @@ func TestAddonMessage(t *testing.T) {
 				t.Errorf("addonMessage() = %q, want %q", got, tc.expected)
 			}
 		})
+	}
+}
+
+// TestAddonUserLabels verifies the addon.harvesterhci.io/* labels never leak
+// into the user labels state (they would drift on every plan otherwise).
+func TestAddonUserLabels(t *testing.T) {
+	getter, err := ResourceAddonStateGetter(&harvsterv1.Addon{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "tf-test-dummy",
+			Namespace: "harvester-system",
+			Labels: map[string]string{
+				"addon.harvesterhci.io/experimental": "true",
+				"team":                               "infra",
+			},
+		},
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	labels := getter.States[constants.FieldCommonLabels].(map[string]string)
+	if _, leaked := labels["addon.harvesterhci.io/experimental"]; leaked {
+		t.Errorf("experimental label leaked into user labels: %v", labels)
+	}
+	if labels["team"] != "infra" {
+		t.Errorf("user label lost: %v", labels)
 	}
 }
