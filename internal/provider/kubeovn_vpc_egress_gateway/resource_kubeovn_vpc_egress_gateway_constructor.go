@@ -29,7 +29,7 @@ func (c *Constructor) Setup() util.Processors {
 		{
 			Field: constants.FieldKubeOVNVpcEgressGatewayReplicas,
 			Parser: func(i interface{}) error {
-				c.EGW.Spec.Replicas = int32(i.(int))
+				c.EGW.Spec.Replicas = int32(i.(int)) //nolint:gosec
 				return nil
 			},
 		},
@@ -53,9 +53,9 @@ func (c *Constructor) Setup() util.Processors {
 				m := i.(map[string]interface{})
 				c.EGW.Spec.BFD = kubeovnv1.VpcEgressGatewayBFDConfig{
 					Enabled:    m[constants.FieldKubeOVNVpcEgressGatewayBFDEnabled].(bool),
-					MinRX:      int32(m[constants.FieldKubeOVNVpcEgressGatewayBFDMinRX].(int)),
-					MinTX:      int32(m[constants.FieldKubeOVNVpcEgressGatewayBFDMinTX].(int)),
-					Multiplier: int32(m[constants.FieldKubeOVNVpcEgressGatewayBFDMultiplier].(int)),
+					MinRX:      int32(m[constants.FieldKubeOVNVpcEgressGatewayBFDMinRX].(int)),      //nolint:gosec
+					MinTX:      int32(m[constants.FieldKubeOVNVpcEgressGatewayBFDMinTX].(int)),      //nolint:gosec
+					Multiplier: int32(m[constants.FieldKubeOVNVpcEgressGatewayBFDMultiplier].(int)), //nolint:gosec
 				}
 				return nil
 			},
