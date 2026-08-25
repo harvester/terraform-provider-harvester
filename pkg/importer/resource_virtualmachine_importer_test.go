@@ -777,3 +777,63 @@ func TestConfigMapSecretDiskImport(t *testing.T) {
 		t.Errorf("disk 1 secret_name = %v, want my-secret", disks[1][constants.FieldDiskSecretName])
 	}
 }
+
+func TestStripInjectedSSHUser(t *testing.T) {
+	newImporter := func(sshUser string) *VMImporter {
+		labels := map[string]string{}
+		if sshUser != "" {
+			labels[builder.LabelPrefixHarvesterTag+constants.LabelSSHUsername] = sshUser
+		}
+		return &VMImporter{
+			VirtualMachine: &kubevirtv1.VirtualMachine{
+				ObjectMeta: metav1.ObjectMeta{
+					Labels: labels,
+				},
+			},
+		}
+	}
+	testcases := []struct {
+		name     string
+		sshUser  string
+		input    string
+		expected string
+	}{
+		{
+			name:     "no ssh-user tag leaves user_data unchanged",
+			sshUser:  "",
+			input:    "#cloud-config\nuser: sles\n",
+			expected: "#cloud-config\nuser: sles\n",
+		},
+		{
+			name:     "fully injected user_data reads back as empty",
+			sshUser:  "sles",
+			input:    "#cloud-config\nuser: sles\n",
+			expected: "",
+		},
+		{
+			name:     "injected trailing user line is stripped",
+			sshUser:  "sles",
+			input:    "#cloud-config\npackages:\n  - qemu-guest-agent\n\nuser: sles\n",
+			expected: "#cloud-config\npackages:\n  - qemu-guest-agent\n",
+		},
+		{
+			name:     "user line in the middle is kept",
+			sshUser:  "sles",
+			input:    "#cloud-config\nuser: sles\npackages:\n  - vim\n",
+			expected: "#cloud-config\nuser: sles\npackages:\n  - vim\n",
+		},
+		{
+			name:     "trailing user line for another user is kept",
+			sshUser:  "sles",
+			input:    "#cloud-config\n\nuser: opensuse\n",
+			expected: "#cloud-config\n\nuser: opensuse\n",
+		},
+	}
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			if got := newImporter(tc.sshUser).stripInjectedSSHUser(tc.input); got != tc.expected {
+				t.Errorf("stripInjectedSSHUser() = %q, want %q", got, tc.expected)
+			}
+		})
+	}
+}
