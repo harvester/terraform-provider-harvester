@@ -111,5 +111,9 @@ func DataSourceSchema() map[string]*schema.Schema {
 	s[constants.FieldCommonName].Optional = true
 	s[constants.FieldImageDisplayName].Computed = false
 	s[constants.FieldImageDisplayName].Optional = true
+	// Exactly one lookup key: silently preferring one of the two would hide
+	// configuration mistakes, and providing neither cannot resolve an image.
+	s[constants.FieldCommonName].ExactlyOneOf = []string{constants.FieldCommonName, constants.FieldImageDisplayName}
+	s[constants.FieldImageDisplayName].ExactlyOneOf = []string{constants.FieldCommonName, constants.FieldImageDisplayName}
 	return s
 }
