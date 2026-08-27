@@ -99,6 +99,7 @@ Read-Only:
 - `bus` (String)
 - `cache_mode` (String)
 - `container_image_name` (String)
+- `eject` (Boolean)
 - `existing_volume_name` (String)
 - `hot_plug` (Boolean)
 - `image` (String)
