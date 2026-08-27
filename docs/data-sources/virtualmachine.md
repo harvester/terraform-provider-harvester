@@ -37,6 +37,7 @@ data "harvester_virtualmachine" "opensuse154" {
 
 ### Read-Only
 
+- `block_multi_queue` (Boolean) Enable multiqueue on virtio block devices, allocating one queue per vCPU. Improves disk throughput on VMs with multiple vCPUs.
 - `cloudinit` (List of Object) (see [below for nested schema](#nestedatt--cloudinit))
 - `cpu` (Number)
 - `cpu_model` (String) CPU model for the virtual machine
@@ -49,12 +50,15 @@ data "harvester_virtualmachine" "opensuse154" {
 - `hostname` (String)
 - `id` (String) The ID of this resource.
 - `input` (List of Object) (see [below for nested schema](#nestedatt--input))
+- `io_threads_count` (Number) Number of IOThreads to allocate, only valid when io_threads_policy is "supplementalPool"
+- `io_threads_policy` (String) IOThreads policy for the virtual machine, more info: https://kubevirt.io/user-guide/compute/dedicated_cpu_resources/#requesting-dedicated-cpu-for-qemu-emulator
 - `isolate_emulator_thread` (Boolean) To enable isolate emulator thread, ensure that at least one node has the CPU manager enabled, also VM CPU pinning must be enabled. Note that enable option will allocate an additional dedicated CPU.
 - `labels` (Map of String)
 - `machine_type` (String)
 - `memory` (String)
 - `message` (String)
 - `network_interface` (List of Object) (see [below for nested schema](#nestedatt--network_interface))
+- `network_interface_multiqueue` (Boolean) Enable multiqueue on virtio network interfaces, allocating one queue per vCPU. Improves network throughput on VMs with multiple vCPUs.
 - `node_name` (String)
 - `node_selector` (Map of String) Node selector for scheduling the VM. The key is the label key and the value is the label value.
 - `requests` (List of Object) Resource requests for the VM. When unset, Harvester's overcommit webhook manages these values. (see [below for nested schema](#nestedatt--requests))
@@ -99,6 +103,7 @@ Read-Only:
 - `bus` (String)
 - `cache_mode` (String)
 - `container_image_name` (String)
+- `dedicated_io_thread` (Boolean) Dedicate an IOThread to this disk. Requires io_threads_policy to be set on the virtual machine.
 - `existing_volume_name` (String)
 - `hot_plug` (Boolean)
 - `image` (String)
