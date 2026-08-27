@@ -17,6 +17,7 @@ import (
 	"github.com/harvester/terraform-provider-harvester/internal/provider/loadbalancer"
 	"github.com/harvester/terraform-provider-harvester/internal/provider/network"
 	"github.com/harvester/terraform-provider-harvester/internal/provider/pcidevice"
+	"github.com/harvester/terraform-provider-harvester/internal/provider/resourcequota"
 	"github.com/harvester/terraform-provider-harvester/internal/provider/schedulebackup"
 	"github.com/harvester/terraform-provider-harvester/internal/provider/setting"
 	"github.com/harvester/terraform-provider-harvester/internal/provider/sriovdevice"
@@ -57,6 +58,7 @@ func Provider() *schema.Provider {
 			constants.ResourceTypeLoadBalancer:       loadbalancer.DataSourceLoadBalancer(),
 			constants.ResourceTypeNetwork:            network.DataSourceNetwork(),
 			constants.ResourceTypePCIDevice:          pcidevice.DataSourcePCIDevice(),
+			constants.ResourceTypeResourceQuota:      resourcequota.DataSourceResourceQuota(),
 			constants.ResourceTypeSRIOVNetworkDevice: sriovdevice.DataSourceSRIOVNetworkDevice(),
 			constants.ResourceTypeScheduleBackup:     schedulebackup.DataSourceScheduleBackup(),
 			constants.ResourceTypeSetting:            setting.DataSourceSetting(),
@@ -75,6 +77,7 @@ func Provider() *schema.Provider {
 			constants.ResourceTypeLoadBalancer:       loadbalancer.ResourceLoadBalancer(),
 			constants.ResourceTypeNetwork:            network.ResourceNetwork(),
 			constants.ResourceTypePCIDevice:          pcidevice.ResourcePCIDevice(),
+			constants.ResourceTypeResourceQuota:      resourcequota.ResourceResourceQuota(),
 			constants.ResourceTypeSRIOVNetworkDevice: sriovdevice.ResourceSRIOVNetworkDevice(),
 			constants.ResourceTypeScheduleBackup:     schedulebackup.ResourceScheduleBackup(),
 			constants.ResourceTypeSetting:            setting.ResourceSetting(),
