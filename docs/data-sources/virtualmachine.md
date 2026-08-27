@@ -37,6 +37,7 @@ data "harvester_virtualmachine" "opensuse154" {
 
 ### Read-Only
 
+- `clock` (List of Object) Clock and timer configuration for the guest (see [below for nested schema](#nestedatt--clock))
 - `cloudinit` (List of Object) (see [below for nested schema](#nestedatt--cloudinit))
 - `cpu` (Number)
 - `cpu_model` (String) CPU model for the virtual machine
@@ -47,6 +48,8 @@ data "harvester_virtualmachine" "opensuse154" {
 - `efi` (Boolean)
 - `host_device` (List of Object) Attaches a host device to the VM (see [below for nested schema](#nestedatt--host_device))
 - `hostname` (String)
+- `hyperv` (List of Object) Hyper-V enlightenments for Windows guests (see [below for nested schema](#nestedatt--hyperv))
+- `hyperv_passthrough` (Boolean) Enable all supported Hyper-V flags automatically. Mutually exclusive with hyperv block. VM will be non-migratable
 - `id` (String) The ID of this resource.
 - `input` (List of Object) (see [below for nested schema](#nestedatt--input))
 - `isolate_emulator_thread` (Boolean) To enable isolate emulator thread, ensure that at least one node has the CPU manager enabled, also VM CPU pinning must be enabled. Note that enable option will allocate an additional dedicated CPU.
@@ -73,6 +76,72 @@ For `ssh-user` tag, the value is added to `cloudinit.user_data` if:
 1. Both `cloudinit.user_data_base64` and `cloudinit.user_data_secret_name` are empty.
 2. There is no `user` field in `cloudinit.user_data`.
 - `tpm` (List of Object) (see [below for nested schema](#nestedatt--tpm))
+
+<a id="nestedatt--clock"></a>
+### Nested Schema for `clock`
+
+Read-Only:
+
+- `timer` (List of Object) (see [below for nested schema](#nestedobjatt--clock--timer))
+- `timezone` (String)
+- `utc_offset_seconds` (Number)
+
+<a id="nestedobjatt--clock--timer"></a>
+### Nested Schema for `clock.timer`
+
+Read-Only:
+
+- `hpet` (List of Object) (see [below for nested schema](#nestedobjatt--clock--timer--hpet))
+- `hyperv` (List of Object) (see [below for nested schema](#nestedobjatt--clock--timer--hyperv))
+- `kvm` (List of Object) (see [below for nested schema](#nestedobjatt--clock--timer--kvm))
+- `pit` (List of Object) (see [below for nested schema](#nestedobjatt--clock--timer--pit))
+- `rtc` (List of Object) (see [below for nested schema](#nestedobjatt--clock--timer--rtc))
+
+<a id="nestedobjatt--clock--timer--hpet"></a>
+### Nested Schema for `clock.timer.hpet`
+
+Read-Only:
+
+- `enabled` (Boolean)
+- `tick_policy` (String)
+
+
+<a id="nestedobjatt--clock--timer--hyperv"></a>
+### Nested Schema for `clock.timer.hyperv`
+
+Read-Only:
+
+- `enabled` (Boolean)
+
+
+<a id="nestedobjatt--clock--timer--kvm"></a>
+### Nested Schema for `clock.timer.kvm`
+
+Read-Only:
+
+- `enabled` (Boolean)
+
+
+<a id="nestedobjatt--clock--timer--pit"></a>
+### Nested Schema for `clock.timer.pit`
+
+Read-Only:
+
+- `enabled` (Boolean)
+- `tick_policy` (String)
+
+
+<a id="nestedobjatt--clock--timer--rtc"></a>
+### Nested Schema for `clock.timer.rtc`
+
+Read-Only:
+
+- `enabled` (Boolean)
+- `tick_policy` (String)
+- `track` (String)
+
+
+
 
 <a id="nestedatt--cloudinit"></a>
 ### Nested Schema for `cloudinit`
@@ -105,6 +174,8 @@ Read-Only:
 - `name` (String)
 - `size` (String)
 - `storage_class_name` (String)
+- `sysprep_configmap_name` (String)
+- `sysprep_secret_name` (String)
 - `type` (String)
 - `volume_mode` (String)
 - `volume_name` (String)
@@ -117,6 +188,30 @@ Read-Only:
 
 - `device_name` (String)
 - `name` (String)
+
+
+<a id="nestedatt--hyperv"></a>
+### Nested Schema for `hyperv`
+
+Read-Only:
+
+- `evmcs` (Boolean)
+- `frequencies` (Boolean)
+- `ipi` (Boolean)
+- `reenlightenment` (Boolean)
+- `relaxed` (Boolean)
+- `reset` (Boolean)
+- `runtime` (Boolean)
+- `spinlocks` (Boolean)
+- `spinlocks_retries` (Number)
+- `synic` (Boolean)
+- `synictimer` (Boolean)
+- `synictimer_direct` (Boolean)
+- `tlbflush` (Boolean)
+- `vapic` (Boolean)
+- `vendorid` (Boolean)
+- `vendorid_value` (String)
+- `vpindex` (Boolean)
 
 
 <a id="nestedatt--input"></a>
