@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"slices"
+	"strings"
 
 	corev1 "k8s.io/api/core/v1"
 	kubevirtv1 "kubevirt.io/api/core/v1"
@@ -250,12 +251,29 @@ func (v *VMImporter) pvcVolume(volume kubevirtv1.Volume, state map[string]interf
 	return nil
 }
 
+// stripInjectedSSHUser removes the "user: <name>" line the provider appends to
+// cloudinit.user_data from the VM's `ssh-user` tag on create, so reading the
+// VM back does not report a permanent diff.
+func (v *VMImporter) stripInjectedSSHUser(userData string) string {
+	sshUser := v.VirtualMachine.Labels[builder.LabelPrefixHarvesterTag+constants.LabelSSHUsername]
+	if sshUser == "" {
+		return userData
+	}
+	if userData == fmt.Sprintf("#cloud-config\nuser: %s\n", sshUser) {
+		return ""
+	}
+	if suffix := fmt.Sprintf("\nuser: %s\n", sshUser); strings.HasSuffix(userData, suffix) {
+		return strings.TrimSuffix(userData, suffix)
+	}
+	return userData
+}
+
 func (v *VMImporter) cloudInit(volume kubevirtv1.Volume) []map[string]interface{} {
 	var cloudInitState = make([]map[string]interface{}, 0, 1)
 	if volume.CloudInitNoCloud != nil {
 		cloudInitState = append(cloudInitState, map[string]interface{}{
 			constants.FieldCloudInitType:              builder.CloudInitTypeNoCloud,
-			constants.FieldCloudInitUserData:          volume.CloudInitNoCloud.UserData,
+			constants.FieldCloudInitUserData:          v.stripInjectedSSHUser(volume.CloudInitNoCloud.UserData),
 			constants.FieldCloudInitUserDataBase64:    volume.CloudInitNoCloud.UserDataBase64,
 			constants.FieldCloudInitNetworkData:       volume.CloudInitNoCloud.NetworkData,
 			constants.FieldCloudInitNetworkDataBase64: volume.CloudInitNoCloud.NetworkDataBase64,
@@ -269,7 +287,7 @@ func (v *VMImporter) cloudInit(volume kubevirtv1.Volume) []map[string]interface{
 	} else if volume.CloudInitConfigDrive != nil {
 		cloudInitState = append(cloudInitState, map[string]interface{}{
 			constants.FieldCloudInitType:              builder.CloudInitTypeConfigDrive,
-			constants.FieldCloudInitUserData:          volume.CloudInitConfigDrive.UserData,
+			constants.FieldCloudInitUserData:          v.stripInjectedSSHUser(volume.CloudInitConfigDrive.UserData),
 			constants.FieldCloudInitUserDataBase64:    volume.CloudInitConfigDrive.UserDataBase64,
 			constants.FieldCloudInitNetworkData:       volume.CloudInitConfigDrive.NetworkData,
 			constants.FieldCloudInitNetworkDataBase64: volume.CloudInitConfigDrive.NetworkDataBase64,
@@ -329,6 +347,10 @@ func (v *VMImporter) Volume() ([]map[string]interface{}, []map[string]interface{
 					}
 				} else if volume.ContainerDisk != nil {
 					diskState[constants.FieldDiskContainerImageName] = volume.ContainerDisk.Image
+				} else if volume.ConfigMap != nil {
+					diskState[constants.FieldDiskConfigMapName] = volume.ConfigMap.Name
+				} else if volume.Secret != nil {
+					diskState[constants.FieldDiskSecretName] = volume.Secret.SecretName
 				} else {
 					return nil, nil, fmt.Errorf("unsupported volume type found on volume %s. ", volume.Name)
 				}
@@ -337,6 +359,70 @@ func (v *VMImporter) Volume() ([]map[string]interface{}, []map[string]interface{
 		diskStates = append(diskStates, diskState)
 	}
 	return diskStates, cloudInitState, nil
+}
+
+func (v *VMImporter) AccessCredentials() []map[string]interface{} {
+	acs := v.VirtualMachine.Spec.Template.Spec.AccessCredentials
+	result := make([]map[string]interface{}, 0, len(acs))
+	for _, ac := range acs {
+		entry := map[string]interface{}{}
+		if ac.SSHPublicKey != nil {
+			ssh := map[string]interface{}{}
+			if ac.SSHPublicKey.Source.Secret != nil {
+				ssh[constants.FieldAccessCredentialSecretName] = ac.SSHPublicKey.Source.Secret.SecretName
+			}
+			pm := ac.SSHPublicKey.PropagationMethod
+			switch {
+			case pm.ConfigDrive != nil:
+				ssh[constants.FieldAccessCredentialPropagationMethod] = "configDrive"
+			case pm.NoCloud != nil:
+				ssh[constants.FieldAccessCredentialPropagationMethod] = "noCloud"
+			case pm.QemuGuestAgent != nil:
+				ssh[constants.FieldAccessCredentialPropagationMethod] = "qemuGuestAgent"
+				ssh[constants.FieldAccessCredentialUsers] = pm.QemuGuestAgent.Users
+			}
+			entry[constants.FieldAccessCredentialSSHPublicKey] = []interface{}{ssh}
+			entry[constants.FieldAccessCredentialUserPassword] = []interface{}{}
+		} else if ac.UserPassword != nil {
+			pw := map[string]interface{}{}
+			if ac.UserPassword.Source.Secret != nil {
+				pw[constants.FieldAccessCredentialSecretName] = ac.UserPassword.Source.Secret.SecretName
+			}
+			entry[constants.FieldAccessCredentialUserPassword] = []interface{}{pw}
+			entry[constants.FieldAccessCredentialSSHPublicKey] = []interface{}{}
+		}
+		result = append(result, entry)
+	}
+	return result
+}
+
+func (v *VMImporter) DNSPolicy() string {
+	return string(v.VirtualMachine.Spec.Template.Spec.DNSPolicy)
+}
+
+func (v *VMImporter) DNSConfig() []map[string]interface{} {
+	dc := v.VirtualMachine.Spec.Template.Spec.DNSConfig
+	if dc == nil {
+		return nil
+	}
+	result := map[string]interface{}{
+		constants.FieldDNSConfigNameservers: dc.Nameservers,
+		constants.FieldDNSConfigSearches:    dc.Searches,
+	}
+	opts := make([]map[string]interface{}, 0, len(dc.Options))
+	for _, o := range dc.Options {
+		opt := map[string]interface{}{
+			constants.FieldDNSOptionName: o.Name,
+		}
+		if o.Value != nil {
+			opt[constants.FieldDNSOptionValue] = *o.Value
+		} else {
+			opt[constants.FieldDNSOptionValue] = ""
+		}
+		opts = append(opts, opt)
+	}
+	result[constants.FieldDNSConfigOptions] = opts
+	return []map[string]interface{}{result}
 }
 
 func (v *VMImporter) NodeName() string {
@@ -435,6 +521,9 @@ func ResourceVirtualMachineStateGetter(vm *kubevirtv1.VirtualMachine, vmi *kubev
 			constants.FieldVirtualMachineCPUPinning:            vmImporter.DedicatedCPUPlacement(),
 			constants.FieldVirtualMachineIsolateEmulatorThread: vmImporter.IsolateEmulatorThread(),
 			constants.FieldVirtualMachineNodeSelector:          vm.Spec.Template.Spec.NodeSelector,
+			constants.FieldVirtualMachineAccessCredentials:     vmImporter.AccessCredentials(),
+			constants.FieldVirtualMachineDNSPolicy:             vmImporter.DNSPolicy(),
+			constants.FieldVirtualMachineDNSConfig:             vmImporter.DNSConfig(),
 		},
 	}, nil
 }
