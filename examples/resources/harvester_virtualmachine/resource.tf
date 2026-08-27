@@ -11,6 +11,8 @@ resource "harvester_virtualmachine" "k3os" {
   cpu    = 4
   memory = "4Gi"
 
+  install_guest_agent = true
+
   efi         = true
   secure_boot = false
 
