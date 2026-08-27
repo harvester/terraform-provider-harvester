@@ -170,6 +170,36 @@ please use %s instead of this deprecated field:
 			Optional:    true,
 			Default:     false,
 		},
+		constants.FieldVirtualMachineNetworkInterfaceMultiqueue: {
+			Type:        schema.TypeBool,
+			Description: "Enable multiqueue on virtio network interfaces, allocating one queue per vCPU. Improves network throughput on VMs with multiple vCPUs.",
+			Optional:    true,
+			Default:     false,
+		},
+		constants.FieldVirtualMachineBlockMultiQueue: {
+			Type:        schema.TypeBool,
+			Description: "Enable multiqueue on virtio block devices, allocating one queue per vCPU. Improves disk throughput on VMs with multiple vCPUs.",
+			Optional:    true,
+			Default:     false,
+		},
+		constants.FieldVirtualMachineIOThreadsPolicy: {
+			Type:        schema.TypeString,
+			Description: "IOThreads policy for the virtual machine, more info: https://kubevirt.io/user-guide/compute/dedicated_cpu_resources/#requesting-dedicated-cpu-for-qemu-emulator",
+			Optional:    true,
+			ValidateFunc: validation.StringInSlice([]string{
+				string(kubevirtv1.IOThreadsPolicyShared),
+				string(kubevirtv1.IOThreadsPolicyAuto),
+				string(kubevirtv1.IOThreadsPolicySupplementalPool),
+				"",
+			}, false),
+		},
+		constants.FieldVirtualMachineIOThreadsCount: {
+			Type:         schema.TypeInt,
+			Description:  fmt.Sprintf("Number of IOThreads to allocate, only valid when %s is %q", constants.FieldVirtualMachineIOThreadsPolicy, kubevirtv1.IOThreadsPolicySupplementalPool),
+			Optional:     true,
+			Default:      0,
+			ValidateFunc: validation.IntAtLeast(0),
+		},
 		constants.FieldVirtualMachineNodeSelector: {
 			Type:        schema.TypeMap,
 			Description: "Node selector for scheduling the VM. The key is the label key and the value is the label value.",

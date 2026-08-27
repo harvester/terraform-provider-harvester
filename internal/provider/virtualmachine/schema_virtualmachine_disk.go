@@ -104,6 +104,12 @@ func resourceDiskSchema() map[string]*schema.Schema {
 				builder.PersistentVolumeAccessModeReadWriteMany,
 			}, false),
 		},
+		constants.FieldDiskDedicatedIOThread: {
+			Type:        schema.TypeBool,
+			Description: "Dedicate an IOThread to this disk. Requires io_threads_policy to be set on the virtual machine.",
+			Optional:    true,
+			Default:     false,
+		},
 		constants.FieldDiskVolumeName: {
 			Type:         schema.TypeString,
 			Optional:     true,
