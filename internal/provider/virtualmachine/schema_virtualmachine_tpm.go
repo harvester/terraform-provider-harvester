@@ -6,7 +6,7 @@ import (
 	"github.com/harvester/terraform-provider-harvester/pkg/constants"
 )
 
-func resourceTPMSchema() map[string]*schema.Schema {
+func ResourceTPMSchema() map[string]*schema.Schema {
 	s := map[string]*schema.Schema{
 		constants.FieldTPMName: {
 			Type:        schema.TypeString,
