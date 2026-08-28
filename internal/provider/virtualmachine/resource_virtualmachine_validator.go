@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	harvsterv1 "github.com/harvester/harvester/pkg/apis/harvesterhci.io/v1beta1"
-	"gopkg.in/yaml.v2"
+	yaml "go.yaml.in/yaml/v3"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/harvester/terraform-provider-harvester/pkg/helper"
@@ -77,7 +77,7 @@ func (c *Constructor) checkKeyPairsInUserDataBase64(userdataBase64Content string
 }
 
 func checkKeyPairsInUserData(userdataContent []byte, keyPairs []*harvsterv1.KeyPair) error {
-	userData := make(map[interface{}]interface{})
+	userData := make(map[string]any)
 	if err := yaml.Unmarshal(userdataContent, &userData); err != nil {
 		return fmt.Errorf("failed to parser cloud-int userdata, err: %+v", err)
 	}
@@ -94,21 +94,21 @@ Either remove unused ssh keys from "ssh_keys" or add ssh public keys to cloud-in
 	return nil
 }
 
-func inCloudConfig(parentKey, parent, key interface{}, value string) bool {
+func inCloudConfig(parentKey, parent, key any, value string) bool {
 	switch section := parent.(type) {
-	case map[interface{}]interface{}:
+	case map[string]any:
 		for k, v := range section {
 			if inCloudConfig(k, v, key, value) {
 				return true
 			}
 		}
-	case []interface{}:
+	case []any:
 		for _, v := range section {
 			if inCloudConfig(parentKey, v, key, value) {
 				return true
 			}
 		}
-	case interface{}:
+	case any:
 		if parentKey == key {
 			if sectionStr, ok := section.(string); ok && strings.TrimSpace(sectionStr) == strings.TrimSpace(value) {
 				return true
