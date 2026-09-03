@@ -45,6 +45,7 @@ data "harvester_virtualmachine" "opensuse154" {
 - `description` (String) Any text you want that better describes this resource
 - `disk` (List of Object) (see [below for nested schema](#nestedatt--disk))
 - `efi` (Boolean)
+- `features` (List of Object) (see [below for nested schema](#nestedatt--features))
 - `host_device` (List of Object) Attaches a host device to the VM (see [below for nested schema](#nestedatt--host_device))
 - `hostname` (String)
 - `id` (String) The ID of this resource.
@@ -108,6 +109,76 @@ Read-Only:
 - `type` (String)
 - `volume_mode` (String)
 - `volume_name` (String)
+
+
+<a id="nestedatt--features"></a>
+### Nested Schema for `features`
+
+Read-Only:
+
+- `acpi` (Boolean)
+- `apic` (List of Object) (see [below for nested schema](#nestedobjatt--features--apic))
+- `hyperv` (List of Object) (see [below for nested schema](#nestedobjatt--features--hyperv))
+- `hyperv_passthrough` (Boolean)
+- `kvm` (List of Object) (see [below for nested schema](#nestedobjatt--features--kvm))
+- `pvspinlock` (Boolean)
+- `smm` (Boolean)
+
+<a id="nestedobjatt--features--apic"></a>
+### Nested Schema for `features.apic`
+
+Read-Only:
+
+- `enabled` (Boolean)
+- `end_of_interrupt` (Boolean)
+
+
+<a id="nestedobjatt--features--hyperv"></a>
+### Nested Schema for `features.hyperv`
+
+Read-Only:
+
+- `evmcs` (Boolean)
+- `frequencies` (Boolean)
+- `ipi` (Boolean)
+- `reenlightenment` (Boolean)
+- `relaxed` (Boolean)
+- `reset` (Boolean)
+- `runtime` (Boolean)
+- `spinlocks` (List of Object) (see [below for nested schema](#nestedobjatt--features--hyperv--spinlocks))
+- `synic` (Boolean)
+- `synic_timer` (List of Object) (see [below for nested schema](#nestedobjatt--features--hyperv--synic_timer))
+- `tlb_flush` (Boolean)
+- `vapic` (Boolean)
+- `vendorid` (String)
+- `vpindex` (Boolean)
+
+<a id="nestedobjatt--features--hyperv--spinlocks"></a>
+### Nested Schema for `features.hyperv.spinlocks`
+
+Read-Only:
+
+- `enabled` (Boolean)
+- `retries` (Number)
+
+
+<a id="nestedobjatt--features--hyperv--synic_timer"></a>
+### Nested Schema for `features.hyperv.synic_timer`
+
+Read-Only:
+
+- `direct` (Boolean)
+- `enabled` (Boolean)
+
+
+
+<a id="nestedobjatt--features--kvm"></a>
+### Nested Schema for `features.kvm`
+
+Read-Only:
+
+- `hidden` (Boolean)
+
 
 
 <a id="nestedatt--host_device"></a>
