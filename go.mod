@@ -1,6 +1,6 @@
 module github.com/harvester/terraform-provider-harvester
 
-go 1.25.0
+go 1.26.0
 
 replace (
 	github.com/google/gnostic-models => github.com/google/gnostic-models v0.6.9
@@ -180,7 +180,7 @@ require (
 	go.uber.org/mock v0.5.2 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	go.yaml.in/yaml/v2 v2.4.2 // indirect
-	golang.org/x/crypto v0.55.0 // indirect
+	golang.org/x/crypto v0.56.0 // indirect
 	golang.org/x/exp v0.0.0-20250506013437-ce4c2cf36ca6 // indirect
 	golang.org/x/mod v0.40.0 // indirect
 	golang.org/x/net v0.58.0 // indirect
