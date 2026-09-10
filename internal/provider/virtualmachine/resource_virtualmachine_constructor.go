@@ -536,7 +536,18 @@ func (c *Constructor) Validate() error {
 	if err != nil {
 		return err
 	}
-	return c.checkKeyPairsInCloudInit(keyPairs)
+
+	err = c.checkKeyPairsInCloudInit(keyPairs)
+	if err != nil {
+		return err
+	}
+
+	err = c.checkIOThreadsPolicy()
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (c *Constructor) Result() (interface{}, error) {
