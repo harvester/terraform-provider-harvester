@@ -5,7 +5,9 @@ import (
 	"testing"
 
 	harvsterv1 "github.com/harvester/harvester/pkg/apis/harvesterhci.io/v1beta1"
+	"github.com/harvester/harvester/pkg/builder"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	kubevirtv1 "kubevirt.io/api/core/v1"
 )
 
 func Test_inCloudConfig(t *testing.T) {
@@ -160,6 +162,192 @@ func Test_inCloudConfig(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			if ok := inCloudConfig(tt.parentKey, tt.parent, tt.key, tt.value); (ok != true) != tt.expectNotOk {
 				t.Errorf("inCloudConfig() ok = %v, expectNotOk = %v", ok, tt.expectNotOk)
+			}
+		})
+	}
+}
+
+func Test_checkIOThreadsPolicy(t *testing.T) {
+	tests := []struct {
+		name    string
+		c       *Constructor
+		wantErr bool
+	}{
+		{
+			name: "no IO threads policy, io thread count not set, no disks with dedicated io threads",
+			c: &Constructor{
+				Builder: &builder.VMBuilder{
+					VirtualMachine: &kubevirtv1.VirtualMachine{
+						Spec: kubevirtv1.VirtualMachineSpec{
+							Template: &kubevirtv1.VirtualMachineInstanceTemplateSpec{
+								Spec: kubevirtv1.VirtualMachineInstanceSpec{
+									Domain: kubevirtv1.DomainSpec{
+										Devices: kubevirtv1.Devices{
+											Disks: []kubevirtv1.Disk{},
+										},
+										IOThreads: nil,
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "no IO threads policy, io thread count set to nil pointer, no disks with dedicated io threads",
+			c: &Constructor{
+				Builder: &builder.VMBuilder{
+					VirtualMachine: &kubevirtv1.VirtualMachine{
+						Spec: kubevirtv1.VirtualMachineSpec{
+							Template: &kubevirtv1.VirtualMachineInstanceTemplateSpec{
+								Spec: kubevirtv1.VirtualMachineInstanceSpec{
+									Domain: kubevirtv1.DomainSpec{
+										Devices: kubevirtv1.Devices{
+											Disks: []kubevirtv1.Disk{},
+										},
+										IOThreads: &kubevirtv1.DiskIOThreads{
+											SupplementalPoolThreadCount: nil,
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "no IO threads policy, io thread count set to 0, no disks with dedicated io threads",
+			c: &Constructor{
+				Builder: &builder.VMBuilder{
+					VirtualMachine: &kubevirtv1.VirtualMachine{
+						Spec: kubevirtv1.VirtualMachineSpec{
+							Template: &kubevirtv1.VirtualMachineInstanceTemplateSpec{
+								Spec: kubevirtv1.VirtualMachineInstanceSpec{
+									Domain: kubevirtv1.DomainSpec{
+										Devices: kubevirtv1.Devices{
+											Disks: []kubevirtv1.Disk{},
+										},
+										IOThreads: &kubevirtv1.DiskIOThreads{
+											SupplementalPoolThreadCount: new(uint32(0)),
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "no IO threads policy, io thread count not 0, no disks with dedicated io threads",
+			c: &Constructor{
+				Builder: &builder.VMBuilder{
+					VirtualMachine: &kubevirtv1.VirtualMachine{
+						Spec: kubevirtv1.VirtualMachineSpec{
+							Template: &kubevirtv1.VirtualMachineInstanceTemplateSpec{
+								Spec: kubevirtv1.VirtualMachineInstanceSpec{
+									Domain: kubevirtv1.DomainSpec{
+										Devices: kubevirtv1.Devices{
+											Disks: []kubevirtv1.Disk{},
+										},
+										IOThreads: &kubevirtv1.DiskIOThreads{
+											SupplementalPoolThreadCount: new(uint32(4)),
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "IO threads policy auto, io thread count not 0, no disks with dedicated io threads",
+			c: &Constructor{
+				Builder: &builder.VMBuilder{
+					VirtualMachine: &kubevirtv1.VirtualMachine{
+						Spec: kubevirtv1.VirtualMachineSpec{
+							Template: &kubevirtv1.VirtualMachineInstanceTemplateSpec{
+								Spec: kubevirtv1.VirtualMachineInstanceSpec{
+									Domain: kubevirtv1.DomainSpec{
+										Devices: kubevirtv1.Devices{
+											Disks: []kubevirtv1.Disk{},
+										},
+										IOThreads: &kubevirtv1.DiskIOThreads{
+											SupplementalPoolThreadCount: new(uint32(4)),
+										},
+										IOThreadsPolicy: new(kubevirtv1.IOThreadsPolicyAuto),
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "IO threads policy shared, io thread count not 0, no disks with dedicated io threads",
+			c: &Constructor{
+				Builder: &builder.VMBuilder{
+					VirtualMachine: &kubevirtv1.VirtualMachine{
+						Spec: kubevirtv1.VirtualMachineSpec{
+							Template: &kubevirtv1.VirtualMachineInstanceTemplateSpec{
+								Spec: kubevirtv1.VirtualMachineInstanceSpec{
+									Domain: kubevirtv1.DomainSpec{
+										Devices: kubevirtv1.Devices{
+											Disks: []kubevirtv1.Disk{},
+										},
+										IOThreads: &kubevirtv1.DiskIOThreads{
+											SupplementalPoolThreadCount: new(uint32(4)),
+										},
+										IOThreadsPolicy: new(kubevirtv1.IOThreadsPolicyShared),
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "IO threads policy supplemental-pool, io thread count not 0, no disks with dedicated io threads",
+			c: &Constructor{
+				Builder: &builder.VMBuilder{
+					VirtualMachine: &kubevirtv1.VirtualMachine{
+						Spec: kubevirtv1.VirtualMachineSpec{
+							Template: &kubevirtv1.VirtualMachineInstanceTemplateSpec{
+								Spec: kubevirtv1.VirtualMachineInstanceSpec{
+									Domain: kubevirtv1.DomainSpec{
+										Devices: kubevirtv1.Devices{
+											Disks: []kubevirtv1.Disk{},
+										},
+										IOThreads: &kubevirtv1.DiskIOThreads{
+											SupplementalPoolThreadCount: new(uint32(4)),
+										},
+										IOThreadsPolicy: new(kubevirtv1.IOThreadsPolicySupplementalPool),
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			wantErr: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if err := tt.c.checkIOThreadsPolicy(); (err != nil) != tt.wantErr {
+				t.Errorf("checkIOThreadsPolicy() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
 	}

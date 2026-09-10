@@ -37,7 +37,7 @@ data "harvester_virtualmachine" "opensuse154" {
 
 ### Read-Only
 
-- `block_multi_queue` (Boolean) Enable multiqueue on virtio block devices, allocating one queue per vCPU. Improves disk throughput on VMs with multiple vCPUs.
+- `block_device_multiqueue` (Boolean) Enable multiqueue on virtio block devices, allocating one queue per vCPU. Improves disk throughput on VMs with multiple vCPUs.
 - `cloudinit` (List of Object) (see [below for nested schema](#nestedatt--cloudinit))
 - `cpu` (Number)
 - `cpu_model` (String) CPU model for the virtual machine
@@ -103,7 +103,7 @@ Read-Only:
 - `bus` (String)
 - `cache_mode` (String)
 - `container_image_name` (String)
-- `dedicated_io_thread` (Boolean) Dedicate an IOThread to this disk. Requires io_threads_policy to be set on the virtual machine.
+- `dedicated_io_thread` (Boolean)
 - `existing_volume_name` (String)
 - `hot_plug` (Boolean)
 - `image` (String)

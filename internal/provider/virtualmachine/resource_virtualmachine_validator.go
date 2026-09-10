@@ -8,6 +8,7 @@ import (
 	harvsterv1 "github.com/harvester/harvester/pkg/apis/harvesterhci.io/v1beta1"
 	yaml "go.yaml.in/yaml/v3"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	kubevirtv1 "kubevirt.io/api/core/v1"
 
 	"github.com/harvester/terraform-provider-harvester/pkg/helper"
 )
@@ -116,4 +117,29 @@ func inCloudConfig(parentKey, parent, key any, value string) bool {
 		}
 	}
 	return false
+}
+
+// Check that the IO threads policy is compatible with other IO threads settings.
+// 1) `io_threads_count` requires that the IO threads policy is set to `supplemental-pool`.
+// 2) if there is a disk with dedicated IO thread configured, then an IO thread policy needs to be
+// set.
+func (c *Constructor) checkIOThreadsPolicy() error {
+	domain := c.Builder.VirtualMachine.Spec.Template.Spec.Domain
+	ioThreadsPolicy := domain.IOThreadsPolicy
+
+	if domain.IOThreads != nil &&
+		domain.IOThreads.SupplementalPoolThreadCount != nil &&
+		*domain.IOThreads.SupplementalPoolThreadCount > 0 {
+		if ioThreadsPolicy == nil || *ioThreadsPolicy != kubevirtv1.IOThreadsPolicySupplementalPool {
+			return fmt.Errorf("IO thread count > 0, but IO thread policy not `supplemental-pool`")
+		}
+	}
+
+	for _, disk := range domain.Devices.Disks {
+		if *disk.DedicatedIOThread && ioThreadsPolicy == nil {
+			return fmt.Errorf("disk with dedicated IO thread, but no IO thread policy is set")
+		}
+	}
+
+	return nil
 }
