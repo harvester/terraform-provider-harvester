@@ -195,7 +195,7 @@ resource "harvester_virtualmachine" "opensuse154" {
 
 ### Optional
 
-- `block_multi_queue` (Boolean) Enable multiqueue on virtio block devices, allocating one queue per vCPU. Improves disk throughput on VMs with multiple vCPUs.
+- `block_device_multiqueue` (Boolean) Enable multiqueue on virtio block devices, allocating one queue per vCPU. Improves disk throughput on VMs with multiple vCPUs.
 - `cloudinit` (Block List, Max: 1) (see [below for nested schema](#nestedblock--cloudinit))
 - `cpu` (Number)
 - `cpu_model` (String) CPU model for the virtual machine

@@ -5,7 +5,7 @@ const (
 
 	FieldRequestsCPU                              = "cpu"
 	FieldRequestsMemory                           = "memory"
-	FieldVirtualMachineBlockMultiQueue            = "block_multi_queue"
+	FieldVirtualMachineBlockMultiQueue            = "block_device_multiqueue"
 	FieldVirtualMachineCPU                        = "cpu"
 	FieldVirtualMachineCPUModel                   = "cpu_model"
 	FieldVirtualMachineCPUPinning                 = "cpu_pinning"
