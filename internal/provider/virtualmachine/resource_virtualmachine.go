@@ -14,7 +14,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/utils/ptr"
 	kubevirtv1 "kubevirt.io/api/core/v1"
 
 	"github.com/harvester/terraform-provider-harvester/internal/config"
@@ -332,7 +331,7 @@ func createInitialSnapshot(ctx context.Context, c *client.Client, namespace, vmN
 		},
 		Spec: harvsterv1.VirtualMachineBackupSpec{
 			Source: corev1.TypedLocalObjectReference{
-				APIGroup: ptr.To(kubevirtv1.SchemeGroupVersion.Group),
+				APIGroup: new(kubevirtv1.SchemeGroupVersion.Group),
 				Kind:     kubevirtv1.VirtualMachineGroupVersionKind.Kind,
 				Name:     vmName,
 			},
