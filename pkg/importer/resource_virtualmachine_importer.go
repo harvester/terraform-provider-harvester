@@ -346,6 +346,125 @@ func (v *VMImporter) NodeName() string {
 	return v.VirtualMachineInstance.Status.NodeName
 }
 
+func (v *VMImporter) Features() (map[string]any, error) {
+	f := map[string]any{}
+	if v.VirtualMachine.Spec.Template.Spec.Domain.Features == nil {
+		return f, nil
+	}
+
+	features := v.VirtualMachine.Spec.Template.Spec.Domain.Features
+
+	if features.ACPI.Enabled != nil {
+		f[constants.FieldFeatureACPI] = *(features.ACPI.Enabled)
+	}
+
+	if features.APIC != nil {
+		a := map[string]any{}
+
+		if features.APIC.Enabled != nil {
+			a[constants.FieldFeatureAPICEnabled] = *(features.APIC.Enabled)
+		}
+
+		a[constants.FieldFeatureAPICEndOfInterrupt] = features.APIC.EndOfInterrupt
+
+		f[constants.FieldFeatureAPIC] = a
+	}
+
+	if features.Hyperv != nil {
+		h := map[string]any{}
+
+		if features.Hyperv.EVMCS != nil {
+			h[constants.FieldFeatureHyperVEVMCS] = *(features.Hyperv.EVMCS.Enabled)
+		}
+
+		if features.Hyperv.Frequencies != nil {
+			h[constants.FieldFeatureHyperVFrequencies] = *(features.Hyperv.Frequencies.Enabled)
+		}
+
+		if features.Hyperv.IPI != nil {
+			h[constants.FieldFeatureHyperVIPI] = *(features.Hyperv.IPI.Enabled)
+		}
+
+		if features.Hyperv.Reenlightenment != nil {
+			h[constants.FieldFeatureHyperVReenlightenment] = *(features.Hyperv.Reenlightenment.Enabled)
+		}
+
+		if features.Hyperv.Relaxed != nil {
+			h[constants.FieldFeatureHyperVRelaxed] = *(features.Hyperv.Relaxed.Enabled)
+		}
+
+		if features.Hyperv.Runtime != nil {
+			h[constants.FieldFeatureHyperVRuntime] = *(features.Hyperv.Runtime.Enabled)
+		}
+
+		if features.Hyperv.Spinlocks != nil {
+			s := map[string]any{}
+
+			if features.Hyperv.Spinlocks.Enabled != nil {
+				s[constants.FieldFeatureHyperVSpinlocksEnabled] = *(features.Hyperv.Spinlocks.Enabled)
+			}
+
+			if features.Hyperv.Spinlocks.Retries != nil {
+				s[constants.FieldFeatureHyperVSpinlocksRetries] = *(features.Hyperv.Spinlocks.Retries)
+			}
+
+			h[constants.FieldFeatureHyperVSpinlocks] = s
+		}
+
+		if features.Hyperv.SyNIC != nil {
+			h[constants.FieldFeatureHyperVSyNIC] = *(features.Hyperv.SyNIC.Enabled)
+		}
+
+		if features.Hyperv.SyNICTimer != nil {
+			st := map[string]any{}
+
+			if features.Hyperv.SyNICTimer.Enabled != nil {
+				st[constants.FieldFeatureHyperVSyNICTimerEnabled] = *(features.Hyperv.SyNICTimer.Enabled)
+			}
+
+			if features.Hyperv.SyNICTimer.Direct != nil {
+				st[constants.FieldFeatureHyperVSyNICTimerDirect] = *(features.Hyperv.SyNICTimer.Direct.Enabled)
+			}
+
+			h[constants.FieldFeatureHyperVSyNICTimer] = st
+		}
+
+		if features.Hyperv.TLBFlush != nil {
+			h[constants.FieldFeatureHyperVTLBFlush] = *(features.Hyperv.TLBFlush.Enabled)
+		}
+
+		if features.Hyperv.VAPIC != nil {
+			h[constants.FieldFeatureHyperVVAPIC] = *(features.Hyperv.VAPIC.Enabled)
+		}
+
+		if features.Hyperv.VPIndex != nil {
+			h[constants.FieldFeatureHyperVVPIndex] = *(features.Hyperv.VPIndex.Enabled)
+		}
+
+		f[constants.FieldFeatureHyperV] = h
+	}
+
+	if features.HypervPassthrough != nil {
+		f[constants.FieldFeatureHyperVPassthrough] = *(features.HypervPassthrough.Enabled)
+	}
+
+	if features.KVM != nil {
+		k := map[string]any{}
+		k[constants.FieldFeatureKVMHidden] = features.KVM.Hidden
+		f[constants.FieldFeatureKVM] = k
+	}
+
+	if features.Pvspinlock != nil && features.Pvspinlock.Enabled != nil {
+		f[constants.FieldFeaturePVSpinLock] = *(features.Pvspinlock.Enabled)
+	}
+
+	if features.SMM != nil && features.SMM.Enabled != nil {
+		f[constants.FieldFeatureSMM] = *(features.SMM.Enabled)
+	}
+
+	return f, nil
+}
+
 func (v *VMImporter) State(networkInterfaces []map[string]interface{}, oldInstanceUID string) string {
 	if v.VirtualMachineInstance == nil {
 		return constants.StateVirtualMachineStopped

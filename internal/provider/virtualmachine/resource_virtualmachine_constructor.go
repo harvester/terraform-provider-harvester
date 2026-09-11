@@ -460,8 +460,124 @@ func (c *Constructor) Setup() util.Processors {
 				return nil
 			},
 		},
+		{
+			Field:  constants.FieldVirtualMachineFeatures,
+			Parser: c.parseFeatures,
+		},
 	}
 	return append(processors, customProcessors...)
+}
+
+func (c *Constructor) parseFeatures(f any) error {
+	features := f.(map[string]any)
+
+	c.Builder.FeatureACPI(features[constants.FieldFeatureACPI].(bool))
+
+	APIC, ok := features[constants.FieldFeatureAPIC].([]any)
+	if ok {
+		for _, a := range APIC {
+			err := c.parseFeatureAPIC(a)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	hyperV, ok := features[constants.FieldFeatureHyperV].([]any)
+	if ok {
+		for _, h := range hyperV {
+			err := c.parseFeatureHyperV(h)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	c.Builder.FeatureACPI(features[constants.FieldFeatureHyperVPassthrough].(bool))
+
+	kvm, ok := features[constants.FieldFeatureKVM].([]any)
+	if ok {
+		for _, k := range kvm {
+			err := c.parseFeatureKVM(k)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	c.Builder.FeaturePVSpinlock(features[constants.FieldFeaturePVSpinLock].(bool))
+	c.Builder.FeatureSMM(features[constants.FieldFeatureSMM].(bool))
+
+	return nil
+}
+
+func (c *Constructor) parseFeatureAPIC(f any) error {
+	features := f.(map[string]any)
+
+	enabled := features[constants.FieldFeatureAPICEnabled].(bool)
+	endOfInterrupt := features[constants.FieldFeatureAPICEndOfInterrupt].(bool)
+	c.Builder.FeatureAPIC(enabled, endOfInterrupt)
+	return nil
+}
+
+func (c *Constructor) parseFeatureHyperV(f any) error {
+	features := f.(map[string]any)
+
+	c.Builder.FeatureHyperVEVMCS(features[constants.FieldFeatureHyperVEVMCS].(bool))
+	c.Builder.FeatureHyperVFrequencies(features[constants.FieldFeatureHyperVFrequencies].(bool))
+	c.Builder.FeatureHyperVIPI(features[constants.FieldFeatureHyperVIPI].(bool))
+	c.Builder.FeatureHyperVReenlightenment(features[constants.FieldFeatureHyperVReenlightenment].(bool))
+	c.Builder.FeatureHyperVRelaxed(features[constants.FieldFeatureHyperVRelaxed].(bool))
+	c.Builder.FeatureHyperVReset(features[constants.FieldFeatureHyperVReset].(bool))
+	c.Builder.FeatureHyperVRuntime(features[constants.FieldFeatureHyperVRuntime].(bool))
+
+	spinlocks, ok := features[constants.FieldFeatureHyperVSpinlocks]
+	if ok {
+		err := c.parseFeatureHyperVSpinlocks(spinlocks)
+		if err != nil {
+			return err
+		}
+	}
+
+	c.Builder.FeatureHyperVSyNIC(features[constants.FieldFeatureHyperVSyNIC].(bool))
+
+	synictimer, ok := features[constants.FieldFeatureHyperVSyNICTimer]
+	if ok {
+		err := c.parseFeatureHyperVSyNICTimer(synictimer)
+		if err != nil {
+			return err
+		}
+	}
+
+	c.Builder.FeatureHyperVVAPIC(features[constants.FieldFeatureHyperVVAPIC].(bool))
+	c.Builder.FeatureHyperVVPIndex(features[constants.FieldFeatureHyperVVPIndex].(bool))
+	return nil
+}
+
+func (c *Constructor) parseFeatureHyperVSpinlocks(f any) error {
+	features := f.(map[string]any)
+	enabled := features[constants.FieldFeatureHyperVSpinlocksEnabled].(bool)
+	retries := features[constants.FieldFeatureHyperVSpinlocksRetries].(int)
+	c.Builder.FeatureHyperVSpinlocks(enabled, uint32(retries))
+	return nil
+}
+
+func (c *Constructor) parseFeatureHyperVSyNICTimer(f any) error {
+	features := f.(map[string]any)
+	enabled := features[constants.FieldFeatureHyperVSyNICTimerEnabled].(bool)
+	direct := features[constants.FieldFeatureHyperVSyNICTimerDirect].(bool)
+	c.Builder.FeatureHyperVSyNICTimer(enabled, direct)
+	return nil
+}
+
+func (c *Constructor) parseFeatureKVM(f any) error {
+	features := f.(map[string]any)
+
+	hidden, ok := features[constants.FieldFeatureKVMHidden].(bool)
+	if ok {
+		c.Builder.FeatureKVM(hidden)
+	}
+	return nil
 }
 
 func (c *Constructor) Validate() error {
