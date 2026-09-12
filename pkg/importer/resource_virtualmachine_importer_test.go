@@ -575,3 +575,141 @@ func TestResourceRequestsImport(t *testing.T) {
 		t.Errorf("Requests() nil memory = %q, want empty", got)
 	}
 }
+
+func affinityImporter(affinity *corev1.Affinity) *VMImporter {
+	return &VMImporter{
+		VirtualMachine: &kubevirtv1.VirtualMachine{
+			Spec: kubevirtv1.VirtualMachineSpec{
+				Template: &kubevirtv1.VirtualMachineInstanceTemplateSpec{
+					Spec: kubevirtv1.VirtualMachineInstanceSpec{
+						Affinity: affinity,
+					},
+				},
+			},
+		},
+	}
+}
+
+// TestNodeAffinityImport verifies that Harvester-injected node selector
+// expressions (network.harvesterhci.io/*) are filtered out and that terms left
+// empty by the filter are not exported as phantom empty terms.
+func TestNodeAffinityImport(t *testing.T) {
+	injected := corev1.NodeSelectorRequirement{
+		Key:      "network.harvesterhci.io/mgmt",
+		Operator: corev1.NodeSelectorOpIn,
+		Values:   []string{"true"},
+	}
+	user := corev1.NodeSelectorRequirement{
+		Key:      "kubernetes.io/hostname",
+		Operator: corev1.NodeSelectorOpIn,
+		Values:   []string{"node1"},
+	}
+
+	testcases := []struct {
+		name     string
+		affinity *corev1.Affinity
+		expected int // number of exported node_affinity blocks
+	}{
+		{
+			name:     "nil affinity exports nothing",
+			affinity: nil,
+			expected: 0,
+		},
+		{
+			name: "injected-only term exports nothing (no phantom empty term)",
+			affinity: &corev1.Affinity{
+				NodeAffinity: &corev1.NodeAffinity{
+					RequiredDuringSchedulingIgnoredDuringExecution: &corev1.NodeSelector{
+						NodeSelectorTerms: []corev1.NodeSelectorTerm{
+							{MatchExpressions: []corev1.NodeSelectorRequirement{injected}},
+						},
+					},
+				},
+			},
+			expected: 0,
+		},
+		{
+			name: "user expression is kept when mixed with injected one",
+			affinity: &corev1.Affinity{
+				NodeAffinity: &corev1.NodeAffinity{
+					RequiredDuringSchedulingIgnoredDuringExecution: &corev1.NodeSelector{
+						NodeSelectorTerms: []corev1.NodeSelectorTerm{
+							{MatchExpressions: []corev1.NodeSelectorRequirement{user, injected}},
+						},
+					},
+				},
+			},
+			expected: 1,
+		},
+	}
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			got := affinityImporter(tc.affinity).NodeAffinity()
+			if len(got) != tc.expected {
+				t.Fatalf("NodeAffinity() exported %d blocks, want %d (%v)", len(got), tc.expected, got)
+			}
+			if tc.expected == 1 {
+				required := got[0][constants.FieldNodeAffinityRequired].([]map[string]interface{})
+				terms := required[0][constants.FieldNodeSelectorTerm].([]map[string]interface{})
+				expressions := terms[0][constants.FieldMatchExpressions].([]map[string]interface{})
+				if len(expressions) != 1 || expressions[0][constants.FieldExpressionKey] != "kubernetes.io/hostname" {
+					t.Errorf("expected only the user expression, got %v", expressions)
+				}
+			}
+		})
+	}
+}
+
+// TestPodAntiAffinityImport verifies that the Harvester-injected creator term
+// is filtered while user terms selecting other harvesterhci.io labels are kept.
+func TestPodAntiAffinityImport(t *testing.T) {
+	creatorTerm := corev1.WeightedPodAffinityTerm{
+		Weight: 1,
+		PodAffinityTerm: corev1.PodAffinityTerm{
+			TopologyKey: "kubernetes.io/hostname",
+			LabelSelector: &metav1.LabelSelector{
+				MatchExpressions: []metav1.LabelSelectorRequirement{
+					{Key: "harvesterhci.io/creator", Operator: metav1.LabelSelectorOpExists},
+				},
+			},
+		},
+	}
+	userTerm := corev1.WeightedPodAffinityTerm{
+		Weight: 100,
+		PodAffinityTerm: corev1.PodAffinityTerm{
+			TopologyKey: "kubernetes.io/hostname",
+			LabelSelector: &metav1.LabelSelector{
+				MatchExpressions: []metav1.LabelSelectorRequirement{
+					{Key: "harvesterhci.io/vmName", Operator: metav1.LabelSelectorOpIn, Values: []string{"other-vm"}},
+				},
+			},
+		},
+	}
+
+	affinity := &corev1.Affinity{
+		PodAntiAffinity: &corev1.PodAntiAffinity{
+			PreferredDuringSchedulingIgnoredDuringExecution: []corev1.WeightedPodAffinityTerm{creatorTerm, userTerm},
+		},
+	}
+	got := affinityImporter(affinity).PodAntiAffinity()
+	if len(got) != 1 {
+		t.Fatalf("PodAntiAffinity() exported %d blocks, want 1", len(got))
+	}
+	preferred := got[0][constants.FieldPodAffinityPreferred].([]map[string]interface{})
+	if len(preferred) != 1 {
+		t.Fatalf("expected exactly the user term after filtering, got %d terms", len(preferred))
+	}
+	if preferred[0][constants.FieldPreferredWeight] != 100 {
+		t.Errorf("expected user term weight 100, got %v", preferred[0][constants.FieldPreferredWeight])
+	}
+
+	// creator-only anti-affinity (plain VM) must export nothing at all
+	affinityInjectedOnly := &corev1.Affinity{
+		PodAntiAffinity: &corev1.PodAntiAffinity{
+			PreferredDuringSchedulingIgnoredDuringExecution: []corev1.WeightedPodAffinityTerm{creatorTerm},
+		},
+	}
+	if got := affinityImporter(affinityInjectedOnly).PodAntiAffinity(); len(got) != 0 {
+		t.Errorf("creator-only anti-affinity should export nothing, got %v", got)
+	}
+}
