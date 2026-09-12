@@ -8,7 +8,7 @@ import (
 	"github.com/harvester/terraform-provider-harvester/pkg/constants"
 )
 
-func resourceCloudInitSchema() map[string]*schema.Schema {
+func ResourceCloudInitSchema() map[string]*schema.Schema {
 	s := map[string]*schema.Schema{
 		constants.FieldCloudInitType: {
 			Type:     schema.TypeString,
