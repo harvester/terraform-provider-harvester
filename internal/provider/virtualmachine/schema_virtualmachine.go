@@ -200,6 +200,18 @@ please use %s instead of this deprecated field:
 				},
 			},
 		},
+		constants.FieldVirtualMachineCPUSockets: {
+			Type:        schema.TypeInt,
+			Description: "Number of CPU sockets. Works with cpu (cores) and cpu_threads to define CPU topology (total vCPUs = sockets x cores x threads).",
+			Optional:    true,
+			Default:     1,
+		},
+		constants.FieldVirtualMachineCPUThreads: {
+			Type:        schema.TypeInt,
+			Description: "Number of threads per core. Works with cpu (cores) and cpu_sockets to define CPU topology (total vCPUs = sockets x cores x threads).",
+			Optional:    true,
+			Default:     1,
+		},
 	}
 	util.NamespacedSchemaWrap(s, false)
 	s[constants.FieldCommonTags].Description = "The tag is reflected as label on the VM.\n" +
