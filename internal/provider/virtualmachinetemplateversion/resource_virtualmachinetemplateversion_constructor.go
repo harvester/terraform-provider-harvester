@@ -9,7 +9,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/utils/ptr"
 	kubevirtv1 "kubevirt.io/api/core/v1"
 
 	harvsterv1 "github.com/harvester/harvester/pkg/apis/harvesterhci.io/v1beta1"
@@ -204,7 +203,7 @@ func (c *Constructor) parseEFI(i interface{}) error {
 		firmware = &kubevirtv1.Firmware{
 			Bootloader: &kubevirtv1.Bootloader{
 				EFI: &kubevirtv1.EFI{
-					SecureBoot: ptr.To(false),
+					SecureBoot: new(false),
 				},
 			},
 		}
@@ -225,7 +224,7 @@ func (c *Constructor) parseSecureBoot(i interface{}) error {
 	if firmware == nil || firmware.Bootloader == nil || firmware.Bootloader.EFI == nil {
 		return errors.New("EFI must be enabled to use Secure Boot. ")
 	}
-	firmware.Bootloader.EFI.SecureBoot = ptr.To(true)
+	firmware.Bootloader.EFI.SecureBoot = new(true)
 	c.VMBuilder.VirtualMachine.Spec.Template.Spec.Domain.Firmware = firmware
 
 	features := c.VMBuilder.VirtualMachine.Spec.Template.Spec.Domain.Features
@@ -233,7 +232,7 @@ func (c *Constructor) parseSecureBoot(i interface{}) error {
 		features = &kubevirtv1.Features{}
 	}
 	features.SMM = &kubevirtv1.FeatureState{
-		Enabled: ptr.To(true),
+		Enabled: new(true),
 	}
 	c.VMBuilder.VirtualMachine.Spec.Template.Spec.Domain.Features = features
 	return nil
@@ -346,7 +345,7 @@ func (c *Constructor) preparePVCVolume(r map[string]interface{}, diskName, diskS
 			}
 		}
 	}
-	pvcOption.StorageClassName = ptr.To(storageClassName)
+	pvcOption.StorageClassName = new(storageClassName)
 
 	if volumeMode := r[constants.FieldVolumeMode].(string); volumeMode != "" {
 		pvcOption.VolumeMode = corev1.PersistentVolumeMode(volumeMode)
