@@ -201,6 +201,8 @@ resource "harvester_virtualmachine" "opensuse154" {
 - `cpu_pinning` (Boolean) To enable VM CPU pinning, ensure that at least one node has the CPU manager enabled
 - `create_initial_snapshot` (Boolean) Create an initial snapshot named {vm-name}-initial after the VM is created and ready
 - `description` (String) Any text you want that better describes this resource
+- `dns_config` (Block List, Max: 1) DNS configuration for the VM pod (see [below for nested schema](#nestedblock--dns_config))
+- `dns_policy` (String) DNS policy for the VM pod: ClusterFirst, ClusterFirstWithHostNet, Default, or None
 - `efi` (Boolean)
 - `host_device` (Block List) Attaches a host device to the VM (see [below for nested schema](#nestedblock--host_device))
 - `hostname` (String)
@@ -294,6 +296,28 @@ Optional:
 - `user_data` (String)
 - `user_data_base64` (String)
 - `user_data_secret_name` (String)
+
+
+<a id="nestedblock--dns_config"></a>
+### Nested Schema for `dns_config`
+
+Optional:
+
+- `nameservers` (List of String) List of DNS nameservers
+- `options` (Block List) List of DNS resolver options (see [below for nested schema](#nestedblock--dns_config--options))
+- `searches` (List of String) List of DNS search domains
+
+<a id="nestedblock--dns_config--options"></a>
+### Nested Schema for `dns_config.options`
+
+Required:
+
+- `name` (String) DNS option name
+
+Optional:
+
+- `value` (String) DNS option value
+
 
 
 <a id="nestedblock--host_device"></a>

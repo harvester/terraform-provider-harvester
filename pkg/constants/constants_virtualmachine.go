@@ -29,6 +29,8 @@ const (
 	FieldVirtualMachineNodeSelector          = "node_selector"
 	FieldVirtualMachineCreateInitialSnapshot = "create_initial_snapshot"
 	FieldVirtualMachineHostDevice            = "host_device"
+	FieldVirtualMachineDNSPolicy             = "dns_policy"
+	FieldVirtualMachineDNSConfig             = "dns_config"
 
 	StateVirtualMachineStarting = "Starting"
 	StateVirtualMachineRunning  = "Running"
@@ -102,4 +104,12 @@ const (
 const (
 	FieldHostDeviceName       = "name"
 	FieldHostDeviceDeviceName = "device_name"
+)
+
+const (
+	FieldDNSConfigNameservers = "nameservers"
+	FieldDNSConfigSearches    = "searches"
+	FieldDNSConfigOptions     = "options"
+	FieldDNSOptionName        = "name"
+	FieldDNSOptionValue       = "value"
 )

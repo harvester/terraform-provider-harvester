@@ -339,6 +339,35 @@ func (v *VMImporter) Volume() ([]map[string]interface{}, []map[string]interface{
 	return diskStates, cloudInitState, nil
 }
 
+func (v *VMImporter) DNSPolicy() string {
+	return string(v.VirtualMachine.Spec.Template.Spec.DNSPolicy)
+}
+
+func (v *VMImporter) DNSConfig() []map[string]interface{} {
+	dc := v.VirtualMachine.Spec.Template.Spec.DNSConfig
+	if dc == nil {
+		return nil
+	}
+	result := map[string]interface{}{
+		constants.FieldDNSConfigNameservers: dc.Nameservers,
+		constants.FieldDNSConfigSearches:    dc.Searches,
+	}
+	opts := make([]map[string]interface{}, 0, len(dc.Options))
+	for _, o := range dc.Options {
+		opt := map[string]interface{}{
+			constants.FieldDNSOptionName: o.Name,
+		}
+		if o.Value != nil {
+			opt[constants.FieldDNSOptionValue] = *o.Value
+		} else {
+			opt[constants.FieldDNSOptionValue] = ""
+		}
+		opts = append(opts, opt)
+	}
+	result[constants.FieldDNSConfigOptions] = opts
+	return []map[string]interface{}{result}
+}
+
 func (v *VMImporter) NodeName() string {
 	if v.VirtualMachineInstance == nil {
 		return ""
@@ -435,6 +464,8 @@ func ResourceVirtualMachineStateGetter(vm *kubevirtv1.VirtualMachine, vmi *kubev
 			constants.FieldVirtualMachineCPUPinning:            vmImporter.DedicatedCPUPlacement(),
 			constants.FieldVirtualMachineIsolateEmulatorThread: vmImporter.IsolateEmulatorThread(),
 			constants.FieldVirtualMachineNodeSelector:          vm.Spec.Template.Spec.NodeSelector,
+			constants.FieldVirtualMachineDNSPolicy:             vmImporter.DNSPolicy(),
+			constants.FieldVirtualMachineDNSConfig:             vmImporter.DNSConfig(),
 		},
 	}, nil
 }
