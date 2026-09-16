@@ -75,6 +75,8 @@ const (
 	FieldDiskHotPlug            = "hot_plug"
 	FieldDiskAutoDelete         = "auto_delete"
 	FieldDiskVolumeName         = "volume_name"
+	FieldDiskConfigMapName      = "configmap_name"
+	FieldDiskSecretName         = "secret_name"
 
 	AnnotationDiskAutoDelete = "terraform-provider-harvester-auto-delete"
 )

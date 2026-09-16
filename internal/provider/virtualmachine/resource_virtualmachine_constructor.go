@@ -241,6 +241,8 @@ func (c *Constructor) Setup() util.Processors {
 				volumeName := r[constants.FieldDiskVolumeName].(string)
 				existingVolumeName := r[constants.FieldDiskExistingVolumeName].(string)
 				containerImageName := r[constants.FieldDiskContainerImageName].(string)
+				configMapName := r[constants.FieldDiskConfigMapName].(string)
+				secretName := r[constants.FieldDiskSecretName].(string)
 				hotPlug := r[constants.FieldDiskHotPlug].(bool)
 				isCDRom := diskType == builder.DiskTypeCDRom
 				if diskBus == "" {
@@ -262,7 +264,25 @@ func (c *Constructor) Setup() util.Processors {
 					}
 				}
 
-				if existingVolumeName != "" {
+				if configMapName != "" {
+					vmBuilder.Volume(diskName, kubevirtv1.Volume{
+						Name: diskName,
+						VolumeSource: kubevirtv1.VolumeSource{
+							ConfigMap: &kubevirtv1.ConfigMapVolumeSource{
+								LocalObjectReference: corev1.LocalObjectReference{Name: configMapName},
+							},
+						},
+					})
+				} else if secretName != "" {
+					vmBuilder.Volume(diskName, kubevirtv1.Volume{
+						Name: diskName,
+						VolumeSource: kubevirtv1.VolumeSource{
+							Secret: &kubevirtv1.SecretVolumeSource{
+								SecretName: secretName,
+							},
+						},
+					})
+				} else if existingVolumeName != "" {
 					vmBuilder.ExistingPVCVolume(diskName, existingVolumeName, hotPlug)
 				} else if containerImageName != "" {
 					vmBuilder.ContainerDiskVolume(diskName, containerImageName, builder.DefaultImagePullPolicy)

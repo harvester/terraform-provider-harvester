@@ -249,10 +249,12 @@ Optional:
 - `boot_order` (Number)
 - `bus` (String)
 - `cache_mode` (String)
+- `configmap_name` (String) Name of a ConfigMap to mount as a disk volume
 - `container_image_name` (String)
 - `existing_volume_name` (String)
 - `hot_plug` (Boolean)
 - `image` (String)
+- `secret_name` (String) Name of a Secret to mount as a disk volume
 - `size` (String)
 - `storage_class_name` (String)
 - `type` (String)

@@ -575,3 +575,65 @@ func TestResourceRequestsImport(t *testing.T) {
 		t.Errorf("Requests() nil memory = %q, want empty", got)
 	}
 }
+
+func TestConfigMapSecretDiskImport(t *testing.T) {
+	vm := &kubevirtv1.VirtualMachine{
+		ObjectMeta: metav1.ObjectMeta{Namespace: "default"},
+		Spec: kubevirtv1.VirtualMachineSpec{
+			Template: &kubevirtv1.VirtualMachineInstanceTemplateSpec{
+				Spec: kubevirtv1.VirtualMachineInstanceSpec{
+					Domain: kubevirtv1.DomainSpec{
+						Devices: kubevirtv1.Devices{
+							Disks: []kubevirtv1.Disk{
+								{
+									Name: "cm-disk",
+									DiskDevice: kubevirtv1.DiskDevice{
+										Disk: &kubevirtv1.DiskTarget{Bus: "virtio"},
+									},
+								},
+								{
+									Name: "sec-disk",
+									DiskDevice: kubevirtv1.DiskDevice{
+										Disk: &kubevirtv1.DiskTarget{Bus: "virtio"},
+									},
+								},
+							},
+						},
+					},
+					Volumes: []kubevirtv1.Volume{
+						{
+							Name: "cm-disk",
+							VolumeSource: kubevirtv1.VolumeSource{
+								ConfigMap: &kubevirtv1.ConfigMapVolumeSource{
+									LocalObjectReference: corev1.LocalObjectReference{Name: "my-config"},
+								},
+							},
+						},
+						{
+							Name: "sec-disk",
+							VolumeSource: kubevirtv1.VolumeSource{
+								Secret: &kubevirtv1.SecretVolumeSource{
+									SecretName: "my-secret",
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+	importer := &VMImporter{VirtualMachine: vm}
+	disks, _, err := importer.Volume()
+	if err != nil {
+		t.Fatalf("Volume() error: %v", err)
+	}
+	if len(disks) != 2 {
+		t.Fatalf("Volume() returned %d disks, want 2", len(disks))
+	}
+	if disks[0][constants.FieldDiskConfigMapName] != "my-config" {
+		t.Errorf("disk 0 configmap_name = %v, want my-config", disks[0][constants.FieldDiskConfigMapName])
+	}
+	if disks[1][constants.FieldDiskSecretName] != "my-secret" {
+		t.Errorf("disk 1 secret_name = %v, want my-secret", disks[1][constants.FieldDiskSecretName])
+	}
+}
