@@ -26,10 +26,11 @@ func Schema() map[string]*schema.Schema {
 			ValidateFunc: validation.IsIPAddress,
 		},
 		constants.FieldKubeOVNSubnetExcludeIPs: {
-			Type:     schema.TypeList,
-			Optional: true,
-			Computed: true,
-			Elem:     &schema.Schema{Type: schema.TypeString},
+			Type:        schema.TypeSet,
+			Optional:    true,
+			Computed:    true,
+			Elem:        &schema.Schema{Type: schema.TypeString},
+			Description: "IP addresses or ranges (\"10.0.0.10..10.0.0.20\") kept out of the subnet IPAM pool. kube-ovn always reserves the gateway, so it is added to the planned value when missing.",
 		},
 		constants.FieldKubeOVNSubnetProtocol: {
 			Type:         schema.TypeString,
