@@ -26,6 +26,7 @@ func ResourceAddon() *schema.Resource {
 		ReadContext:   resourceAddonRead,
 		UpdateContext: resourceAddonUpdate,
 		DeleteContext: resourceAddonDelete,
+		CustomizeDiff: resourceAddonCustomizeDiff,
 		Importer: &schema.ResourceImporter{
 			StateContext: schema.ImportStatePassthroughContext,
 		},
@@ -42,6 +43,22 @@ func ResourceAddon() *schema.Resource {
 			Default: schema.DefaultTimeout(2 * time.Minute),
 		},
 	}
+}
+
+// A plan keeps computed attributes at their prior value unless they are marked
+// unknown, so state and message, which the update waits change, would feed
+// outputs with the value from before the operation until the next refresh.
+func resourceAddonCustomizeDiff(_ context.Context, d *schema.ResourceDiff, _ interface{}) error {
+	if d.Id() == "" || !d.HasChanges(constants.FieldAddonEnabled, constants.FieldAddonValuesContent,
+		constants.FieldAddonRepo, constants.FieldAddonChart, constants.FieldAddonVersion) {
+		return nil
+	}
+	for _, key := range []string{constants.FieldCommonState, constants.FieldCommonMessage} {
+		if err := d.SetNewComputed(key); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // failedConditionGrace is how long a wait tolerates an OperationFailed
