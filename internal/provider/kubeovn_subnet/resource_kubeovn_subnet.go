@@ -23,6 +23,7 @@ func ResourceKubeOVNSubnet() *schema.Resource {
 		ReadContext:   resourceKubeOVNSubnetRead,
 		UpdateContext: resourceKubeOVNSubnetUpdate,
 		DeleteContext: resourceKubeOVNSubnetDelete,
+		CustomizeDiff: resourceKubeOVNSubnetCustomizeDiff,
 		Importer: &schema.ResourceImporter{
 			StateContext: schema.ImportStatePassthroughContext,
 		},
@@ -35,6 +36,10 @@ func ResourceKubeOVNSubnet() *schema.Resource {
 			Default: schema.DefaultTimeout(2 * time.Minute),
 		},
 	}
+}
+
+func resourceKubeOVNSubnetCustomizeDiff(_ context.Context, d *schema.ResourceDiff, _ interface{}) error {
+	return planExcludeIPs(d)
 }
 
 func resourceKubeOVNSubnetCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {

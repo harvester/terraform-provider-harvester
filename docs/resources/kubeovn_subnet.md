@@ -20,7 +20,8 @@ resource "harvester_kubeovn_subnet" "example" {
   cidr_block = "10.0.0.0/24"
   gateway    = "10.0.0.1"
 
-  exclude_ips  = ["10.0.0.1"]
+  # kube-ovn always reserves the gateway, it does not need to be listed here
+  exclude_ips  = ["10.0.0.2..10.0.0.10"]
   protocol     = "IPv4"
   nat_outgoing = true
   gateway_type = "distributed"
@@ -44,7 +45,7 @@ resource "harvester_kubeovn_subnet" "example" {
 - `dhcp_v4_options` (String)
 - `enable_dhcp` (Boolean)
 - `enable_lb` (Boolean)
-- `exclude_ips` (List of String)
+- `exclude_ips` (Set of String) IP addresses or ranges ("10.0.0.10..10.0.0.20") kept out of the subnet IPAM pool. kube-ovn always reserves the gateway, so it is added to the planned value when missing.
 - `gateway_node` (String)
 - `gateway_type` (String)
 - `labels` (Map of String)

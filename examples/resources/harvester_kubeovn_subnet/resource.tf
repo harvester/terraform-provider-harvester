@@ -5,7 +5,8 @@ resource "harvester_kubeovn_subnet" "example" {
   cidr_block = "10.0.0.0/24"
   gateway    = "10.0.0.1"
 
-  exclude_ips  = ["10.0.0.1"]
+  # kube-ovn always reserves the gateway, it does not need to be listed here
+  exclude_ips  = ["10.0.0.2..10.0.0.10"]
   protocol     = "IPv4"
   nat_outgoing = true
   gateway_type = "distributed"
