@@ -10,6 +10,7 @@ import (
 	harvclient "github.com/harvester/harvester/pkg/generated/clientset/versioned"
 	"github.com/harvester/harvester/pkg/generated/clientset/versioned/scheme"
 	harvdeviceclient "github.com/harvester/pcidevices/pkg/generated/clientset/versioned"
+	kubeovnclient "github.com/kubeovn/kube-ovn/pkg/client/clientset/versioned"
 	"github.com/rancher/wrangler/v3/pkg/kubeconfig"
 	kubeschema "k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/kubernetes"
@@ -27,6 +28,7 @@ type Client struct {
 	HarvesterNetworkClient      *harvnetworkclient.Clientset
 	HarvesterLoadbalancerClient *harvloadbalancerclient.Clientset
 	HarvesterDeviceClient       *harvdeviceclient.Clientset
+	KubeOVNClient               *kubeovnclient.Clientset
 }
 
 func NewClient(kubeConfig, kubeContext string) (*Client, error) {
@@ -73,6 +75,10 @@ func NewClient(kubeConfig, kubeContext string) (*Client, error) {
 	if err != nil {
 		return nil, err
 	}
+	kubeOVNClient, err := kubeovnclient.NewForConfig(restConfig)
+	if err != nil {
+		return nil, err
+	}
 	return &Client{
 		RestConfig:                  restConfig,
 		KubeVirtSubresourceClient:   restClient,
@@ -82,6 +88,7 @@ func NewClient(kubeConfig, kubeContext string) (*Client, error) {
 		HarvesterNetworkClient:      harvNetworkClient,
 		HarvesterLoadbalancerClient: harvLoadbalancerClient,
 		HarvesterDeviceClient:       harvDeviceClient,
+		KubeOVNClient:               kubeOVNClient,
 	}, nil
 }
 
