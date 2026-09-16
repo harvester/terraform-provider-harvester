@@ -6,7 +6,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/utils/ptr"
 	kubevirtv1 "kubevirt.io/api/core/v1"
 
 	"github.com/harvester/harvester/pkg/builder"
@@ -586,23 +585,23 @@ func TestHypervImport(t *testing.T) {
 					Domain: kubevirtv1.DomainSpec{
 						Features: &kubevirtv1.Features{
 							Hyperv: &kubevirtv1.FeatureHyperv{
-								Relaxed:         &kubevirtv1.FeatureState{Enabled: ptr.To(true)},
-								VAPIC:           &kubevirtv1.FeatureState{Enabled: ptr.To(true)},
-								VPIndex:         &kubevirtv1.FeatureState{Enabled: ptr.To(true)},
-								Runtime:         &kubevirtv1.FeatureState{Enabled: ptr.To(true)},
-								SyNIC:           &kubevirtv1.FeatureState{Enabled: ptr.To(true)},
-								Frequencies:     &kubevirtv1.FeatureState{Enabled: ptr.To(true)},
-								Reenlightenment: &kubevirtv1.FeatureState{Enabled: ptr.To(true)},
+								Relaxed:         &kubevirtv1.FeatureState{Enabled: new(true)},
+								VAPIC:           &kubevirtv1.FeatureState{Enabled: new(true)},
+								VPIndex:         &kubevirtv1.FeatureState{Enabled: new(true)},
+								Runtime:         &kubevirtv1.FeatureState{Enabled: new(true)},
+								SyNIC:           &kubevirtv1.FeatureState{Enabled: new(true)},
+								Frequencies:     &kubevirtv1.FeatureState{Enabled: new(true)},
+								Reenlightenment: &kubevirtv1.FeatureState{Enabled: new(true)},
 								Spinlocks: &kubevirtv1.FeatureSpinlocks{
-									Enabled: ptr.To(true),
+									Enabled: new(true),
 									Retries: &retries,
 								},
 								SyNICTimer: &kubevirtv1.SyNICTimer{
-									Enabled: ptr.To(true),
-									Direct:  &kubevirtv1.FeatureState{Enabled: ptr.To(true)},
+									Enabled: new(true),
+									Direct:  &kubevirtv1.FeatureState{Enabled: new(true)},
 								},
 								VendorID: &kubevirtv1.FeatureVendorID{
-									Enabled:  ptr.To(true),
+									Enabled:  new(true),
 									VendorID: "KVMKVMKVM",
 								},
 							},
@@ -668,7 +667,7 @@ func TestHypervPassthroughImport(t *testing.T) {
 					Domain: kubevirtv1.DomainSpec{
 						Features: &kubevirtv1.Features{
 							HypervPassthrough: &kubevirtv1.HyperVPassthrough{
-								Enabled: ptr.To(true),
+								Enabled: new(true),
 							},
 						},
 					},
@@ -709,23 +708,23 @@ func TestClockImport(t *testing.T) {
 							},
 							Timer: &kubevirtv1.Timer{
 								HPET: &kubevirtv1.HPETTimer{
-									Enabled:    ptr.To(true),
+									Enabled:    new(true),
 									TickPolicy: kubevirtv1.HPETTickPolicyDelay,
 								},
 								KVM: &kubevirtv1.KVMTimer{
-									Enabled: ptr.To(true),
+									Enabled: new(true),
 								},
 								PIT: &kubevirtv1.PITTimer{
-									Enabled:    ptr.To(true),
+									Enabled:    new(true),
 									TickPolicy: kubevirtv1.PITTickPolicyCatchup,
 								},
 								RTC: &kubevirtv1.RTCTimer{
-									Enabled:    ptr.To(true),
+									Enabled:    new(true),
 									TickPolicy: kubevirtv1.RTCTickPolicyCatchup,
 									Track:      kubevirtv1.TrackGuest,
 								},
 								Hyperv: &kubevirtv1.HypervTimer{
-									Enabled: ptr.To(true),
+									Enabled: new(true),
 								},
 							},
 						},

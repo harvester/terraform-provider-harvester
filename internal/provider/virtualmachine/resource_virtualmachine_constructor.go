@@ -502,7 +502,7 @@ func (c *Constructor) Setup() util.Processors {
 						features = &kubevirtv1.Features{}
 					}
 					features.HypervPassthrough = &kubevirtv1.HyperVPassthrough{
-						Enabled: ptr.To(true),
+						Enabled: new(true),
 					}
 					vmBuilder.VirtualMachine.Spec.Template.Spec.Domain.Features = features
 				}
@@ -561,7 +561,7 @@ func parseHyperv(r map[string]interface{}) *kubevirtv1.FeatureHyperv {
 	hv := &kubevirtv1.FeatureHyperv{}
 	setBool := func(field string) *kubevirtv1.FeatureState {
 		if v, ok := r[field].(bool); ok && v {
-			return &kubevirtv1.FeatureState{Enabled: ptr.To(true)}
+			return &kubevirtv1.FeatureState{Enabled: new(true)}
 		}
 		return nil
 	}
@@ -580,23 +580,23 @@ func parseHyperv(r map[string]interface{}) *kubevirtv1.FeatureHyperv {
 	if v, ok := r[constants.FieldHypervSpinlocks].(bool); ok && v {
 		retries := uint32(r[constants.FieldHypervSpinlocksRetries].(int)) // nolint: gosec
 		hv.Spinlocks = &kubevirtv1.FeatureSpinlocks{
-			Enabled: ptr.To(true),
+			Enabled: new(true),
 			Retries: &retries,
 		}
 	}
 
 	if v, ok := r[constants.FieldHypervSyNICTimer].(bool); ok && v {
 		hv.SyNICTimer = &kubevirtv1.SyNICTimer{
-			Enabled: ptr.To(true),
+			Enabled: new(true),
 		}
 		if direct, ok := r[constants.FieldHypervSyNICTimerDirect].(bool); ok && direct {
-			hv.SyNICTimer.Direct = &kubevirtv1.FeatureState{Enabled: ptr.To(true)}
+			hv.SyNICTimer.Direct = &kubevirtv1.FeatureState{Enabled: new(true)}
 		}
 	}
 
 	if v, ok := r[constants.FieldHypervVendorID].(bool); ok && v {
 		hv.VendorID = &kubevirtv1.FeatureVendorID{
-			Enabled:  ptr.To(true),
+			Enabled:  new(true),
 			VendorID: r[constants.FieldHypervVendorIDValue].(string),
 		}
 	}
