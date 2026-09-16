@@ -1,6 +1,8 @@
 package kubeovn_subnet
 
 import (
+	"sort"
+
 	kubeovnv1 "github.com/kubeovn/kube-ovn/pkg/apis/kubeovn/v1"
 
 	"github.com/harvester/terraform-provider-harvester/internal/util"
@@ -35,7 +37,8 @@ func (c *Constructor) Setup() util.Processors {
 		{
 			Field: constants.FieldKubeOVNSubnetExcludeIPs,
 			Parser: func(i interface{}) error {
-				c.Subnet.Spec.ExcludeIps = append(c.Subnet.Spec.ExcludeIps, i.(string))
+				c.Subnet.Spec.ExcludeIps = append(c.Subnet.Spec.ExcludeIps, excludeIPsFromSet(i)...)
+				sort.Strings(c.Subnet.Spec.ExcludeIps)
 				return nil
 			},
 		},
