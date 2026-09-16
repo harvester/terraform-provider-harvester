@@ -33,7 +33,7 @@ data "harvester_kubeovn_subnet" "example" {
 - `dhcp_v4_options` (String)
 - `enable_dhcp` (Boolean)
 - `enable_lb` (Boolean)
-- `exclude_ips` (List of String)
+- `exclude_ips` (Set of String) IP addresses or ranges ("10.0.0.10..10.0.0.20") kept out of the subnet IPAM pool. kube-ovn always reserves the gateway, so it is added to the planned value when missing.
 - `gateway` (String)
 - `gateway_node` (String)
 - `gateway_type` (String)
