@@ -44,9 +44,9 @@ resource "harvester_kubeovn_vpc_egress_gateway" "example" {
 
 - `bfd` (Block List, Max: 1) BFD (Bidirectional Forwarding Detection) configuration (see [below for nested schema](#nestedblock--bfd))
 - `description` (String) Any text you want that better describes this resource
-- `external_ips` (List of String) External IPs for the workload. Must be in the external subnet. Count must not be less than replicas
+- `external_ips` (List of String) External IPs for the workload. Must be in the external subnet. Count must not be less than replicas. Allocated by kube-ovn when not set
 - `image` (String) Image used by the workload. If not specified, the default kube-ovn image is used
-- `internal_ips` (List of String) Internal IPs for the workload. Must be in the internal subnet. Count must not be less than replicas
+- `internal_ips` (List of String) Internal IPs for the workload. Must be in the internal subnet. Count must not be less than replicas. Allocated by kube-ovn when not set
 - `internal_subnet` (String) Internal subnet for the workload. Defaults to the VPC's default subnet
 - `labels` (Map of String)
 - `namespace` (String)

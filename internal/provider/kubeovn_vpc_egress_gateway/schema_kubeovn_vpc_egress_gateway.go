@@ -37,6 +37,7 @@ func Schema() map[string]*schema.Schema {
 		constants.FieldKubeOVNVpcEgressGatewayInternalSubnet: {
 			Type:        schema.TypeString,
 			Optional:    true,
+			Computed:    true,
 			ForceNew:    true,
 			Description: "Internal subnet for the workload. Defaults to the VPC's default subnet",
 		},
@@ -49,18 +50,20 @@ func Schema() map[string]*schema.Schema {
 		constants.FieldKubeOVNVpcEgressGatewayInternalIPs: {
 			Type:     schema.TypeList,
 			Optional: true,
+			Computed: true,
 			Elem: &schema.Schema{
 				Type: schema.TypeString,
 			},
-			Description: "Internal IPs for the workload. Must be in the internal subnet. Count must not be less than replicas",
+			Description: "Internal IPs for the workload. Must be in the internal subnet. Count must not be less than replicas. Allocated by kube-ovn when not set",
 		},
 		constants.FieldKubeOVNVpcEgressGatewayExternalIPs: {
 			Type:     schema.TypeList,
 			Optional: true,
+			Computed: true,
 			Elem: &schema.Schema{
 				Type: schema.TypeString,
 			},
-			Description: "External IPs for the workload. Must be in the external subnet. Count must not be less than replicas",
+			Description: "External IPs for the workload. Must be in the external subnet. Count must not be less than replicas. Allocated by kube-ovn when not set",
 		},
 		constants.FieldKubeOVNVpcEgressGatewayTrafficPolicy: {
 			Type:         schema.TypeString,
