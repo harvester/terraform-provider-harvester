@@ -8,6 +8,7 @@ import (
 	"github.com/mitchellh/go-homedir"
 
 	"github.com/harvester/terraform-provider-harvester/internal/config"
+	"github.com/harvester/terraform-provider-harvester/internal/provider/blockdevice"
 	"github.com/harvester/terraform-provider-harvester/internal/provider/bootstrap"
 	"github.com/harvester/terraform-provider-harvester/internal/provider/cloudinitsecret"
 	"github.com/harvester/terraform-provider-harvester/internal/provider/clusternetwork"
@@ -49,6 +50,7 @@ func Provider() *schema.Provider {
 			},
 		},
 		DataSourcesMap: map[string]*schema.Resource{
+			constants.ResourceTypeBlockDevice:        blockdevice.DataSourceBlockDevice(),
 			constants.ResourceTypeCloudInitSecret:    cloudinitsecret.DataSourceCloudInitSecret(),
 			constants.ResourceTypeClusterNetwork:     clusternetwork.DataSourceClusterNetwork(),
 			constants.ResourceTypeIPPool:             ippool.DataSourceIPPool(),
@@ -66,6 +68,7 @@ func Provider() *schema.Provider {
 			constants.ResourceTypeVolume:             volume.DataSourceVolume(),
 		},
 		ResourcesMap: map[string]*schema.Resource{
+			constants.ResourceTypeBlockDevice:        blockdevice.ResourceBlockDevice(),
 			constants.ResourceTypeBootstrap:          bootstrap.ResourceBootstrap(),
 			constants.ResourceTypeCloudInitSecret:    cloudinitsecret.ResourceCloudInitSecret(),
 			constants.ResourceTypeClusterNetwork:     clusternetwork.ResourceClusterNetwork(),
