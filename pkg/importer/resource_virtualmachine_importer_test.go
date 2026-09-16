@@ -1,6 +1,7 @@
 package importer
 
 import (
+	"reflect"
 	"testing"
 
 	corev1 "k8s.io/api/core/v1"
@@ -573,5 +574,87 @@ func TestResourceRequestsImport(t *testing.T) {
 	}
 	if got := reqsNil[0][constants.FieldRequestsMemory]; got != "" {
 		t.Errorf("Requests() nil memory = %q, want empty", got)
+	}
+}
+
+func TestAccessCredentialsImport(t *testing.T) {
+	// VM with SSH public key via qemuGuestAgent
+	vm := &kubevirtv1.VirtualMachine{
+		Spec: kubevirtv1.VirtualMachineSpec{
+			Template: &kubevirtv1.VirtualMachineInstanceTemplateSpec{
+				Spec: kubevirtv1.VirtualMachineInstanceSpec{
+					AccessCredentials: []kubevirtv1.AccessCredential{
+						{
+							SSHPublicKey: &kubevirtv1.SSHPublicKeyAccessCredential{
+								Source: kubevirtv1.SSHPublicKeyAccessCredentialSource{
+									Secret: &kubevirtv1.AccessCredentialSecretSource{SecretName: "my-ssh-keys"}, // #nosec G101
+								},
+								PropagationMethod: kubevirtv1.SSHPublicKeyAccessCredentialPropagationMethod{
+									QemuGuestAgent: &kubevirtv1.QemuGuestAgentSSHPublicKeyAccessCredentialPropagation{
+										Users: []string{"root", "admin"},
+									},
+								},
+							},
+						},
+						{
+							UserPassword: &kubevirtv1.UserPasswordAccessCredential{
+								Source: kubevirtv1.UserPasswordAccessCredentialSource{
+									Secret: &kubevirtv1.AccessCredentialSecretSource{SecretName: "my-passwords"},
+								},
+								PropagationMethod: kubevirtv1.UserPasswordAccessCredentialPropagationMethod{
+									QemuGuestAgent: &kubevirtv1.QemuGuestAgentUserPasswordAccessCredentialPropagation{},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+	importer := &VMImporter{VirtualMachine: vm}
+	acs := importer.AccessCredentials()
+
+	if len(acs) != 2 {
+		t.Fatalf("AccessCredentials() returned %d entries, want 2", len(acs))
+	}
+
+	// Check SSH entry
+	sshList := acs[0][constants.FieldAccessCredentialSSHPublicKey].([]interface{})
+	if len(sshList) != 1 {
+		t.Fatalf("SSH entry has %d items, want 1", len(sshList))
+	}
+	ssh := sshList[0].(map[string]interface{})
+	if ssh[constants.FieldAccessCredentialSecretName] != "my-ssh-keys" {
+		t.Errorf("SSH secret_name = %q, want %q", ssh[constants.FieldAccessCredentialSecretName], "my-ssh-keys")
+	}
+	if ssh[constants.FieldAccessCredentialPropagationMethod] != "qemuGuestAgent" {
+		t.Errorf("SSH propagation_method = %q, want %q", ssh[constants.FieldAccessCredentialPropagationMethod], "qemuGuestAgent")
+	}
+	users := ssh[constants.FieldAccessCredentialUsers].([]string)
+	if !reflect.DeepEqual(users, []string{"root", "admin"}) {
+		t.Errorf("SSH users = %v, want [root admin]", users)
+	}
+
+	// Check UserPassword entry
+	pwList := acs[1][constants.FieldAccessCredentialUserPassword].([]interface{})
+	if len(pwList) != 1 {
+		t.Fatalf("UserPassword entry has %d items, want 1", len(pwList))
+	}
+	pw := pwList[0].(map[string]interface{})
+	if pw[constants.FieldAccessCredentialSecretName] != "my-passwords" {
+		t.Errorf("UserPassword secret_name = %q, want %q", pw[constants.FieldAccessCredentialSecretName], "my-passwords")
+	}
+
+	// Test empty access credentials
+	vmEmpty := &kubevirtv1.VirtualMachine{
+		Spec: kubevirtv1.VirtualMachineSpec{
+			Template: &kubevirtv1.VirtualMachineInstanceTemplateSpec{
+				Spec: kubevirtv1.VirtualMachineInstanceSpec{},
+			},
+		},
+	}
+	importerEmpty := &VMImporter{VirtualMachine: vmEmpty}
+	if got := importerEmpty.AccessCredentials(); len(got) != 0 {
+		t.Errorf("AccessCredentials() empty VM returned %d entries, want 0", len(got))
 	}
 }

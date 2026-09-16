@@ -459,6 +459,19 @@ func (c *Constructor) Setup() util.Processors {
 				return nil
 			},
 		},
+		{
+			Field: constants.FieldVirtualMachineAccessCredentials,
+			Parser: func(i interface{}) error {
+				r := i.(map[string]interface{})
+				ac, err := parseAccessCredential(r)
+				if err != nil {
+					return err
+				}
+				vmBuilder.VirtualMachine.Spec.Template.Spec.AccessCredentials = append(
+					vmBuilder.VirtualMachine.Spec.Template.Spec.AccessCredentials, ac)
+				return nil
+			},
+		},
 	}
 	return append(processors, customProcessors...)
 }
@@ -495,6 +508,62 @@ func Creator(c *client.Client, ctx context.Context, namespace, name string) util
 	return newVMConstructor(c, ctx, vmBuilder)
 }
 
+func parseAccessCredential(r map[string]interface{}) (kubevirtv1.AccessCredential, error) {
+	sshList, hasSSH := r[constants.FieldAccessCredentialSSHPublicKey].([]interface{})
+	pwList, hasPW := r[constants.FieldAccessCredentialUserPassword].([]interface{})
+
+	if hasSSH && len(sshList) > 0 && hasPW && len(pwList) > 0 {
+		return kubevirtv1.AccessCredential{}, errors.New("access_credentials entry must have either ssh_public_key or user_password, not both")
+	}
+
+	if hasSSH && len(sshList) > 0 {
+		ssh := sshList[0].(map[string]interface{})
+		secretName := ssh[constants.FieldAccessCredentialSecretName].(string)
+		method := ssh[constants.FieldAccessCredentialPropagationMethod].(string)
+		ac := kubevirtv1.AccessCredential{
+			SSHPublicKey: &kubevirtv1.SSHPublicKeyAccessCredential{
+				Source: kubevirtv1.SSHPublicKeyAccessCredentialSource{
+					Secret: &kubevirtv1.AccessCredentialSecretSource{SecretName: secretName},
+				},
+			},
+		}
+		switch method {
+		case "configDrive":
+			ac.SSHPublicKey.PropagationMethod.ConfigDrive = &kubevirtv1.ConfigDriveSSHPublicKeyAccessCredentialPropagation{}
+		case "noCloud":
+			ac.SSHPublicKey.PropagationMethod.NoCloud = &kubevirtv1.NoCloudSSHPublicKeyAccessCredentialPropagation{}
+		case "qemuGuestAgent":
+			var users []string
+			if uList, ok := ssh[constants.FieldAccessCredentialUsers].([]interface{}); ok {
+				for _, u := range uList {
+					users = append(users, u.(string))
+				}
+			}
+			ac.SSHPublicKey.PropagationMethod.QemuGuestAgent = &kubevirtv1.QemuGuestAgentSSHPublicKeyAccessCredentialPropagation{
+				Users: users,
+			}
+		}
+		return ac, nil
+	}
+
+	if hasPW && len(pwList) > 0 {
+		pw := pwList[0].(map[string]interface{})
+		secretName := pw[constants.FieldAccessCredentialSecretName].(string)
+		return kubevirtv1.AccessCredential{
+			UserPassword: &kubevirtv1.UserPasswordAccessCredential{
+				Source: kubevirtv1.UserPasswordAccessCredentialSource{
+					Secret: &kubevirtv1.AccessCredentialSecretSource{SecretName: secretName},
+				},
+				PropagationMethod: kubevirtv1.UserPasswordAccessCredentialPropagationMethod{
+					QemuGuestAgent: &kubevirtv1.QemuGuestAgentUserPasswordAccessCredentialPropagation{},
+				},
+			},
+		}, nil
+	}
+
+	return kubevirtv1.AccessCredential{}, errors.New("access_credentials entry must have either ssh_public_key or user_password")
+}
+
 func Updater(c *client.Client, ctx context.Context, vm *kubevirtv1.VirtualMachine) util.Constructor {
 	vm.Spec.Template.Spec.Networks = []kubevirtv1.Network{}
 	vm.Spec.Template.Spec.Domain.Devices.TPM = nil
@@ -502,6 +571,7 @@ func Updater(c *client.Client, ctx context.Context, vm *kubevirtv1.VirtualMachin
 	vm.Spec.Template.Spec.Domain.Devices.Disks = []kubevirtv1.Disk{}
 	vm.Spec.Template.Spec.Domain.Devices.Inputs = []kubevirtv1.Input{}
 	vm.Spec.Template.Spec.Volumes = []kubevirtv1.Volume{}
+	vm.Spec.Template.Spec.AccessCredentials = nil
 	vm.Annotations[harvesterutil.AnnotationVolumeClaimTemplates] = "[]"
 	return newVMConstructor(c, ctx, &builder.VMBuilder{
 		VirtualMachine: vm,
