@@ -44,6 +44,8 @@ data "harvester_virtualmachine" "opensuse154" {
 - `create_initial_snapshot` (Boolean) Create an initial snapshot named {vm-name}-initial after the VM is created and ready
 - `description` (String) Any text you want that better describes this resource
 - `disk` (List of Object) (see [below for nested schema](#nestedatt--disk))
+- `dns_config` (List of Object) DNS configuration for the VM pod (see [below for nested schema](#nestedatt--dns_config))
+- `dns_policy` (String) DNS policy for the VM pod: ClusterFirst, ClusterFirstWithHostNet, Default, or None
 - `efi` (Boolean)
 - `host_device` (List of Object) Attaches a host device to the VM (see [below for nested schema](#nestedatt--host_device))
 - `hostname` (String)
@@ -108,6 +110,25 @@ Read-Only:
 - `type` (String)
 - `volume_mode` (String)
 - `volume_name` (String)
+
+
+<a id="nestedatt--dns_config"></a>
+### Nested Schema for `dns_config`
+
+Read-Only:
+
+- `nameservers` (List of String)
+- `options` (List of Object) (see [below for nested schema](#nestedobjatt--dns_config--options))
+- `searches` (List of String)
+
+<a id="nestedobjatt--dns_config--options"></a>
+### Nested Schema for `dns_config.options`
+
+Read-Only:
+
+- `name` (String)
+- `value` (String)
+
 
 
 <a id="nestedatt--host_device"></a>

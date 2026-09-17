@@ -1,6 +1,7 @@
 package importer
 
 import (
+	"reflect"
 	"testing"
 
 	corev1 "k8s.io/api/core/v1"
@@ -573,5 +574,70 @@ func TestResourceRequestsImport(t *testing.T) {
 	}
 	if got := reqsNil[0][constants.FieldRequestsMemory]; got != "" {
 		t.Errorf("Requests() nil memory = %q, want empty", got)
+	}
+}
+
+func TestDNSImport(t *testing.T) {
+	// VM with DNS policy and config
+	vm := &kubevirtv1.VirtualMachine{
+		Spec: kubevirtv1.VirtualMachineSpec{
+			Template: &kubevirtv1.VirtualMachineInstanceTemplateSpec{
+				Spec: kubevirtv1.VirtualMachineInstanceSpec{
+					DNSPolicy: corev1.DNSNone,
+					DNSConfig: &corev1.PodDNSConfig{
+						Nameservers: []string{"8.8.8.8", "8.8.4.4"},
+						Searches:    []string{"example.com"},
+						Options: []corev1.PodDNSConfigOption{
+							{Name: "ndots", Value: new("5")},
+							{Name: "single-request"},
+						},
+					},
+				},
+			},
+		},
+	}
+	importer := &VMImporter{VirtualMachine: vm}
+
+	if policy := importer.DNSPolicy(); policy != "None" {
+		t.Errorf("DNSPolicy() = %q, want %q", policy, "None")
+	}
+
+	dc := importer.DNSConfig()
+	if len(dc) != 1 {
+		t.Fatalf("DNSConfig() returned %d entries, want 1", len(dc))
+	}
+	ns := dc[0][constants.FieldDNSConfigNameservers].([]string)
+	if !reflect.DeepEqual(ns, []string{"8.8.8.8", "8.8.4.4"}) {
+		t.Errorf("DNSConfig nameservers = %v, want [8.8.8.8 8.8.4.4]", ns)
+	}
+	searches := dc[0][constants.FieldDNSConfigSearches].([]string)
+	if !reflect.DeepEqual(searches, []string{"example.com"}) {
+		t.Errorf("DNSConfig searches = %v, want [example.com]", searches)
+	}
+	opts := dc[0][constants.FieldDNSConfigOptions].([]map[string]interface{})
+	if len(opts) != 2 {
+		t.Fatalf("DNSConfig options has %d items, want 2", len(opts))
+	}
+	if opts[0][constants.FieldDNSOptionName] != "ndots" || opts[0][constants.FieldDNSOptionValue] != "5" {
+		t.Errorf("DNS option 0 = %v, want {name:ndots, value:5}", opts[0])
+	}
+	if opts[1][constants.FieldDNSOptionName] != "single-request" || opts[1][constants.FieldDNSOptionValue] != "" {
+		t.Errorf("DNS option 1 = %v, want {name:single-request, value:\"\"}", opts[1])
+	}
+
+	// VM without DNS config
+	vmNoDNS := &kubevirtv1.VirtualMachine{
+		Spec: kubevirtv1.VirtualMachineSpec{
+			Template: &kubevirtv1.VirtualMachineInstanceTemplateSpec{
+				Spec: kubevirtv1.VirtualMachineInstanceSpec{},
+			},
+		},
+	}
+	importerNoDNS := &VMImporter{VirtualMachine: vmNoDNS}
+	if policy := importerNoDNS.DNSPolicy(); policy != "" {
+		t.Errorf("DNSPolicy() empty = %q, want empty", policy)
+	}
+	if dc := importerNoDNS.DNSConfig(); dc != nil {
+		t.Errorf("DNSConfig() empty = %v, want nil", dc)
 	}
 }

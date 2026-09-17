@@ -200,6 +200,26 @@ please use %s instead of this deprecated field:
 				},
 			},
 		},
+		constants.FieldVirtualMachineDNSPolicy: {
+			Type:     schema.TypeString,
+			Optional: true,
+			ValidateFunc: validation.StringInSlice([]string{
+				"ClusterFirst",
+				"ClusterFirstWithHostNet",
+				"Default",
+				"None",
+			}, false),
+			Description: "DNS policy for the VM pod: ClusterFirst, ClusterFirstWithHostNet, Default, or None",
+		},
+		constants.FieldVirtualMachineDNSConfig: {
+			Type:     schema.TypeList,
+			Optional: true,
+			MaxItems: 1,
+			Elem: &schema.Resource{
+				Schema: resourceDNSConfigSchema(),
+			},
+			Description: "DNS configuration for the VM pod",
+		},
 	}
 	util.NamespacedSchemaWrap(s, false)
 	s[constants.FieldCommonTags].Description = "The tag is reflected as label on the VM.\n" +
