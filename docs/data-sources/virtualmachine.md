@@ -47,6 +47,7 @@ data "harvester_virtualmachine" "opensuse154" {
 - `efi` (Boolean)
 - `host_device` (List of Object) Attaches a host device to the VM (see [below for nested schema](#nestedatt--host_device))
 - `hostname` (String)
+- `hugepages` (String) Hugepages size for memory performance (2Mi or 1Gi)
 - `id` (String) The ID of this resource.
 - `input` (List of Object) (see [below for nested schema](#nestedatt--input))
 - `isolate_emulator_thread` (Boolean) To enable isolate emulator thread, ensure that at least one node has the CPU manager enabled, also VM CPU pinning must be enabled. Note that enable option will allocate an additional dedicated CPU.
