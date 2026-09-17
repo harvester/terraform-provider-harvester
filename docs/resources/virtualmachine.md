@@ -195,6 +195,7 @@ resource "harvester_virtualmachine" "opensuse154" {
 
 ### Optional
 
+- `access_credentials` (Block List) Access credentials for the VM (SSH public keys or user passwords) (see [below for nested schema](#nestedblock--access_credentials))
 - `cloudinit` (Block List, Max: 1) (see [below for nested schema](#nestedblock--cloudinit))
 - `cpu` (Number)
 - `cpu_model` (String) CPU model for the virtual machine
@@ -280,6 +281,36 @@ Read-Only:
 
 - `interface_name` (String)
 - `ip_address` (String)
+
+
+<a id="nestedblock--access_credentials"></a>
+### Nested Schema for `access_credentials`
+
+Optional:
+
+- `ssh_public_key` (Block List, Max: 1) SSH public key access credential sourced from a Kubernetes secret (see [below for nested schema](#nestedblock--access_credentials--ssh_public_key))
+- `user_password` (Block List, Max: 1) User password access credential sourced from a Kubernetes secret, propagated via qemu guest agent (see [below for nested schema](#nestedblock--access_credentials--user_password))
+
+<a id="nestedblock--access_credentials--ssh_public_key"></a>
+### Nested Schema for `access_credentials.ssh_public_key`
+
+Required:
+
+- `propagation_method` (String) Method to propagate SSH keys: configDrive, noCloud, or qemuGuestAgent
+- `secret_name` (String) Name of the Kubernetes secret containing SSH public keys
+
+Optional:
+
+- `users` (List of String) List of guest users for qemuGuestAgent propagation (required when propagation_method is qemuGuestAgent)
+
+
+<a id="nestedblock--access_credentials--user_password"></a>
+### Nested Schema for `access_credentials.user_password`
+
+Required:
+
+- `secret_name` (String) Name of the Kubernetes secret containing user passwords
+
 
 
 <a id="nestedblock--cloudinit"></a>
