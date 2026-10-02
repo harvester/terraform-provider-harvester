@@ -782,6 +782,10 @@ func TestVolume(t *testing.T) {
 }
 
 func TestDiskEjectImport(t *testing.T) {
+	const (
+		cdromDisk = "cdrom-disk"
+		testImage = "test-image"
+	)
 	makeVM := func(disks []kubevirtv1.Disk, volumes []kubevirtv1.Volume) *VMImporter {
 		return &VMImporter{
 			VirtualMachine: &kubevirtv1.VirtualMachine{
@@ -804,7 +808,7 @@ func TestDiskEjectImport(t *testing.T) {
 	// CD-ROM with tray open (ejected)
 	imp := makeVM(
 		[]kubevirtv1.Disk{{
-			Name: "cdrom-disk",
+			Name: cdromDisk,
 			DiskDevice: kubevirtv1.DiskDevice{
 				CDRom: &kubevirtv1.CDRomTarget{
 					Bus:  kubevirtv1.DiskBusSATA,
@@ -813,10 +817,10 @@ func TestDiskEjectImport(t *testing.T) {
 			},
 		}},
 		[]kubevirtv1.Volume{{
-			Name: "cdrom-disk",
+			Name: cdromDisk,
 			VolumeSource: kubevirtv1.VolumeSource{
 				ContainerDisk: &kubevirtv1.ContainerDiskSource{
-					Image: "test-image",
+					Image: testImage,
 				},
 			},
 		}},
@@ -835,7 +839,7 @@ func TestDiskEjectImport(t *testing.T) {
 	// CD-ROM with tray closed (not ejected)
 	imp2 := makeVM(
 		[]kubevirtv1.Disk{{
-			Name: "cdrom-disk",
+			Name: cdromDisk,
 			DiskDevice: kubevirtv1.DiskDevice{
 				CDRom: &kubevirtv1.CDRomTarget{
 					Bus:  kubevirtv1.DiskBusSATA,
@@ -844,10 +848,10 @@ func TestDiskEjectImport(t *testing.T) {
 			},
 		}},
 		[]kubevirtv1.Volume{{
-			Name: "cdrom-disk",
+			Name: cdromDisk,
 			VolumeSource: kubevirtv1.VolumeSource{
 				ContainerDisk: &kubevirtv1.ContainerDiskSource{
-					Image: "test-image",
+					Image: testImage,
 				},
 			},
 		}},
@@ -874,7 +878,7 @@ func TestDiskEjectImport(t *testing.T) {
 			Name: "rootdisk",
 			VolumeSource: kubevirtv1.VolumeSource{
 				ContainerDisk: &kubevirtv1.ContainerDiskSource{
-					Image: "test-image",
+					Image: testImage,
 				},
 			},
 		}},
@@ -901,7 +905,7 @@ func TestDiskEjectImport(t *testing.T) {
 			Name: "cdrom-no-tray",
 			VolumeSource: kubevirtv1.VolumeSource{
 				ContainerDisk: &kubevirtv1.ContainerDiskSource{
-					Image: "test-image",
+					Image: testImage,
 				},
 			},
 		}},
