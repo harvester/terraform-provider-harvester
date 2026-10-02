@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"strings"
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -354,51 +353,12 @@ func (c *Constructor) Setup() util.Processors {
 				}
 				// only apply ssh username and ssh keys to cloud-init if UserDataBase64 and UserDataSecretName are not set
 				if cloudInitSource.UserDataBase64 == "" && cloudInitSource.UserDataSecretName == "" {
-					if vmBuilder.VirtualMachine.Labels != nil {
-						if sshUsername, ok := vmBuilder.VirtualMachine.Labels[builder.LabelPrefixHarvesterTag+constants.LabelSSHUsername]; ok && sshUsername != "" {
-							if cloudInitSource.UserData == "" {
-								cloudInitSource.UserData = fmt.Sprintf("#cloud-config\nuser: %s\n", sshUsername)
-							} else {
-								appendUser := true
-								for _, line := range strings.Split(cloudInitSource.UserData, "\n") {
-									if strings.HasPrefix(line, "user: ") {
-										appendUser = false
-										break
-									}
-								}
-								if appendUser {
-									cloudInitSource.UserData += fmt.Sprintf("\nuser: %s\n", sshUsername)
-								}
-							}
-						}
+					publicKeys, err := keyPairPublicKeys(c.Context, c.Client, c.Builder.VirtualMachine.Namespace, vmBuilder.SSHNames)
+					if err != nil {
+						return err
 					}
-
-					publicKeys := []string{}
-					for _, sshName := range vmBuilder.SSHNames {
-						_, keyPairName, err := helper.NamespacedNameParts(sshName)
-						if err != nil {
-							return err
-						}
-						keyPair, err := c.Client.HarvesterClient.HarvesterhciV1beta1().KeyPairs(c.Builder.VirtualMachine.Namespace).Get(c.Context, keyPairName, metav1.GetOptions{})
-						if err != nil {
-							return err
-						}
-						publicKeys = append(publicKeys, keyPair.Spec.PublicKey)
-					}
-					appendPublicKeys := len(publicKeys) > 0
-					for _, line := range strings.Split(cloudInitSource.UserData, "\n") {
-						if strings.HasPrefix(line, "ssh_authorized_keys:") {
-							appendPublicKeys = false
-							break
-						}
-					}
-					if appendPublicKeys {
-						if cloudInitSource.UserData == "" {
-							cloudInitSource.UserData = fmt.Sprintf("#cloud-config\nssh_authorized_keys:\n  - %s", strings.Join(publicKeys, "\n  - "))
-						} else {
-							cloudInitSource.UserData += fmt.Sprintf("\nssh_authorized_keys:\n  - %s", strings.Join(publicKeys, "\n  - "))
-						}
-					}
+					sshUser := vmBuilder.VirtualMachine.Labels[builder.LabelPrefixHarvesterTag+constants.LabelSSHUsername]
+					cloudInitSource.UserData = injectSSHUserAndKeys(cloudInitSource.UserData, sshUser, publicKeys)
 				}
 				diskName := builder.CloudInitDiskName
 				vmBuilder.Disk(diskName, diskBus, isCDRom, 0)
