@@ -541,6 +541,113 @@ resource "harvester_virtualmachine" "test-acc-labels" {
 	})
 }
 
+// testAccVirtualMachineSSHUserConfig returns a VM whose user data gets the
+// ssh-user tag and two key pairs injected when inject is true.
+func testAccVirtualMachineSSHUserConfig(userData string, inject bool) string {
+	injection := ""
+	if inject {
+		injection = `
+	tags = {
+		"ssh-user" = "fedora"
+	}
+	ssh_keys = [harvester_ssh_key.test-acc-ssh-user-a.id, harvester_ssh_key.test-acc-ssh-user-b.id]`
+	}
+	return fmt.Sprintf(`
+resource "harvester_ssh_key" "test-acc-ssh-user-a" {
+	name       = "test-acc-ssh-user-a"
+	namespace  = "default"
+	public_key = %q
+}
+
+resource "harvester_ssh_key" "test-acc-ssh-user-b" {
+	name       = "test-acc-ssh-user-b"
+	namespace  = "default"
+	public_key = %q
+}
+
+resource "harvester_virtualmachine" "test-acc-ssh-user" {
+	name      = "test-acc-ssh-user"
+	namespace = "default"
+%s
+
+	cpu          = 1
+	memory       = "1Gi"
+	run_strategy = "Halted"
+	machine_type = "q35"
+
+	network_interface {
+		name = "default"
+	}
+
+	disk {
+		name       = "rootdisk"
+		type       = "disk"
+		bus        = "virtio"
+		boot_order = 1
+
+		container_image_name = %q
+	}
+
+	cloudinit {
+		user_data = %q
+	}
+}
+`, testAccKeyPairPublicKey, testAccKeyPairPublicKeyUpdate, injection, fedoraCloudContainer, userData)
+}
+
+// TestAccVirtualMachine_sshUserAndKeys checks that the user data the provider
+// injects from the ssh-user tag and ssh_keys does not show up as a change:
+// every step fails if the plan after apply is not empty.
+func TestAccVirtualMachine_sshUserAndKeys(t *testing.T) {
+	const (
+		resourceName = "harvester_virtualmachine.test-acc-ssh-user"
+		userDataVim  = "#cloud-config\npackages:\n  - vim\n"
+		userDataGit  = "#cloud-config\npackages:\n  - git"
+	)
+	var (
+		vm       = &kubevirtv1.VirtualMachine{}
+		ctx      = context.Background()
+		userAttr = constants.FieldVirtualMachineCloudInit + ".0." + constants.FieldCloudInitUserData
+		injected = "\nuser: fedora\n\nssh_authorized_keys:\n  - " + testAccKeyPairPublicKey + "\n  - " + testAccKeyPairPublicKeyUpdate
+	)
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckVirtualMachineDestroy(ctx),
+		Steps: []resource.TestStep{
+			{
+				Config: testAccVirtualMachineSSHUserConfig(userDataVim, true),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					testAccVirtualMachineExists(ctx, resourceName, vm),
+					resource.TestCheckResourceAttr(resourceName, userAttr, userDataVim),
+					testAccVirtualMachineUserData(ctx, resourceName, userDataVim+injected),
+				),
+			},
+			{
+				Config: testAccVirtualMachineSSHUserConfig(userDataGit, true),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceName, userAttr, userDataGit),
+					testAccVirtualMachineUserData(ctx, resourceName, userDataGit+injected),
+				),
+			},
+			{
+				Config: testAccVirtualMachineSSHUserConfig(userDataGit, false),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceName, userAttr, userDataGit),
+					testAccVirtualMachineUserData(ctx, resourceName, userDataGit),
+				),
+			},
+			{
+				Config: testAccVirtualMachineSSHUserConfig(userDataGit, true),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceName, userAttr, userDataGit),
+					testAccVirtualMachineUserData(ctx, resourceName, userDataGit+injected),
+				),
+			},
+		},
+	})
+}
+
 func TestAccVirtualMachine_hotplug_cdrom_volume(t *testing.T) {
 	var (
 		testAccImageName                  = "test-acc-hp-cdrom-img"
@@ -782,6 +889,26 @@ func testAccVirtualMachineLabels(ctx context.Context, n string, labels map[strin
 			}
 		}
 		return nil
+	}
+}
+
+// testAccVirtualMachineUserData checks the cloud-init user data stored on the VM.
+func testAccVirtualMachineUserData(ctx context.Context, n, expected string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		vm, err := testAccGetVirtualMachine(ctx, s, n)
+		if err != nil {
+			return err
+		}
+		for _, volume := range vm.Spec.Template.Spec.Volumes {
+			if volume.CloudInitNoCloud == nil {
+				continue
+			}
+			if volume.CloudInitNoCloud.UserData != expected {
+				return fmt.Errorf("user data on the VM is %q, want %q", volume.CloudInitNoCloud.UserData, expected)
+			}
+			return nil
+		}
+		return errors.New("no cloud-init volume on the VM")
 	}
 }
 
