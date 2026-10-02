@@ -799,13 +799,14 @@ func affinityImporter(affinity *corev1.Affinity) *VMImporter {
 // expressions (network.harvesterhci.io/*) are filtered out and that terms left
 // empty by the filter are not exported as phantom empty terms.
 func TestNodeAffinityImport(t *testing.T) {
+	const injectedValue = "true"
 	injected := corev1.NodeSelectorRequirement{
 		Key:      "network.harvesterhci.io/mgmt",
 		Operator: corev1.NodeSelectorOpIn,
-		Values:   []string{"true"},
+		Values:   []string{injectedValue},
 	}
 	user := corev1.NodeSelectorRequirement{
-		Key:      "kubernetes.io/hostname",
+		Key:      corev1.LabelHostname,
 		Operator: corev1.NodeSelectorOpIn,
 		Values:   []string{"node1"},
 	}
@@ -857,7 +858,7 @@ func TestNodeAffinityImport(t *testing.T) {
 				required := got[0][constants.FieldNodeAffinityRequired].([]map[string]interface{})
 				terms := required[0][constants.FieldNodeSelectorTerm].([]map[string]interface{})
 				expressions := terms[0][constants.FieldMatchExpressions].([]map[string]interface{})
-				if len(expressions) != 1 || expressions[0][constants.FieldExpressionKey] != "kubernetes.io/hostname" {
+				if len(expressions) != 1 || expressions[0][constants.FieldExpressionKey] != corev1.LabelHostname {
 					t.Errorf("expected only the user expression, got %v", expressions)
 				}
 			}
@@ -871,7 +872,7 @@ func TestPodAntiAffinityImport(t *testing.T) {
 	creatorTerm := corev1.WeightedPodAffinityTerm{
 		Weight: 1,
 		PodAffinityTerm: corev1.PodAffinityTerm{
-			TopologyKey: "kubernetes.io/hostname",
+			TopologyKey: corev1.LabelHostname,
 			LabelSelector: &metav1.LabelSelector{
 				MatchExpressions: []metav1.LabelSelectorRequirement{
 					{Key: "harvesterhci.io/creator", Operator: metav1.LabelSelectorOpExists},
@@ -882,7 +883,7 @@ func TestPodAntiAffinityImport(t *testing.T) {
 	userTerm := corev1.WeightedPodAffinityTerm{
 		Weight: 100,
 		PodAffinityTerm: corev1.PodAffinityTerm{
-			TopologyKey: "kubernetes.io/hostname",
+			TopologyKey: corev1.LabelHostname,
 			LabelSelector: &metav1.LabelSelector{
 				MatchExpressions: []metav1.LabelSelectorRequirement{
 					{Key: "harvesterhci.io/vmName", Operator: metav1.LabelSelectorOpIn, Values: []string{"other-vm"}},
