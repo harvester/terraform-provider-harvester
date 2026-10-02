@@ -80,9 +80,12 @@ func (p Processors) Tags(labels *map[string]string) Processors {
 }
 
 func (p Processors) Labels(labels *map[string]string) Processors {
+	// Labels managed by Harvester or by the kube-ovn controller are kept: only
+	// user labels are owned by the configuration.
 	for key := range *labels {
 		if !strings.HasPrefix(key, builder.LabelPrefixHarvesterTag) &&
-			!strings.HasPrefix(key, builder.LabelAnnotationPrefixHarvester) {
+			!strings.HasPrefix(key, builder.LabelAnnotationPrefixHarvester) &&
+			!strings.HasPrefix(key, constants.LabelPrefixKubeOVN) {
 			delete(*labels, key)
 		}
 	}
