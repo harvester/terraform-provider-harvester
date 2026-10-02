@@ -581,13 +581,20 @@ func TestResourceRequestsImport(t *testing.T) {
 // block only. Reporting the cloud-init disk as a disk block would otherwise
 // cause a perpetual diff on every plan.
 func TestVolume(t *testing.T) {
+	const (
+		diskname  = "rootdisk"
+		virtio    = "virtio"
+		scsi      = "scsi"
+		writeback = "writeback"
+	)
+
 	bootOrder := func(n uint) *uint { return &n }
-	disk := func(name, diskType, bus string, order uint, cache string) kubevirtv1.Disk {
+	disk := func(name, diskType string, bus kubevirtv1.DiskBus, order uint, cache string) kubevirtv1.Disk {
 		d := kubevirtv1.Disk{Name: name, BootOrder: bootOrder(order), Cache: kubevirtv1.DriverCache(cache)}
 		if diskType == builder.DiskTypeCDRom {
-			d.DiskDevice = kubevirtv1.DiskDevice{CDRom: &kubevirtv1.CDRomTarget{Bus: kubevirtv1.DiskBus(bus)}}
+			d.DiskDevice = kubevirtv1.DiskDevice{CDRom: &kubevirtv1.CDRomTarget{Bus: bus}}
 		} else {
-			d.DiskDevice = kubevirtv1.DiskDevice{Disk: &kubevirtv1.DiskTarget{Bus: kubevirtv1.DiskBus(bus)}}
+			d.DiskDevice = kubevirtv1.DiskDevice{Disk: &kubevirtv1.DiskTarget{Bus: bus}}
 		}
 		return d
 	}
@@ -615,7 +622,7 @@ func TestVolume(t *testing.T) {
 		bus       string
 		bootOrder uint
 		cache     string
-		extra     map[string]interface{}
+		extra     map[string]any
 	}
 
 	testcases := []struct {
@@ -626,45 +633,99 @@ func TestVolume(t *testing.T) {
 		wantErr       bool
 	}{
 		{
-			name:          "pvc root disk + noCloud cloud-init is skipped",
-			importer:      build([]kubevirtv1.Disk{disk("rootdisk", builder.DiskTypeDisk, "virtio", 1, "writeback"), disk(builder.CloudInitDiskName, builder.DiskTypeDisk, "virtio", 0, "")}, []kubevirtv1.Volume{pvcVol("rootdisk"), noCloudVol(builder.CloudInitDiskName)}),
-			wantDisks:     []wantDisk{{name: "rootdisk", diskType: builder.DiskTypeDisk, bus: "virtio", bootOrder: 1, cache: "writeback", extra: map[string]interface{}{constants.FieldDiskVolumeName: "rootdisk"}}},
+			name: "pvc root disk + noCloud cloud-init is skipped",
+			importer: build(
+				[]kubevirtv1.Disk{
+					disk(diskname, builder.DiskTypeDisk, kubevirtv1.DiskBusVirtio, 1, writeback),
+					disk(builder.CloudInitDiskName, builder.DiskTypeDisk, kubevirtv1.DiskBusVirtio, 0, ""),
+				},
+				[]kubevirtv1.Volume{
+					pvcVol(diskname), noCloudVol(builder.CloudInitDiskName),
+				},
+			),
+			wantDisks: []wantDisk{
+				{name: diskname, diskType: builder.DiskTypeDisk, bus: virtio, bootOrder: 1, cache: writeback, extra: map[string]any{constants.FieldDiskVolumeName: diskname}},
+			},
 			wantCloudInit: true,
 		},
 		{
-			name:          "configDrive cloud-init is also skipped",
-			importer:      build([]kubevirtv1.Disk{disk("rootdisk", builder.DiskTypeDisk, "virtio", 1, ""), disk(builder.CloudInitDiskName, builder.DiskTypeDisk, "sata", 0, "")}, []kubevirtv1.Volume{pvcVol("rootdisk"), configDriveVol(builder.CloudInitDiskName)}),
-			wantDisks:     []wantDisk{{name: "rootdisk", diskType: builder.DiskTypeDisk, bus: "virtio", bootOrder: 1}},
+			name: "configDrive cloud-init is also skipped",
+			importer: build(
+				[]kubevirtv1.Disk{
+					disk(diskname, builder.DiskTypeDisk, kubevirtv1.DiskBusVirtio, 1, ""),
+					disk(builder.CloudInitDiskName, builder.DiskTypeDisk, kubevirtv1.DiskBusSATA, 0, ""),
+				},
+				[]kubevirtv1.Volume{
+					pvcVol(diskname), configDriveVol(builder.CloudInitDiskName),
+				},
+			),
+			wantDisks: []wantDisk{
+				{name: diskname, diskType: builder.DiskTypeDisk, bus: virtio, bootOrder: 1},
+			},
 			wantCloudInit: true,
 		},
 		{
-			name:          "container disk reported, no cloud-init",
-			importer:      build([]kubevirtv1.Disk{disk("rootdisk", builder.DiskTypeDisk, "virtio", 1, "")}, []kubevirtv1.Volume{containerVol("rootdisk", "example/image:latest")}),
-			wantDisks:     []wantDisk{{name: "rootdisk", diskType: builder.DiskTypeDisk, bus: "virtio", bootOrder: 1, extra: map[string]interface{}{constants.FieldDiskContainerImageName: "example/image:latest"}}},
+			name: "container disk reported, no cloud-init",
+			importer: build(
+				[]kubevirtv1.Disk{
+					disk(diskname, builder.DiskTypeDisk, kubevirtv1.DiskBusVirtio, 1, ""),
+				},
+				[]kubevirtv1.Volume{
+					containerVol("rootdisk", "example/image:latest"),
+				},
+			),
+			wantDisks: []wantDisk{
+				{name: diskname, diskType: builder.DiskTypeDisk, bus: virtio, bootOrder: 1, extra: map[string]any{constants.FieldDiskContainerImageName: "example/image:latest"}},
+			},
 			wantCloudInit: false,
 		},
 		{
 			// cloud-init in the middle of the disk list must still be skipped and
 			// must not shift the surrounding disks.
-			name:     "cd-rom and a cloud-init disk in the middle",
-			importer: build([]kubevirtv1.Disk{disk("rootdisk", builder.DiskTypeDisk, "scsi", 1, ""), disk(builder.CloudInitDiskName, builder.DiskTypeDisk, "virtio", 0, ""), disk("iso", builder.DiskTypeCDRom, "sata", 2, "")}, []kubevirtv1.Volume{pvcVol("rootdisk"), noCloudVol(builder.CloudInitDiskName)}),
+			name: "cd-rom and a cloud-init disk in the middle",
+			importer: build(
+				[]kubevirtv1.Disk{
+					disk(diskname, builder.DiskTypeDisk, kubevirtv1.DiskBusSCSI, 1, ""),
+					disk(builder.CloudInitDiskName, builder.DiskTypeDisk, kubevirtv1.DiskBusVirtio, 0, ""),
+					disk("iso", builder.DiskTypeCDRom, kubevirtv1.DiskBusSATA, 2, ""),
+				},
+				[]kubevirtv1.Volume{
+					pvcVol(diskname), noCloudVol(builder.CloudInitDiskName),
+				},
+			),
 			wantDisks: []wantDisk{
-				{name: "rootdisk", diskType: builder.DiskTypeDisk, bus: "scsi", bootOrder: 1, extra: map[string]interface{}{constants.FieldDiskVolumeName: "rootdisk"}},
+				{name: diskname, diskType: builder.DiskTypeDisk, bus: scsi, bootOrder: 1, extra: map[string]any{constants.FieldDiskVolumeName: diskname}},
 				{name: "iso", diskType: builder.DiskTypeCDRom, bus: "sata", bootOrder: 2},
 			},
 			wantCloudInit: true,
 		},
 		{
-			name:          "no cloud-init at all",
-			importer:      build([]kubevirtv1.Disk{disk("rootdisk", builder.DiskTypeDisk, "virtio", 1, "")}, []kubevirtv1.Volume{pvcVol("rootdisk")}),
-			wantDisks:     []wantDisk{{name: "rootdisk", diskType: builder.DiskTypeDisk, bus: "virtio", bootOrder: 1}},
+			name: "no cloud-init at all",
+			importer: build(
+				[]kubevirtv1.Disk{
+					disk(diskname, builder.DiskTypeDisk, kubevirtv1.DiskBusVirtio, 1, ""),
+				},
+				[]kubevirtv1.Volume{
+					pvcVol(diskname),
+				},
+			),
+			wantDisks: []wantDisk{
+				{name: diskname, diskType: builder.DiskTypeDisk, bus: virtio, bootOrder: 1},
+			},
 			wantCloudInit: false,
 		},
 		{
 			// not reachable via this provider (a VM always has a real disk), but the
 			// importer must not panic and yields an empty disk list.
-			name:          "cloud-init only yields an empty disk list",
-			importer:      build([]kubevirtv1.Disk{disk(builder.CloudInitDiskName, builder.DiskTypeDisk, "virtio", 0, "")}, []kubevirtv1.Volume{noCloudVol(builder.CloudInitDiskName)}),
+			name: "cloud-init only yields an empty disk list",
+			importer: build(
+				[]kubevirtv1.Disk{
+					disk(builder.CloudInitDiskName, builder.DiskTypeDisk, kubevirtv1.DiskBusVirtio, 0, ""),
+				},
+				[]kubevirtv1.Volume{
+					noCloudVol(builder.CloudInitDiskName),
+				},
+			),
 			wantDisks:     []wantDisk{},
 			wantCloudInit: true,
 		},
