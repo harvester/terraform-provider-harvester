@@ -1,6 +1,7 @@
 package importer
 
 import (
+	"slices"
 	"testing"
 
 	corev1 "k8s.io/api/core/v1"
@@ -8,9 +9,11 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	kubevirtv1 "kubevirt.io/api/core/v1"
 
+	networkapi "github.com/harvester/harvester-network-controller/pkg/apis/network.harvesterhci.io"
 	"github.com/harvester/harvester/pkg/builder"
 
 	"github.com/harvester/terraform-provider-harvester/pkg/constants"
+	"github.com/harvester/terraform-provider-harvester/pkg/helper"
 )
 
 func TestNetworkInterface(t *testing.T) {
@@ -778,5 +781,234 @@ func TestVolume(t *testing.T) {
 				t.Errorf("cloud-init present = %v, want %v", hasCloudInit, tc.wantCloudInit)
 			}
 		})
+	}
+}
+
+func affinityImporter(affinity *corev1.Affinity) *VMImporter {
+	return &VMImporter{
+		VirtualMachine: &kubevirtv1.VirtualMachine{
+			Spec: kubevirtv1.VirtualMachineSpec{
+				Template: &kubevirtv1.VirtualMachineInstanceTemplateSpec{
+					Spec: kubevirtv1.VirtualMachineInstanceSpec{
+						Affinity: affinity,
+					},
+				},
+			},
+		},
+	}
+}
+
+// TestNodeAffinityImport verifies that the node selector expressions injected
+// by the Harvester webhook in required terms (network.harvesterhci.io/* and
+// kubevirt.io/cpumanager) are filtered out, that terms left empty by the filter
+// are not exported as phantom empty terms, and that preferred terms are kept.
+func TestNodeAffinityImport(t *testing.T) {
+	const injectedValue = "true"
+	injected := corev1.NodeSelectorRequirement{
+		Key:      networkapi.GroupName + "/mgmt",
+		Operator: corev1.NodeSelectorOpIn,
+		Values:   []string{injectedValue},
+	}
+	user := corev1.NodeSelectorRequirement{
+		Key:      corev1.LabelHostname,
+		Operator: corev1.NodeSelectorOpIn,
+		Values:   []string{"node1"},
+	}
+
+	testcases := []struct {
+		name     string
+		affinity *corev1.Affinity
+		expected int // number of exported node_affinity blocks
+	}{
+		{
+			name:     "nil affinity exports nothing",
+			affinity: nil,
+			expected: 0,
+		},
+		{
+			name: "injected-only term exports nothing (no phantom empty term)",
+			affinity: &corev1.Affinity{
+				NodeAffinity: &corev1.NodeAffinity{
+					RequiredDuringSchedulingIgnoredDuringExecution: &corev1.NodeSelector{
+						NodeSelectorTerms: []corev1.NodeSelectorTerm{
+							{MatchExpressions: []corev1.NodeSelectorRequirement{injected}},
+						},
+					},
+				},
+			},
+			expected: 0,
+		},
+		{
+			name: "cpumanager-only term of a VM with dedicated CPUs exports nothing",
+			affinity: &corev1.Affinity{
+				NodeAffinity: &corev1.NodeAffinity{
+					RequiredDuringSchedulingIgnoredDuringExecution: &corev1.NodeSelector{
+						NodeSelectorTerms: []corev1.NodeSelectorTerm{
+							{MatchExpressions: []corev1.NodeSelectorRequirement{{Key: kubevirtv1.CPUManager, Operator: corev1.NodeSelectorOpIn, Values: []string{injectedValue}}}},
+							{MatchExpressions: []corev1.NodeSelectorRequirement{{Key: helper.CPUManagerLabel, Operator: corev1.NodeSelectorOpIn, Values: []string{injectedValue}}}},
+						},
+					},
+				},
+			},
+			expected: 0,
+		},
+		{
+			name: "preferred term is not filtered",
+			affinity: &corev1.Affinity{
+				NodeAffinity: &corev1.NodeAffinity{
+					PreferredDuringSchedulingIgnoredDuringExecution: []corev1.PreferredSchedulingTerm{
+						{Weight: 1, Preference: corev1.NodeSelectorTerm{MatchExpressions: []corev1.NodeSelectorRequirement{injected}}},
+					},
+				},
+			},
+			expected: 1,
+		},
+		{
+			name: "user expression is kept when mixed with injected one",
+			affinity: &corev1.Affinity{
+				NodeAffinity: &corev1.NodeAffinity{
+					RequiredDuringSchedulingIgnoredDuringExecution: &corev1.NodeSelector{
+						NodeSelectorTerms: []corev1.NodeSelectorTerm{
+							{MatchExpressions: []corev1.NodeSelectorRequirement{user, injected}},
+						},
+					},
+				},
+			},
+			expected: 1,
+		},
+	}
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			got := affinityImporter(tc.affinity).NodeAffinity()
+			if len(got) != tc.expected {
+				t.Fatalf("NodeAffinity() exported %d blocks, want %d (%v)", len(got), tc.expected, got)
+			}
+			if tc.expected == 0 {
+				return
+			}
+			if required, ok := got[0][constants.FieldNodeAffinityRequired].([]map[string]interface{}); ok {
+				terms := required[0][constants.FieldNodeSelectorTerm].([]map[string]interface{})
+				expressions := terms[0][constants.FieldMatchExpressions].([]map[string]interface{})
+				if len(expressions) != 1 || expressions[0][constants.FieldExpressionKey] != corev1.LabelHostname {
+					t.Errorf("expected only the user expression, got %v", expressions)
+				}
+			}
+			if preferred, ok := got[0][constants.FieldNodeAffinityPreferred].([]map[string]interface{}); ok {
+				preference, _ := preferred[0][constants.FieldPreferredPreference].([]map[string]interface{})
+				if len(preference) != 1 || preference[0][constants.FieldMatchExpressions] == nil {
+					t.Errorf("preferred term = %v, want its preference kept", preferred)
+				}
+			}
+		})
+	}
+}
+
+func weightedTerm(weight int32, key string, operator metav1.LabelSelectorOperator, values ...string) corev1.WeightedPodAffinityTerm {
+	return corev1.WeightedPodAffinityTerm{
+		Weight: weight,
+		PodAffinityTerm: corev1.PodAffinityTerm{
+			TopologyKey: corev1.LabelHostname,
+			LabelSelector: &metav1.LabelSelector{
+				MatchExpressions: []metav1.LabelSelectorRequirement{{Key: key, Operator: operator, Values: values}},
+			},
+		},
+	}
+}
+
+// TestPodAntiAffinityImport verifies that only the default term set by
+// builder.DefaultPodAntiAffinity() is filtered, and that user terms are kept,
+// including terms on the harvesterhci.io/creator label.
+func TestPodAntiAffinityImport(t *testing.T) {
+	defaultTerm := builder.NewVMBuilder("").DefaultPodAntiAffinity().VirtualMachine.Spec.Template.Spec.Affinity.PodAntiAffinity.PreferredDuringSchedulingIgnoredDuringExecution[0]
+	userTerm := weightedTerm(50, builder.LabelKeyVirtualMachineName, metav1.LabelSelectorOpIn, "other-vm")
+	userCreatorTerm := weightedTerm(10, builder.LabelKeyVirtualMachineCreator, metav1.LabelSelectorOpExists)
+
+	testcases := []struct {
+		name              string
+		affinity          *corev1.Affinity
+		expectedPreferred []int
+		expectedRequired  int
+	}{
+		{name: "nil affinity exports nothing"},
+		{
+			name:     "default term only exports nothing",
+			affinity: &corev1.Affinity{PodAntiAffinity: &corev1.PodAntiAffinity{PreferredDuringSchedulingIgnoredDuringExecution: []corev1.WeightedPodAffinityTerm{defaultTerm}}},
+		},
+		{
+			name:              "user terms are kept next to the default term",
+			affinity:          &corev1.Affinity{PodAntiAffinity: &corev1.PodAntiAffinity{PreferredDuringSchedulingIgnoredDuringExecution: []corev1.WeightedPodAffinityTerm{defaultTerm, userTerm, userCreatorTerm}}},
+			expectedPreferred: []int{50, 10},
+		},
+		{
+			name:             "required term on the creator label is kept",
+			affinity:         &corev1.Affinity{PodAntiAffinity: &corev1.PodAntiAffinity{RequiredDuringSchedulingIgnoredDuringExecution: []corev1.PodAffinityTerm{defaultTerm.PodAffinityTerm}}},
+			expectedRequired: 1,
+		},
+	}
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			got := affinityImporter(tc.affinity).PodAntiAffinity()
+			if len(tc.expectedPreferred) == 0 && tc.expectedRequired == 0 {
+				if got != nil {
+					t.Fatalf("PodAntiAffinity() = %v, want nil", got)
+				}
+				return
+			}
+			if len(got) != 1 {
+				t.Fatalf("PodAntiAffinity() exported %d blocks, want 1", len(got))
+			}
+			preferred, _ := got[0][constants.FieldPodAffinityPreferred].([]map[string]interface{})
+			weights := make([]int, 0, len(preferred))
+			for _, term := range preferred {
+				weights = append(weights, term[constants.FieldPreferredWeight].(int))
+			}
+			if !slices.Equal(weights, tc.expectedPreferred) {
+				t.Errorf("preferred weights = %v, want %v", weights, tc.expectedPreferred)
+			}
+			required, _ := got[0][constants.FieldPodAffinityRequired].([]map[string]interface{})
+			if len(required) != tc.expectedRequired {
+				t.Errorf("exported %d required terms, want %d", len(required), tc.expectedRequired)
+			}
+		})
+	}
+}
+
+// TestPodAffinityImport verifies the export of pod affinity rules. Nothing is
+// filtered there: the default term only exists in pod anti-affinity.
+func TestPodAffinityImport(t *testing.T) {
+	if got := affinityImporter(nil).PodAffinity(); got != nil {
+		t.Errorf("PodAffinity() with nil affinity = %v, want nil", got)
+	}
+	if got := affinityImporter(&corev1.Affinity{PodAffinity: &corev1.PodAffinity{}}).PodAffinity(); got != nil {
+		t.Errorf("PodAffinity() with empty pod affinity = %v, want nil", got)
+	}
+
+	creatorTerm := weightedTerm(100, builder.LabelKeyVirtualMachineCreator, metav1.LabelSelectorOpExists)
+	affinity := &corev1.Affinity{PodAffinity: &corev1.PodAffinity{
+		RequiredDuringSchedulingIgnoredDuringExecution:  []corev1.PodAffinityTerm{creatorTerm.PodAffinityTerm},
+		PreferredDuringSchedulingIgnoredDuringExecution: []corev1.WeightedPodAffinityTerm{creatorTerm},
+	}}
+	got := affinityImporter(affinity).PodAffinity()
+	if len(got) != 1 {
+		t.Fatalf("PodAffinity() exported %d blocks, want 1", len(got))
+	}
+	required := got[0][constants.FieldPodAffinityRequired].([]map[string]interface{})
+	if len(required) != 1 || required[0][constants.FieldTopologyKey] != corev1.LabelHostname {
+		t.Errorf("required = %v, want one term on %s", required, corev1.LabelHostname)
+	}
+	preferred := got[0][constants.FieldPodAffinityPreferred].([]map[string]interface{})
+	if len(preferred) != 1 || preferred[0][constants.FieldPreferredWeight] != 100 {
+		t.Errorf("preferred = %v, want one term with weight 100", preferred)
+	}
+
+	// An empty namespace selector (every namespace) is kept as an empty block.
+	allNamespaces := creatorTerm.PodAffinityTerm
+	allNamespaces.NamespaceSelector = &metav1.LabelSelector{}
+	got = affinityImporter(&corev1.Affinity{PodAffinity: &corev1.PodAffinity{
+		RequiredDuringSchedulingIgnoredDuringExecution: []corev1.PodAffinityTerm{allNamespaces},
+	}}).PodAffinity()
+	required = got[0][constants.FieldPodAffinityRequired].([]map[string]interface{})
+	if selector, _ := required[0][constants.FieldNamespaceSelector].([]map[string]interface{}); len(selector) != 1 || len(selector[0]) != 0 {
+		t.Errorf("namespace selector = %v, want one empty block", required[0][constants.FieldNamespaceSelector])
 	}
 }

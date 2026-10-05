@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
 	"strings"
 
 	corev1 "k8s.io/api/core/v1"
@@ -19,6 +20,297 @@ import (
 	"github.com/harvester/terraform-provider-harvester/pkg/constants"
 	"github.com/harvester/terraform-provider-harvester/pkg/helper"
 )
+
+// vmAffinity returns the affinity of the VM being built, empty when it has
+// none yet, so that each affinity block can complete it.
+func vmAffinity(vmBuilder *builder.VMBuilder) *corev1.Affinity {
+	if affinity := vmBuilder.VirtualMachine.Spec.Template.Spec.Affinity; affinity != nil {
+		return affinity
+	}
+	return &corev1.Affinity{}
+}
+
+// blockMap returns the content of a block. Terraform passes nil for a block
+// written without any attribute, read as an empty map here.
+func blockMap(i interface{}) map[string]interface{} {
+	r, _ := i.(map[string]interface{})
+	return r
+}
+
+// requiredOrPreferred returns the required and preferred lists of an
+// affinity block, and an error when the block sets neither.
+func requiredOrPreferred(block string, r map[string]interface{}, requiredKey, preferredKey string) ([]interface{}, []interface{}, error) {
+	required, _ := r[requiredKey].([]interface{})
+	preferred, _ := r[preferredKey].([]interface{})
+	if len(required) == 0 && len(preferred) == 0 {
+		return nil, nil, fmt.Errorf("%s: set a %s or a %s block", block, requiredKey, preferredKey)
+	}
+	return required, preferred, nil
+}
+
+// parseNodeAffinity returns the node affinity of a node_affinity block.
+func parseNodeAffinity(r map[string]interface{}) (*corev1.NodeAffinity, error) {
+	required, preferred, err := requiredOrPreferred(constants.FieldVirtualMachineNodeAffinity, r, constants.FieldNodeAffinityRequired, constants.FieldNodeAffinityPreferred)
+	if err != nil {
+		return nil, err
+	}
+	nodeAffinity := &corev1.NodeAffinity{}
+	if len(required) > 0 {
+		data, _ := blockMap(required[0])[constants.FieldNodeSelectorTerm].([]interface{})
+		terms, err := parseNodeSelectorTerms(data)
+		if err != nil {
+			return nil, err
+		}
+		nodeAffinity.RequiredDuringSchedulingIgnoredDuringExecution = &corev1.NodeSelector{NodeSelectorTerms: terms}
+	}
+	for _, item := range preferred {
+		p := blockMap(item)
+		data, _ := p[constants.FieldPreferredPreference].([]interface{})
+		terms, err := parseNodeSelectorTerms(data)
+		if err != nil {
+			return nil, err
+		}
+		for _, term := range terms {
+			nodeAffinity.PreferredDuringSchedulingIgnoredDuringExecution = append(nodeAffinity.PreferredDuringSchedulingIgnoredDuringExecution, corev1.PreferredSchedulingTerm{
+				Weight:     int32(p[constants.FieldPreferredWeight].(int)), //nolint:gosec // weight is validated 1-100 by schema
+				Preference: term,
+			})
+		}
+	}
+	return nodeAffinity, nil
+}
+
+// parsePodAffinityRules returns the required and preferred terms of a
+// pod_affinity or pod_anti_affinity block.
+func parsePodAffinityRules(block string, r map[string]interface{}) ([]corev1.PodAffinityTerm, []corev1.WeightedPodAffinityTerm, error) {
+	required, preferred, err := requiredOrPreferred(block, r, constants.FieldPodAffinityRequired, constants.FieldPodAffinityPreferred)
+	if err != nil {
+		return nil, nil, err
+	}
+	requiredTerms, err := parsePodAffinityTerms(required)
+	if err != nil {
+		return nil, nil, err
+	}
+	preferredTerms, err := parseWeightedPodAffinityTerms(preferred)
+	if err != nil {
+		return nil, nil, err
+	}
+	return requiredTerms, preferredTerms, nil
+}
+
+// parseLabelSelectorRequirements parses a list of label selector requirements
+func parseLabelSelectorRequirements(data []interface{}) []metav1.LabelSelectorRequirement {
+	requirements := make([]metav1.LabelSelectorRequirement, 0, len(data))
+	for _, item := range data {
+		r := blockMap(item)
+		req := metav1.LabelSelectorRequirement{
+			Key:      r[constants.FieldExpressionKey].(string),
+			Operator: metav1.LabelSelectorOperator(r[constants.FieldExpressionOperator].(string)),
+		}
+		if values, ok := r[constants.FieldExpressionValues].([]interface{}); ok {
+			for _, v := range values {
+				req.Values = append(req.Values, v.(string))
+			}
+		}
+		requirements = append(requirements, req)
+	}
+	return requirements
+}
+
+// parseSelector parses a label_selector or namespace_selector block.
+func parseSelector(item interface{}) *metav1.LabelSelector {
+	r := blockMap(item)
+	selector := &metav1.LabelSelector{}
+	if matchLabels, ok := r[constants.FieldMatchLabels].(map[string]interface{}); ok && len(matchLabels) > 0 {
+		selector.MatchLabels = make(map[string]string, len(matchLabels))
+		for k, v := range matchLabels {
+			selector.MatchLabels[k] = v.(string)
+		}
+	}
+	if matchExprs, ok := r[constants.FieldMatchExpressions].([]interface{}); ok && len(matchExprs) > 0 {
+		selector.MatchExpressions = parseLabelSelectorRequirements(matchExprs)
+	}
+	return selector
+}
+
+// parseNodeSelectorRequirements parses node selector requirements
+func parseNodeSelectorRequirements(data []interface{}) []corev1.NodeSelectorRequirement {
+	requirements := make([]corev1.NodeSelectorRequirement, 0, len(data))
+	for _, item := range data {
+		r := blockMap(item)
+		req := corev1.NodeSelectorRequirement{
+			Key:      r[constants.FieldExpressionKey].(string),
+			Operator: corev1.NodeSelectorOperator(r[constants.FieldExpressionOperator].(string)),
+		}
+		if values, ok := r[constants.FieldExpressionValues].([]interface{}); ok {
+			for _, v := range values {
+				req.Values = append(req.Values, v.(string))
+			}
+		}
+		requirements = append(requirements, req)
+	}
+	return requirements
+}
+
+// parseNodeSelectorTerms parses node selector terms. A term needs at least one
+// match expression: an empty term would match every node, and the Harvester
+// VM webhook (makeAffinityFromVMTemplate) drops the terms left without match
+// expressions, match_fields alone included.
+func parseNodeSelectorTerms(data []interface{}) ([]corev1.NodeSelectorTerm, error) {
+	terms := make([]corev1.NodeSelectorTerm, 0, len(data))
+	for _, item := range data {
+		r := blockMap(item)
+		term := corev1.NodeSelectorTerm{}
+		if matchExprs, ok := r[constants.FieldMatchExpressions].([]interface{}); ok && len(matchExprs) > 0 {
+			term.MatchExpressions = parseNodeSelectorRequirements(matchExprs)
+		}
+		if matchFields, ok := r[constants.FieldMatchFields].([]interface{}); ok && len(matchFields) > 0 {
+			term.MatchFields = parseNodeSelectorRequirements(matchFields)
+		}
+		if len(term.MatchExpressions) == 0 {
+			return nil, fmt.Errorf("each %s and %s needs at least one %s block", constants.FieldNodeSelectorTerm, constants.FieldPreferredPreference, constants.FieldMatchExpressions)
+		}
+		terms = append(terms, term)
+	}
+	return terms, nil
+}
+
+// parsePodAffinityTerms parses pod affinity terms
+func parsePodAffinityTerms(data []interface{}) ([]corev1.PodAffinityTerm, error) {
+	var terms []corev1.PodAffinityTerm
+	for _, item := range data {
+		r := blockMap(item)
+		term := corev1.PodAffinityTerm{
+			TopologyKey: r[constants.FieldTopologyKey].(string),
+		}
+		if labelSelector, ok := r[constants.FieldLabelSelector].([]interface{}); ok && len(labelSelector) > 0 {
+			// An empty label selector would match every pod.
+			term.LabelSelector = parseSelector(labelSelector[0])
+			if len(term.LabelSelector.MatchLabels) == 0 && len(term.LabelSelector.MatchExpressions) == 0 {
+				return nil, fmt.Errorf("%s needs %s or %s", constants.FieldLabelSelector, constants.FieldMatchLabels, constants.FieldMatchExpressions)
+			}
+		}
+		if namespaces, ok := r[constants.FieldNamespaces].([]interface{}); ok && len(namespaces) > 0 {
+			for _, ns := range namespaces {
+				term.Namespaces = append(term.Namespaces, ns.(string))
+			}
+		}
+		if nsSelector, ok := r[constants.FieldNamespaceSelector].([]interface{}); ok && len(nsSelector) > 0 {
+			// An empty namespace selector selects every namespace, like the
+			// "all namespaces" option of the Harvester UI.
+			term.NamespaceSelector = parseSelector(nsSelector[0])
+		}
+		terms = append(terms, term)
+	}
+	return terms, nil
+}
+
+// parseWeightedPodAffinityTerms parses weighted pod affinity terms
+func parseWeightedPodAffinityTerms(data []interface{}) ([]corev1.WeightedPodAffinityTerm, error) {
+	var terms []corev1.WeightedPodAffinityTerm
+	for _, item := range data {
+		r := blockMap(item)
+		podAffinityTerm, _ := r[constants.FieldPodAffinityTerm].([]interface{})
+		parsed, err := parsePodAffinityTerms(podAffinityTerm)
+		if err != nil {
+			return nil, err
+		}
+		for _, term := range parsed {
+			terms = append(terms, corev1.WeightedPodAffinityTerm{
+				Weight:          int32(r[constants.FieldPreferredWeight].(int)), //nolint:gosec // weight is validated 1-100 by schema
+				PodAffinityTerm: term,
+			})
+		}
+	}
+	return terms, nil
+}
+
+// harvesterManagedNodeAffinity returns a node affinity with only the
+// requirements that the Harvester webhook manages in the required terms of
+// affinity, nil when there are none. Harvester refuses an update that changes
+// the CPU manager requirements (checkCpuManagerAffinityTermChanged), then adds
+// its requirements back to every term, so one term is enough to carry them.
+func harvesterManagedNodeAffinity(affinity *corev1.Affinity) *corev1.NodeAffinity {
+	if affinity == nil || affinity.NodeAffinity == nil || affinity.NodeAffinity.RequiredDuringSchedulingIgnoredDuringExecution == nil {
+		return nil
+	}
+	var managed []corev1.NodeSelectorRequirement
+	for _, term := range affinity.NodeAffinity.RequiredDuringSchedulingIgnoredDuringExecution.NodeSelectorTerms {
+		for _, req := range term.MatchExpressions {
+			if helper.IsHarvesterManagedNodeSelector(req) {
+				managed = append(managed, req)
+			}
+		}
+	}
+	if len(managed) == 0 {
+		return nil
+	}
+	return &corev1.NodeAffinity{RequiredDuringSchedulingIgnoredDuringExecution: &corev1.NodeSelector{
+		NodeSelectorTerms: []corev1.NodeSelectorTerm{{MatchExpressions: managed}},
+	}}
+}
+
+// nodeAffinityParser sets the node affinity of a node_affinity block, keeping
+// the requirements that Harvester manages.
+func nodeAffinityParser(vmBuilder *builder.VMBuilder) func(interface{}) error {
+	return func(i interface{}) error {
+		nodeAffinity, err := parseNodeAffinity(blockMap(i))
+		if err != nil {
+			return err
+		}
+		affinity := vmAffinity(vmBuilder)
+		if managed := harvesterManagedNodeAffinity(affinity); managed != nil {
+			if nodeAffinity.RequiredDuringSchedulingIgnoredDuringExecution == nil {
+				nodeAffinity.RequiredDuringSchedulingIgnoredDuringExecution = managed.RequiredDuringSchedulingIgnoredDuringExecution
+			} else {
+				terms := nodeAffinity.RequiredDuringSchedulingIgnoredDuringExecution.NodeSelectorTerms
+				terms[0].MatchExpressions = append(terms[0].MatchExpressions, managed.RequiredDuringSchedulingIgnoredDuringExecution.NodeSelectorTerms[0].MatchExpressions...)
+			}
+		}
+		affinity.NodeAffinity = nodeAffinity
+		vmBuilder.Affinity(affinity)
+		return nil
+	}
+}
+
+// podAffinityParser sets the pod affinity of a pod_affinity block.
+func podAffinityParser(vmBuilder *builder.VMBuilder) func(interface{}) error {
+	return func(i interface{}) error {
+		required, preferred, err := parsePodAffinityRules(constants.FieldVirtualMachinePodAffinity, blockMap(i))
+		if err != nil {
+			return err
+		}
+		affinity := vmAffinity(vmBuilder)
+		affinity.PodAffinity = &corev1.PodAffinity{
+			RequiredDuringSchedulingIgnoredDuringExecution:  required,
+			PreferredDuringSchedulingIgnoredDuringExecution: preferred,
+		}
+		vmBuilder.Affinity(affinity)
+		return nil
+	}
+}
+
+// podAntiAffinityParser adds the rules of a pod_anti_affinity block to the
+// default anti-affinity set by Creator and Updater.
+func podAntiAffinityParser(vmBuilder *builder.VMBuilder) func(interface{}) error {
+	return func(i interface{}) error {
+		required, preferred, err := parsePodAffinityRules(constants.FieldVirtualMachinePodAntiAffinity, blockMap(i))
+		if err != nil {
+			return err
+		}
+		if slices.ContainsFunc(preferred, helper.IsDefaultPodAntiAffinityTerm) {
+			return fmt.Errorf("%s: remove the %s term on %s, the provider always sets it", constants.FieldVirtualMachinePodAntiAffinity, constants.FieldPodAffinityPreferred, builder.LabelKeyVirtualMachineCreator)
+		}
+		affinity := vmAffinity(vmBuilder)
+		if affinity.PodAntiAffinity == nil {
+			affinity.PodAntiAffinity = &corev1.PodAntiAffinity{}
+		}
+		affinity.PodAntiAffinity.RequiredDuringSchedulingIgnoredDuringExecution = append(affinity.PodAntiAffinity.RequiredDuringSchedulingIgnoredDuringExecution, required...)
+		affinity.PodAntiAffinity.PreferredDuringSchedulingIgnoredDuringExecution = append(affinity.PodAntiAffinity.PreferredDuringSchedulingIgnoredDuringExecution, preferred...)
+		vmBuilder.Affinity(affinity)
+		return nil
+	}
+}
 
 const (
 	vmCreator = "terraform-provider-harvester"
@@ -459,6 +751,18 @@ func (c *Constructor) Setup() util.Processors {
 				return nil
 			},
 		},
+		{
+			Field:  constants.FieldVirtualMachineNodeAffinity,
+			Parser: nodeAffinityParser(vmBuilder),
+		},
+		{
+			Field:  constants.FieldVirtualMachinePodAffinity,
+			Parser: podAffinityParser(vmBuilder),
+		},
+		{
+			Field:  constants.FieldVirtualMachinePodAntiAffinity,
+			Parser: podAntiAffinityParser(vmBuilder),
+		},
 	}
 	return append(processors, customProcessors...)
 }
@@ -502,8 +806,14 @@ func Updater(c *client.Client, ctx context.Context, vm *kubevirtv1.VirtualMachin
 	vm.Spec.Template.Spec.Domain.Devices.Disks = []kubevirtv1.Disk{}
 	vm.Spec.Template.Spec.Domain.Devices.Inputs = []kubevirtv1.Input{}
 	vm.Spec.Template.Spec.Volumes = []kubevirtv1.Volume{}
+	// Rebuild the affinity like Creator does, then from the configuration,
+	// keeping the node selector requirements that Harvester manages.
+	vm.Spec.Template.Spec.Affinity = &corev1.Affinity{
+		NodeAffinity: harvesterManagedNodeAffinity(vm.Spec.Template.Spec.Affinity),
+	}
 	vm.Annotations[harvesterutil.AnnotationVolumeClaimTemplates] = "[]"
-	return newVMConstructor(c, ctx, &builder.VMBuilder{
+	vmBuilder := &builder.VMBuilder{
 		VirtualMachine: vm,
-	})
+	}
+	return newVMConstructor(c, ctx, vmBuilder.DefaultPodAntiAffinity())
 }
