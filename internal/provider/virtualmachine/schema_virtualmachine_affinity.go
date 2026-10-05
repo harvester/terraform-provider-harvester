@@ -126,6 +126,7 @@ func resourcePreferredSchedulingTermSchema() map[string]*schema.Schema {
 		constants.FieldPreferredPreference: {
 			Type:        schema.TypeList,
 			Required:    true,
+			MinItems:    1,
 			MaxItems:    1,
 			Description: "A node selector term, associated with the corresponding weight",
 			Elem: &schema.Resource{
