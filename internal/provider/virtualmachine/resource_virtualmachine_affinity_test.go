@@ -2,6 +2,7 @@ package virtualmachine
 
 import (
 	"context"
+	"errors"
 	"reflect"
 	"strconv"
 	"testing"
@@ -20,9 +21,12 @@ import (
 )
 
 const (
-	affinityTestLabel = "app"
-	affinityTestValue = "web"
-	affinityTestNode  = "node1"
+	affinityTestLabel           = "app"
+	affinityTestValue           = "web"
+	affinityTestNode            = "node1"
+	affinityPreferenceTestKey   = "disktype"
+	affinityPreferenceTestOp    = "In"
+	affinityPreferenceTestValue = "ssd"
 )
 
 func affinityExpression(key, operator string, values ...string) map[string]interface{} {
@@ -47,61 +51,131 @@ func nodeAffinityBlock(term interface{}) map[string]interface{} {
 }
 
 func TestParseNodeAffinity(t *testing.T) {
-	block := map[string]interface{}{
-		constants.FieldNodeAffinityRequired: []interface{}{map[string]interface{}{
-			constants.FieldNodeSelectorTerm: []interface{}{
-				map[string]interface{}{
-					constants.FieldMatchExpressions: []interface{}{affinityExpression(corev1.LabelHostname, "In", affinityTestNode)},
-					constants.FieldMatchFields:      []interface{}{affinityExpression("metadata.name", "In", affinityTestNode)},
+	testcases := []struct {
+		name              string
+		block             map[string]any
+		expected_affinity *corev1.NodeAffinity
+		expected_error    error
+	}{
+		{
+			name:              "empty block", //nolint:goconst
+			block:             util.BlockMap(nil),
+			expected_affinity: nil,
+			expected_error:    ErrMissingBlock,
+		},
+		{
+			name:              "empty term",
+			block:             nodeAffinityBlock(nil),
+			expected_affinity: nil,
+			expected_error:    ErrMissingMatchExpression,
+		},
+		{
+			name: "match_fields only",
+			block: nodeAffinityBlock(
+				map[string]any{
+					constants.FieldMatchFields: []any{
+						affinityExpression("metadata.name", "In", affinityTestNode),
+					},
+				},
+			),
+			expected_affinity: nil,
+			expected_error:    ErrMissingMatchExpression,
+		},
+		{
+			name: "empty preference",
+			block: map[string]any{
+				constants.FieldNodeAffinityPreferred: []any{
+					map[string]any{
+						constants.FieldPreferredWeight:     10,
+						constants.FieldPreferredPreference: []any{},
+					},
 				},
 			},
-		}},
-		constants.FieldNodeAffinityPreferred: []interface{}{map[string]interface{}{
-			constants.FieldPreferredWeight: 10,
-			constants.FieldPreferredPreference: []interface{}{
-				map[string]interface{}{constants.FieldMatchExpressions: []interface{}{affinityExpression("disktype", "In", "ssd")}},
+			expected_affinity: nil,
+			expected_error:    ErrMissingTerms,
+		},
+		{
+			name: "parse valid node affinity block",
+			block: map[string]any{
+				constants.FieldNodeAffinityRequired: []any{map[string]any{
+					constants.FieldNodeSelectorTerm: []any{
+						map[string]any{
+							constants.FieldMatchExpressions: []any{
+								affinityExpression(corev1.LabelHostname, "In", affinityTestNode),
+							},
+							constants.FieldMatchFields: []any{
+								affinityExpression("metadata.name", "In", affinityTestNode),
+							},
+						},
+					},
+				}},
+				constants.FieldNodeAffinityPreferred: []any{map[string]any{
+					constants.FieldPreferredWeight: 10,
+					constants.FieldPreferredPreference: []any{
+						map[string]any{constants.FieldMatchExpressions: []any{
+							affinityExpression(affinityPreferenceTestKey, affinityPreferenceTestOp, affinityPreferenceTestValue),
+						}},
+					},
+				}},
 			},
-		}},
-	}
-	expected := &corev1.NodeAffinity{
-		RequiredDuringSchedulingIgnoredDuringExecution: &corev1.NodeSelector{NodeSelectorTerms: []corev1.NodeSelectorTerm{{
-			MatchExpressions: []corev1.NodeSelectorRequirement{{Key: corev1.LabelHostname, Operator: corev1.NodeSelectorOpIn, Values: []string{affinityTestNode}}},
-			MatchFields:      []corev1.NodeSelectorRequirement{{Key: "metadata.name", Operator: corev1.NodeSelectorOpIn, Values: []string{affinityTestNode}}},
-		}}},
-		PreferredDuringSchedulingIgnoredDuringExecution: []corev1.PreferredSchedulingTerm{{
-			Weight:     10,
-			Preference: corev1.NodeSelectorTerm{MatchExpressions: []corev1.NodeSelectorRequirement{{Key: "disktype", Operator: corev1.NodeSelectorOpIn, Values: []string{"ssd"}}}},
-		}},
-	}
-	got, err := parseNodeAffinity(block)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if !reflect.DeepEqual(got, expected) {
-		t.Errorf("parseNodeAffinity() = %+v, want %+v", got, expected)
-	}
-}
-
-// TestParseNodeAffinityRejects covers the blocks that would crash, match every
-// node, or be dropped by the Harvester webhook.
-func TestParseNodeAffinityRejects(t *testing.T) {
-	testcases := map[string]map[string]interface{}{
-		"empty block (nil from Terraform)": blockMap(nil),
-		"empty term":                       nodeAffinityBlock(nil),
-		"match_fields only": nodeAffinityBlock(map[string]interface{}{
-			constants.FieldMatchFields: []interface{}{affinityExpression("metadata.name", "In", affinityTestNode)},
-		}),
-		"empty preference": {
-			constants.FieldNodeAffinityPreferred: []interface{}{map[string]interface{}{
-				constants.FieldPreferredWeight:     10,
-				constants.FieldPreferredPreference: []interface{}{nil},
-			}},
+			expected_affinity: &corev1.NodeAffinity{
+				RequiredDuringSchedulingIgnoredDuringExecution: &corev1.NodeSelector{
+					NodeSelectorTerms: []corev1.NodeSelectorTerm{
+						{
+							MatchExpressions: []corev1.NodeSelectorRequirement{
+								{
+									Key:      corev1.LabelHostname,
+									Operator: corev1.NodeSelectorOpIn,
+									Values:   []string{affinityTestNode},
+								},
+							},
+							MatchFields: []corev1.NodeSelectorRequirement{
+								{
+									Key:      "metadata.name",
+									Operator: corev1.NodeSelectorOpIn,
+									Values:   []string{affinityTestNode},
+								},
+							},
+						},
+					},
+				},
+				PreferredDuringSchedulingIgnoredDuringExecution: []corev1.PreferredSchedulingTerm{
+					{
+						Weight: 10,
+						Preference: corev1.NodeSelectorTerm{
+							MatchExpressions: []corev1.NodeSelectorRequirement{
+								{
+									Key:      affinityPreferenceTestKey,
+									Operator: corev1.NodeSelectorOpIn,
+									Values:   []string{affinityPreferenceTestValue},
+								},
+							},
+						},
+					},
+				},
+			},
+			expected_error: nil,
+		},
+		{
+			name: "parse node affinity block without node selector term",
+			block: map[string]any{
+				constants.FieldNodeAffinityRequired: []any{map[string]any{}},
+			},
+			expected_affinity: nil,
+			expected_error:    ErrMissingTerms,
 		},
 	}
-	for name, block := range testcases {
-		t.Run(name, func(t *testing.T) {
-			if got, err := parseNodeAffinity(block); err == nil {
-				t.Errorf("parseNodeAffinity() = %+v, want an error", got)
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			got, err := parseNodeAffinity(tc.block)
+			if err != nil || tc.expected_error != nil {
+				if !errors.Is(err, tc.expected_error) {
+					t.Errorf("unexpected error: %s", err)
+				}
+			}
+			if !reflect.DeepEqual(got, tc.expected_affinity) {
+				t.Errorf("parseNodeAffinity() = %+v, want %+v", got, tc.expected_affinity)
 			}
 		})
 	}
@@ -118,39 +192,6 @@ func podAffinityTermBlock(labelSelector, namespaceSelector interface{}) map[stri
 	return term
 }
 
-func TestParsePodAffinityRules(t *testing.T) {
-	block := map[string]interface{}{
-		constants.FieldPodAffinityRequired: []interface{}{
-			podAffinityTermBlock(map[string]interface{}{constants.FieldMatchExpressions: []interface{}{affinityExpression(affinityTestLabel, "In", affinityTestValue)}}, nil),
-		},
-		constants.FieldPodAffinityPreferred: []interface{}{map[string]interface{}{
-			constants.FieldPreferredWeight: 20,
-			constants.FieldPodAffinityTerm: []interface{}{podAffinityTermBlock(map[string]interface{}{constants.FieldMatchLabels: map[string]interface{}{affinityTestLabel: "cache"}}, nil)},
-		}},
-	}
-	required, preferred, err := parsePodAffinityRules(constants.FieldVirtualMachinePodAffinity, block)
-	if err != nil {
-		t.Fatal(err)
-	}
-	expectedRequired := []corev1.PodAffinityTerm{{
-		TopologyKey:   corev1.LabelHostname,
-		LabelSelector: &metav1.LabelSelector{MatchExpressions: []metav1.LabelSelectorRequirement{{Key: affinityTestLabel, Operator: metav1.LabelSelectorOpIn, Values: []string{affinityTestValue}}}},
-	}}
-	expectedPreferred := []corev1.WeightedPodAffinityTerm{{
-		Weight: 20,
-		PodAffinityTerm: corev1.PodAffinityTerm{
-			TopologyKey:   corev1.LabelHostname,
-			LabelSelector: &metav1.LabelSelector{MatchLabels: map[string]string{affinityTestLabel: "cache"}},
-		},
-	}}
-	if !reflect.DeepEqual(required, expectedRequired) {
-		t.Errorf("required = %+v, want %+v", required, expectedRequired)
-	}
-	if !reflect.DeepEqual(preferred, expectedPreferred) {
-		t.Errorf("preferred = %+v, want %+v", preferred, expectedPreferred)
-	}
-}
-
 // TestParsePodAffinityNamespaceSelector checks that an empty namespace
 // selector selects every namespace, like the "all namespaces" option of the
 // Harvester UI, instead of being dropped.
@@ -161,7 +202,7 @@ func TestParsePodAffinityNamespaceSelector(t *testing.T) {
 		},
 	}
 	block[constants.FieldPodAffinityRequired].([]interface{})[0].(map[string]interface{})[constants.FieldNamespaceSelector] = []interface{}{nil}
-	required, _, err := parsePodAffinityRules(constants.FieldVirtualMachinePodAntiAffinity, block)
+	required, _, err := parsePodAffinityAndAntiAffinityTerms(constants.FieldVirtualMachinePodAntiAffinity, block)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -171,22 +212,75 @@ func TestParsePodAffinityNamespaceSelector(t *testing.T) {
 }
 
 func TestParsePodAffinityRulesRejects(t *testing.T) {
-	testcases := map[string]map[string]interface{}{
-		"empty block (nil from Terraform)": blockMap(nil),
-		"empty label selector": {
-			constants.FieldPodAffinityRequired: []interface{}{podAffinityTermBlock(map[string]interface{}{}, nil)},
+	testcases := []struct {
+		name              string
+		block             map[string]any
+		expected_affinity *corev1.PodAffinity
+		expected_error    error
+	}{
+		{
+			name:              "empty block (nil from Terraform)",
+			block:             util.BlockMap(nil),
+			expected_affinity: nil,
+			expected_error:    ErrMissingBlock,
 		},
-		"empty label selector in a preferred term": {
-			constants.FieldPodAffinityPreferred: []interface{}{map[string]interface{}{
-				constants.FieldPreferredWeight: 20,
-				constants.FieldPodAffinityTerm: []interface{}{podAffinityTermBlock(map[string]interface{}{}, nil)},
-			}},
+		{
+			name: "empty label selector",
+			block: map[string]any{
+				constants.FieldPodAffinityRequired: []any{podAffinityTermBlock(map[string]any{}, nil)},
+			},
+			expected_affinity: nil,
+			expected_error:    ErrMissingLabelMatcher,
+		},
+		{
+			name: "empty label selector in a preferred term",
+			block: map[string]any{
+				constants.FieldPodAffinityPreferred: []any{map[string]any{
+					constants.FieldPreferredWeight: 20,
+					constants.FieldPodAffinityTerm: []any{podAffinityTermBlock(map[string]any{}, nil)},
+				}},
+			},
+			expected_affinity: nil,
+			expected_error:    ErrMissingLabelMatcher,
+		},
+		{
+			name: "pod affinity with required and preferred",
+			block: map[string]any{
+				constants.FieldPodAffinityRequired: []any{
+					podAffinityTermBlock(map[string]any{constants.FieldMatchExpressions: []any{affinityExpression(affinityTestLabel, "In", affinityTestValue)}}, nil),
+				},
+				constants.FieldPodAffinityPreferred: []any{map[string]any{
+					constants.FieldPreferredWeight: 20,
+					constants.FieldPodAffinityTerm: []any{podAffinityTermBlock(map[string]any{constants.FieldMatchLabels: map[string]any{affinityTestLabel: affinityTestValue}}, nil)},
+				}},
+			},
+			expected_affinity: &corev1.PodAffinity{
+				RequiredDuringSchedulingIgnoredDuringExecution: []corev1.PodAffinityTerm{{
+					TopologyKey:   corev1.LabelHostname,
+					LabelSelector: &metav1.LabelSelector{MatchExpressions: []metav1.LabelSelectorRequirement{{Key: affinityTestLabel, Operator: metav1.LabelSelectorOpIn, Values: []string{affinityTestValue}}}},
+				}},
+				PreferredDuringSchedulingIgnoredDuringExecution: []corev1.WeightedPodAffinityTerm{{
+					Weight: 20,
+					PodAffinityTerm: corev1.PodAffinityTerm{
+						TopologyKey:   corev1.LabelHostname,
+						LabelSelector: &metav1.LabelSelector{MatchLabels: map[string]string{affinityTestLabel: affinityTestValue}},
+					},
+				}},
+			},
+			expected_error: nil,
 		},
 	}
-	for name, block := range testcases {
-		t.Run(name, func(t *testing.T) {
-			if required, preferred, err := parsePodAffinityRules(constants.FieldVirtualMachinePodAffinity, block); err == nil {
-				t.Errorf("parsePodAffinityRules() = %+v, %+v, want an error", required, preferred)
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			got, err := parsePodAffinity(tc.block)
+			if err != nil || tc.expected_error != nil {
+				if !errors.Is(err, tc.expected_error) {
+					t.Errorf("unexpected error: %s", err)
+				}
+			}
+			if !reflect.DeepEqual(got, tc.expected_affinity) {
+				t.Errorf("parsePodAffinity() = %+v, want %+v", got, tc.expected_affinity)
 			}
 		})
 	}
@@ -262,7 +356,7 @@ func TestAffinityRoundTrip(t *testing.T) {
 			constants.FieldNodeAffinityPreferred: []interface{}{map[string]interface{}{
 				constants.FieldPreferredWeight: 10,
 				constants.FieldPreferredPreference: []interface{}{map[string]interface{}{
-					constants.FieldMatchExpressions: []interface{}{affinityExpression("disktype", "Exists")},
+					constants.FieldMatchExpressions: []interface{}{affinityExpression(affinityPreferenceTestKey, "Exists")},
 				}},
 			}},
 		}},

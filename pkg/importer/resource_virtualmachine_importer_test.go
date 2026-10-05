@@ -821,7 +821,7 @@ func TestNodeAffinityImport(t *testing.T) {
 		expected int // number of exported node_affinity blocks
 	}{
 		{
-			name:     "nil affinity exports nothing",
+			name:     "nil affinity exports nothing", //nolint:goconst
 			affinity: nil,
 			expected: 0,
 		},
@@ -929,9 +929,9 @@ func TestPodAntiAffinityImport(t *testing.T) {
 		expectedPreferred []int
 		expectedRequired  int
 	}{
-		{name: "nil affinity exports nothing"},
+		{name: "nil affinity exports nothing"}, //nolint:goconst
 		{
-			name:     "default term only exports nothing",
+			name:     "default term only exports nothing", //nolint:goconst
 			affinity: &corev1.Affinity{PodAntiAffinity: &corev1.PodAntiAffinity{PreferredDuringSchedulingIgnoredDuringExecution: []corev1.WeightedPodAffinityTerm{defaultTerm}}},
 		},
 		{
@@ -976,39 +976,88 @@ func TestPodAntiAffinityImport(t *testing.T) {
 // TestPodAffinityImport verifies the export of pod affinity rules. Nothing is
 // filtered there: the default term only exists in pod anti-affinity.
 func TestPodAffinityImport(t *testing.T) {
-	if got := affinityImporter(nil).PodAffinity(); got != nil {
-		t.Errorf("PodAffinity() with nil affinity = %v, want nil", got)
-	}
-	if got := affinityImporter(&corev1.Affinity{PodAffinity: &corev1.PodAffinity{}}).PodAffinity(); got != nil {
-		t.Errorf("PodAffinity() with empty pod affinity = %v, want nil", got)
-	}
-
 	creatorTerm := weightedTerm(100, builder.LabelKeyVirtualMachineCreator, metav1.LabelSelectorOpExists)
-	affinity := &corev1.Affinity{PodAffinity: &corev1.PodAffinity{
-		RequiredDuringSchedulingIgnoredDuringExecution:  []corev1.PodAffinityTerm{creatorTerm.PodAffinityTerm},
-		PreferredDuringSchedulingIgnoredDuringExecution: []corev1.WeightedPodAffinityTerm{creatorTerm},
-	}}
-	got := affinityImporter(affinity).PodAffinity()
-	if len(got) != 1 {
-		t.Fatalf("PodAffinity() exported %d blocks, want 1", len(got))
-	}
-	required := got[0][constants.FieldPodAffinityRequired].([]map[string]interface{})
-	if len(required) != 1 || required[0][constants.FieldTopologyKey] != corev1.LabelHostname {
-		t.Errorf("required = %v, want one term on %s", required, corev1.LabelHostname)
-	}
-	preferred := got[0][constants.FieldPodAffinityPreferred].([]map[string]interface{})
-	if len(preferred) != 1 || preferred[0][constants.FieldPreferredWeight] != 100 {
-		t.Errorf("preferred = %v, want one term with weight 100", preferred)
-	}
-
-	// An empty namespace selector (every namespace) is kept as an empty block.
 	allNamespaces := creatorTerm.PodAffinityTerm
 	allNamespaces.NamespaceSelector = &metav1.LabelSelector{}
-	got = affinityImporter(&corev1.Affinity{PodAffinity: &corev1.PodAffinity{
-		RequiredDuringSchedulingIgnoredDuringExecution: []corev1.PodAffinityTerm{allNamespaces},
-	}}).PodAffinity()
-	required = got[0][constants.FieldPodAffinityRequired].([]map[string]interface{})
-	if selector, _ := required[0][constants.FieldNamespaceSelector].([]map[string]interface{}); len(selector) != 1 || len(selector[0]) != 0 {
-		t.Errorf("namespace selector = %v, want one empty block", required[0][constants.FieldNamespaceSelector])
+
+	testcases := []struct {
+		name              string
+		affinity          *corev1.Affinity
+		expectedPreferred []int
+		expectedRequired  int
+	}{
+		{name: "nil affinity exports nothing"}, //nolint:goconst
+		{
+			name:     "default term only exports nothing", //nolint:goconst
+			affinity: &corev1.Affinity{PodAffinity: &corev1.PodAffinity{}},
+		},
+		{
+			name: "creator term exports exactly one",
+			affinity: &corev1.Affinity{PodAffinity: &corev1.PodAffinity{
+				RequiredDuringSchedulingIgnoredDuringExecution:  []corev1.PodAffinityTerm{creatorTerm.PodAffinityTerm},
+				PreferredDuringSchedulingIgnoredDuringExecution: []corev1.WeightedPodAffinityTerm{creatorTerm},
+			}},
+			expectedPreferred: []int{100},
+			expectedRequired:  1,
+		},
+		{
+			name: "an empty namespace selector is kept as an empty block",
+			affinity: &corev1.Affinity{PodAffinity: &corev1.PodAffinity{
+				RequiredDuringSchedulingIgnoredDuringExecution: []corev1.PodAffinityTerm{allNamespaces},
+			}},
+			expectedRequired: 1,
+		},
+		{
+			name: "two weighted terms result in two weights",
+			affinity: &corev1.Affinity{PodAffinity: &corev1.PodAffinity{
+				PreferredDuringSchedulingIgnoredDuringExecution: []corev1.WeightedPodAffinityTerm{
+					weightedTerm(50, "test.harvesterhci.io/foo", metav1.LabelSelectorOpIn, "foobar", "barfoo"),
+					weightedTerm(50, "test.harvesterhci.io/bar", metav1.LabelSelectorOpIn, "foofoo", "barbar"),
+				},
+			}},
+			expectedPreferred: []int{50, 50},
+		},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			got := affinityImporter(tc.affinity).PodAffinity()
+			if len(tc.expectedPreferred) == 0 && tc.expectedRequired == 0 {
+				if got != nil {
+					t.Errorf("PodAffinity() = %v, want nil", got)
+				}
+				return
+			}
+			if len(got) != 1 {
+				t.Fatalf("PodAffinity() exported %d blocks, want 1", len(got))
+			}
+
+			if required, ok := got[0][constants.FieldPodAffinityRequired].([]map[string]any); ok {
+				if len(required) != tc.expectedRequired {
+					t.Errorf("required = %v, want %d term(s) on %s", required, tc.expectedRequired, corev1.LabelHostname)
+				}
+				for _, r := range required {
+					if r[constants.FieldTopologyKey] != corev1.LabelHostname {
+						t.Errorf("required = %v, want a term on %s", r, corev1.LabelHostname)
+					}
+				}
+				if selector, ok := required[0][constants.FieldNamespaceSelector].([]map[string]any); ok {
+					if len(selector) != 1 || len(selector[0]) != 0 {
+						t.Errorf("namespace selector = %v, want one empty block", required[0][constants.FieldNamespaceSelector])
+					}
+				}
+			}
+
+			if preferred, ok := got[0][constants.FieldPodAffinityPreferred].([]map[string]any); ok {
+				if len(preferred) != len(tc.expectedPreferred) {
+					t.Errorf("preferred = %v, want %d term", preferred, len(tc.expectedPreferred))
+				}
+				for i, p := range preferred {
+					if p[constants.FieldPreferredWeight] != tc.expectedPreferred[i] {
+						t.Errorf("preferred = %v, want term with weight %d", p, tc.expectedPreferred[i])
+					}
+				}
+			}
+		})
 	}
 }
