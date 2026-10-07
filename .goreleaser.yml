@@ -49,3 +49,8 @@ signs:
       - "--pinentry-mode"
       - "loopback"
       - "${artifact}"
+release:
+  # The release tool creates the release first; keep rc/dev tags as
+  # pre-releases instead of flipping them on update. make_latest is left
+  # unset so the latest flag set at creation is preserved.
+  prerelease: auto
