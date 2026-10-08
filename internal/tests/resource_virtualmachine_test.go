@@ -550,6 +550,7 @@ func TestAccVirtualMachine_hotplug_cdrom_volume(t *testing.T) {
 		testAccVirtualMachineResourceName = constants.ResourceTypeVirtualMachine + "." + testAccVirtualMachineName
 		vm                                = &kubevirtv1.VirtualMachine{}
 		vmiUid                            types.UID
+		cdRomPVCName                      string
 		ctx                               = context.Background()
 	)
 	resource.Test(t, resource.TestCase{
@@ -651,14 +652,14 @@ resource "harvester_virtualmachine" "%s" {
 
     size        = "1Gi"
     hot_plug    = true
-    image       = "%s/%s"
+    image       = harvester_image.%s.id
     auto_delete = true
   }
 }
 `,
 					testAccImageName, testAccImageName, testAccVirtualMachineNamespace, testAccImageName,
 					testAccVirtualMachineName, testAccVirtualMachineName, testAccVirtualMachineNamespace,
-					testAccVirtualMachineNamespace, testAccImageName,
+					testAccImageName,
 				),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(testAccImageResourceName, constants.FieldCommonName, "test-acc-hp-cdrom-img"),
@@ -666,10 +667,25 @@ resource "harvester_virtualmachine" "%s" {
 					testAccVirtualMachineExists(ctx, testAccVirtualMachineResourceName, vm),
 					testAccCheckCdRomSpec(ctx, testAccVirtualMachineNamespace, testAccVirtualMachineName, 2, 2),
 					testAccCheckVmiUid(ctx, testAccVirtualMachineNamespace, testAccVirtualMachineName, &vmiUid),
+					resource.TestCheckResourceAttrWith(testAccVirtualMachineResourceName, constants.FieldVirtualMachineDisk+".1."+constants.FieldDiskVolumeName, func(value string) error {
+						cdRomPVCName = value
+						return nil
+					}),
 				),
 			},
 			{
+				// The image is kept: Terraform would delete it before the VM
+				// ejects it, and Harvester refuses to delete an image in use.
 				Config: fmt.Sprintf(`
+resource harvester_image "%s" {
+  name = "%s"
+	namespace = "%s"
+	display_name = "%s"
+	source_type = "download"
+	url = "https://distro.ibiblio.org/tinycorelinux/16.x/x86/release/TinyCore-current.iso"
+	storage_class_name = "harvester-longhorn"
+}
+
 resource "harvester_virtualmachine" "%s" {
 	name = "%s"
 	namespace = "%s"
@@ -701,12 +717,14 @@ resource "harvester_virtualmachine" "%s" {
   }
 }
 `,
+					testAccImageName, testAccImageName, testAccVirtualMachineNamespace, testAccImageName,
 					testAccVirtualMachineName, testAccVirtualMachineName, testAccVirtualMachineNamespace,
 				),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccVirtualMachineExists(ctx, testAccVirtualMachineResourceName, vm),
 					testAccCheckCdRomSpec(ctx, testAccVirtualMachineNamespace, testAccVirtualMachineName, 2, 1),
 					testAccCheckVmiUid(ctx, testAccVirtualMachineNamespace, testAccVirtualMachineName, &vmiUid),
+					testAccCheckPVCDeleted(ctx, testAccVirtualMachineNamespace, &cdRomPVCName),
 				),
 			},
 		},
@@ -761,6 +779,22 @@ func testAccCheckVmiUid(ctx context.Context, vmNamespace, vmName string, vmiUid 
 			return fmt.Errorf("Shouldn't trigger VMI re-creation. Expected: %s, Got: %s", *vmiUid, vmi.UID)
 		}
 		return nil
+	}
+}
+
+// testAccCheckPVCDeleted checks that the PVC is deleted, which can take a
+// moment while it is still in use.
+func testAccCheckPVCDeleted(ctx context.Context, namespace string, pvcName *string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		c, err := testAccProvider.Meta().(*config.Config).K8sClient()
+		if err != nil {
+			return err
+		}
+		stateConf := getStateChangeConf(getResourceStateRefreshFunc(func() (interface{}, error) {
+			return c.KubeClient.CoreV1().PersistentVolumeClaims(namespace).Get(ctx, *pvcName, metav1.GetOptions{})
+		}))
+		_, err = stateConf.WaitForStateContext(ctx)
+		return err
 	}
 }
 
