@@ -317,7 +317,6 @@ func (v *VMImporter) Volume() ([]map[string]interface{}, []map[string]interface{
 		case disk.Disk != nil:
 			diskState[constants.FieldDiskType] = builder.DiskTypeDisk
 			diskState[constants.FieldDiskBus] = string(disk.Disk.Bus)
-			diskState[constants.FieldDiskEject] = false
 		default:
 			return nil, nil, fmt.Errorf("unsupported disk type found on disk %s. ", disk.Name)
 		}

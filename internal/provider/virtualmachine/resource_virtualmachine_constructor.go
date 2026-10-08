@@ -267,10 +267,10 @@ func (c *Constructor) Setup() util.Processors {
 					}
 				}
 
-				if eject && isCDRom {
+				if eject {
 					disks := vmBuilder.VirtualMachine.Spec.Template.Spec.Domain.Devices.Disks
 					for idx, d := range disks {
-						if d.Name == diskName && d.CDRom != nil {
+						if d.Name == diskName {
 							disks[idx].CDRom.Tray = kubevirtv1.TrayStateOpen
 							break
 						}

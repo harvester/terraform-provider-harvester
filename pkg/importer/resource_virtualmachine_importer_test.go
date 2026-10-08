@@ -586,6 +586,7 @@ func TestVolume(t *testing.T) {
 		virtio    = "virtio"
 		scsi      = "scsi"
 		writeback = "writeback"
+		sata      = "sata"
 	)
 
 	bootOrder := func(n uint) *uint { return &n }
@@ -596,6 +597,10 @@ func TestVolume(t *testing.T) {
 		} else {
 			d.DiskDevice = kubevirtv1.DiskDevice{Disk: &kubevirtv1.DiskTarget{Bus: bus}}
 		}
+		return d
+	}
+	withTray := func(d kubevirtv1.Disk, tray kubevirtv1.TrayState) kubevirtv1.Disk {
+		d.CDRom.Tray = tray
 		return d
 	}
 	pvcVol := func(name string) kubevirtv1.Volume {
@@ -695,7 +700,7 @@ func TestVolume(t *testing.T) {
 			),
 			wantDisks: []wantDisk{
 				{name: diskname, diskType: builder.DiskTypeDisk, bus: scsi, bootOrder: 1, extra: map[string]any{constants.FieldDiskVolumeName: diskname}},
-				{name: "iso", diskType: builder.DiskTypeCDRom, bus: "sata", bootOrder: 2},
+				{name: "iso", diskType: builder.DiskTypeCDRom, bus: sata, bootOrder: 2},
 			},
 			wantCloudInit: true,
 		},
@@ -728,6 +733,28 @@ func TestVolume(t *testing.T) {
 			),
 			wantDisks:     []wantDisk{},
 			wantCloudInit: true,
+		},
+		{
+			// several cd-roms: each one reports its own tray state.
+			name: "cd-rom eject follows the tray state",
+			importer: build(
+				[]kubevirtv1.Disk{
+					disk(diskname, builder.DiskTypeDisk, kubevirtv1.DiskBusVirtio, 1, ""),
+					withTray(disk("iso-open", builder.DiskTypeCDRom, kubevirtv1.DiskBusSATA, 2, ""), kubevirtv1.TrayStateOpen),
+					withTray(disk("iso-closed", builder.DiskTypeCDRom, kubevirtv1.DiskBusSATA, 3, ""), kubevirtv1.TrayStateClosed),
+					disk("iso-unset", builder.DiskTypeCDRom, kubevirtv1.DiskBusSATA, 4, ""),
+				},
+				[]kubevirtv1.Volume{
+					pvcVol(diskname),
+				},
+			),
+			wantDisks: []wantDisk{
+				{name: diskname, diskType: builder.DiskTypeDisk, bus: virtio, bootOrder: 1},
+				{name: "iso-open", diskType: builder.DiskTypeCDRom, bus: sata, bootOrder: 2, extra: map[string]any{constants.FieldDiskEject: true}},
+				{name: "iso-closed", diskType: builder.DiskTypeCDRom, bus: sata, bootOrder: 3, extra: map[string]any{constants.FieldDiskEject: false}},
+				{name: "iso-unset", diskType: builder.DiskTypeCDRom, bus: sata, bootOrder: 4, extra: map[string]any{constants.FieldDiskEject: false}},
+			},
+			wantCloudInit: false,
 		},
 		{
 			name:     "disk with neither cdrom nor disk errors",
@@ -778,143 +805,5 @@ func TestVolume(t *testing.T) {
 				t.Errorf("cloud-init present = %v, want %v", hasCloudInit, tc.wantCloudInit)
 			}
 		})
-	}
-}
-
-func TestDiskEjectImport(t *testing.T) {
-	const (
-		cdromDisk = "cdrom-disk"
-		testImage = "test-image"
-	)
-	makeVM := func(disks []kubevirtv1.Disk, volumes []kubevirtv1.Volume) *VMImporter {
-		return &VMImporter{
-			VirtualMachine: &kubevirtv1.VirtualMachine{
-				Spec: kubevirtv1.VirtualMachineSpec{
-					Template: &kubevirtv1.VirtualMachineInstanceTemplateSpec{
-						Spec: kubevirtv1.VirtualMachineInstanceSpec{
-							Domain: kubevirtv1.DomainSpec{
-								Devices: kubevirtv1.Devices{
-									Disks: disks,
-								},
-							},
-							Volumes: volumes,
-						},
-					},
-				},
-			},
-		}
-	}
-
-	// CD-ROM with tray open (ejected)
-	imp := makeVM(
-		[]kubevirtv1.Disk{{
-			Name: cdromDisk,
-			DiskDevice: kubevirtv1.DiskDevice{
-				CDRom: &kubevirtv1.CDRomTarget{
-					Bus:  kubevirtv1.DiskBusSATA,
-					Tray: kubevirtv1.TrayStateOpen,
-				},
-			},
-		}},
-		[]kubevirtv1.Volume{{
-			Name: cdromDisk,
-			VolumeSource: kubevirtv1.VolumeSource{
-				ContainerDisk: &kubevirtv1.ContainerDiskSource{
-					Image: testImage,
-				},
-			},
-		}},
-	)
-	diskStates, _, err := imp.Volume()
-	if err != nil {
-		t.Fatalf("Volume() error: %v", err)
-	}
-	if len(diskStates) != 1 {
-		t.Fatalf("expected 1 disk, got %d", len(diskStates))
-	}
-	if eject, ok := diskStates[0][constants.FieldDiskEject].(bool); !ok || !eject {
-		t.Errorf("CD-ROM with TrayStateOpen: eject = %v, want true", diskStates[0][constants.FieldDiskEject])
-	}
-
-	// CD-ROM with tray closed (not ejected)
-	imp2 := makeVM(
-		[]kubevirtv1.Disk{{
-			Name: cdromDisk,
-			DiskDevice: kubevirtv1.DiskDevice{
-				CDRom: &kubevirtv1.CDRomTarget{
-					Bus:  kubevirtv1.DiskBusSATA,
-					Tray: kubevirtv1.TrayStateClosed,
-				},
-			},
-		}},
-		[]kubevirtv1.Volume{{
-			Name: cdromDisk,
-			VolumeSource: kubevirtv1.VolumeSource{
-				ContainerDisk: &kubevirtv1.ContainerDiskSource{
-					Image: testImage,
-				},
-			},
-		}},
-	)
-	diskStates2, _, err := imp2.Volume()
-	if err != nil {
-		t.Fatalf("Volume() error: %v", err)
-	}
-	if eject, ok := diskStates2[0][constants.FieldDiskEject].(bool); !ok || eject {
-		t.Errorf("CD-ROM with TrayStateClosed: eject = %v, want false", diskStates2[0][constants.FieldDiskEject])
-	}
-
-	// Regular disk (not CD-ROM) should have eject=false
-	imp3 := makeVM(
-		[]kubevirtv1.Disk{{
-			Name: "rootdisk",
-			DiskDevice: kubevirtv1.DiskDevice{
-				Disk: &kubevirtv1.DiskTarget{
-					Bus: kubevirtv1.DiskBusVirtio,
-				},
-			},
-		}},
-		[]kubevirtv1.Volume{{
-			Name: "rootdisk",
-			VolumeSource: kubevirtv1.VolumeSource{
-				ContainerDisk: &kubevirtv1.ContainerDiskSource{
-					Image: testImage,
-				},
-			},
-		}},
-	)
-	diskStates3, _, err := imp3.Volume()
-	if err != nil {
-		t.Fatalf("Volume() error: %v", err)
-	}
-	if eject, ok := diskStates3[0][constants.FieldDiskEject].(bool); !ok || eject {
-		t.Errorf("Regular disk: eject = %v, want false", diskStates3[0][constants.FieldDiskEject])
-	}
-
-	// CD-ROM with no Tray field set should default to eject=false
-	imp4 := makeVM(
-		[]kubevirtv1.Disk{{
-			Name: "cdrom-no-tray",
-			DiskDevice: kubevirtv1.DiskDevice{
-				CDRom: &kubevirtv1.CDRomTarget{
-					Bus: kubevirtv1.DiskBusSATA,
-				},
-			},
-		}},
-		[]kubevirtv1.Volume{{
-			Name: "cdrom-no-tray",
-			VolumeSource: kubevirtv1.VolumeSource{
-				ContainerDisk: &kubevirtv1.ContainerDiskSource{
-					Image: testImage,
-				},
-			},
-		}},
-	)
-	diskStates4, _, err := imp4.Volume()
-	if err != nil {
-		t.Fatalf("Volume() error: %v", err)
-	}
-	if eject, ok := diskStates4[0][constants.FieldDiskEject].(bool); !ok || eject {
-		t.Errorf("CD-ROM with no Tray set: eject = %v, want false", diskStates4[0][constants.FieldDiskEject])
 	}
 }
