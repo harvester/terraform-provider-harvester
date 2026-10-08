@@ -15,9 +15,14 @@ import (
 
 // Values shared by the kube-ovn importer tests.
 const (
-	testVpcName   = "test-vpc"
-	testCIDR      = "10.0.0.0/24"
-	testGatewayIP = "10.0.0.1"
+	testVpcName        = "test-vpc"
+	testSubnetName     = "test-subnet"
+	testCIDR           = "10.0.0.0/24"
+	testGatewayIP      = "10.0.0.1"
+	testNatGatewayName = "test-gw"
+	testEIPName        = "test-eip"
+	testExternalIP     = "192.168.1.100"
+	testInternalIP     = "10.0.0.100"
 )
 
 // blockStrings returns the string field of every exported block, in order.
