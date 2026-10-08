@@ -71,12 +71,15 @@ func userPasswordCredential(secretName string) *kubevirtv1.UserPasswordAccessCre
 
 // TestParseAccessCredential also covers the blocks the KubeVirt webhook
 // rejects (no type, both types, qemuGuestAgent without users): they must reach
-// it unchanged, not be completed or silently reduced to one type.
+// it unchanged, not be completed or silently reduced to one type. Users with
+// noCloud or configDrive are refused here, as these propagations have no users
+// field to carry them.
 func TestParseAccessCredential(t *testing.T) {
 	testcases := []struct {
-		name     string
-		block    map[string]interface{}
-		expected kubevirtv1.AccessCredential
+		name        string
+		block       map[string]interface{}
+		expected    kubevirtv1.AccessCredential
+		expectError bool
 	}{
 		{
 			name:     "empty block (nil from Terraform) sets no type",
@@ -101,6 +104,16 @@ func TestParseAccessCredential(t *testing.T) {
 			expected: kubevirtv1.AccessCredential{SSHPublicKey: sshPublicKeyCredential(accessCredentialTestKeys, kubevirtv1.SSHPublicKeyAccessCredentialPropagationMethod{
 				ConfigDrive: &kubevirtv1.ConfigDriveSSHPublicKeyAccessCredentialPropagation{},
 			})},
+		},
+		{
+			name:        "users with noCloud are refused, not dropped",
+			block:       accessCredentialBlock([]interface{}{sshPublicKeyBlock(accessCredentialTestKeys, builder.CloudInitTypeNoCloud, accessCredentialTestUser)}, []interface{}{}),
+			expectError: true,
+		},
+		{
+			name:        "users with configDrive are refused, not dropped",
+			block:       accessCredentialBlock([]interface{}{sshPublicKeyBlock(accessCredentialTestKeys, builder.CloudInitTypeConfigDrive, accessCredentialTestUser)}, []interface{}{}),
+			expectError: true,
 		},
 		{
 			name:  "ssh public key over qemuGuestAgent keeps the users in order",
@@ -135,7 +148,11 @@ func TestParseAccessCredential(t *testing.T) {
 
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
-			if got := parseAccessCredential(tc.block); !reflect.DeepEqual(got, tc.expected) {
+			got, err := parseAccessCredential(tc.block)
+			if (err != nil) != tc.expectError {
+				t.Fatalf("parseAccessCredential() error = %v, expectError = %v", err, tc.expectError)
+			}
+			if !reflect.DeepEqual(got, tc.expected) {
 				t.Errorf("parseAccessCredential() = %+v, want %+v", got, tc.expected)
 			}
 		})
@@ -219,12 +236,14 @@ func TestAccessCredentialsSchema(t *testing.T) {
 }
 
 // TestAccessCredentialsParser checks that each access_credentials block adds
-// one credential, in order, and that an empty block does not crash.
+// one credential, in order, that an empty block does not crash and that an
+// invalid block fails the parser instead of being added.
 func TestAccessCredentialsParser(t *testing.T) {
 	testcases := []struct {
-		name     string
-		blocks   []interface{}
-		expected []kubevirtv1.AccessCredential
+		name        string
+		blocks      []interface{}
+		expected    []kubevirtv1.AccessCredential
+		expectError bool
 	}{
 		{
 			name:     "empty block (nil from Terraform) adds a credential without type",
@@ -255,6 +274,11 @@ func TestAccessCredentialsParser(t *testing.T) {
 				})},
 			},
 		},
+		{
+			name:        "users with noCloud fail the parser",
+			blocks:      []interface{}{accessCredentialBlock([]interface{}{sshPublicKeyBlock(accessCredentialTestKeys, builder.CloudInitTypeNoCloud, accessCredentialTestUser)}, []interface{}{})},
+			expectError: true,
+		},
 	}
 
 	for _, tc := range testcases {
@@ -266,8 +290,8 @@ func TestAccessCredentialsParser(t *testing.T) {
 					continue
 				}
 				for _, block := range tc.blocks {
-					if err := processor.Parser(block); err != nil {
-						t.Fatal(err)
+					if err := processor.Parser(block); (err != nil) != tc.expectError {
+						t.Fatalf("Parser() error = %v, expectError = %v", err, tc.expectError)
 					}
 				}
 			}

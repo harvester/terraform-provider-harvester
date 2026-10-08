@@ -460,14 +460,8 @@ func (c *Constructor) Setup() util.Processors {
 			},
 		},
 		{
-			Field: constants.FieldVirtualMachineAccessCredentials,
-			Parser: func(i interface{}) error {
-				// Terraform passes nil for a block written without any attribute.
-				r, _ := i.(map[string]interface{})
-				vmBuilder.VirtualMachine.Spec.Template.Spec.AccessCredentials = append(
-					vmBuilder.VirtualMachine.Spec.Template.Spec.AccessCredentials, parseAccessCredential(r))
-				return nil
-			},
+			Field:  constants.FieldVirtualMachineAccessCredentials,
+			Parser: accessCredentialParser(vmBuilder),
 		},
 	}
 	return append(processors, customProcessors...)
@@ -505,11 +499,31 @@ func Creator(c *client.Client, ctx context.Context, namespace, name string) util
 	return newVMConstructor(c, ctx, vmBuilder)
 }
 
+// accessCredentialParser appends the access credential of an
+// access_credentials block to the VM.
+func accessCredentialParser(vmBuilder *builder.VMBuilder) func(interface{}) error {
+	return func(i interface{}) error {
+		// Terraform passes nil for a block written without any attribute.
+		r, _ := i.(map[string]interface{})
+		accessCredential, err := parseAccessCredential(r)
+		if err != nil {
+			return err
+		}
+		vmBuilder.VirtualMachine.Spec.Template.Spec.AccessCredentials = append(
+			vmBuilder.VirtualMachine.Spec.Template.Spec.AccessCredentials, accessCredential)
+		return nil
+	}
+}
+
 // parseAccessCredential returns the access credential of an access_credentials
 // block. The KubeVirt webhook rejects a credential that sets none or both of
 // ssh_public_key and user_password, and a qemuGuestAgent propagation without
 // users.
-func parseAccessCredential(r map[string]interface{}) kubevirtv1.AccessCredential {
+//
+// It returns an error when users is set with another propagation method:
+// the noCloud and configDrive propagations have no users field, so the list
+// would be dropped without notice and never read back, a perpetual diff.
+func parseAccessCredential(r map[string]interface{}) (kubevirtv1.AccessCredential, error) {
 	var ac kubevirtv1.AccessCredential
 	if sshList, _ := r[constants.FieldAccessCredentialSSHPublicKey].([]interface{}); len(sshList) > 0 {
 		ssh := sshList[0].(map[string]interface{})
@@ -518,13 +532,20 @@ func parseAccessCredential(r map[string]interface{}) kubevirtv1.AccessCredential
 				Secret: &kubevirtv1.AccessCredentialSecretSource{SecretName: ssh[constants.FieldAccessCredentialSecretName].(string)},
 			},
 		}
-		switch ssh[constants.FieldAccessCredentialPropagationMethod].(string) {
+		method := ssh[constants.FieldAccessCredentialPropagationMethod].(string)
+		userList := ssh[constants.FieldAccessCredentialUsers].([]interface{})
+		if len(userList) > 0 && method != constants.AccessCredentialPropagationQemuGuestAgent {
+			return kubevirtv1.AccessCredential{}, fmt.Errorf("%s.%s.%s only applies to the %s %s, remove it for %s",
+				constants.FieldVirtualMachineAccessCredentials, constants.FieldAccessCredentialSSHPublicKey,
+				constants.FieldAccessCredentialUsers, constants.AccessCredentialPropagationQemuGuestAgent,
+				constants.FieldAccessCredentialPropagationMethod, method)
+		}
+		switch method {
 		case builder.CloudInitTypeConfigDrive:
 			ac.SSHPublicKey.PropagationMethod.ConfigDrive = &kubevirtv1.ConfigDriveSSHPublicKeyAccessCredentialPropagation{}
 		case builder.CloudInitTypeNoCloud:
 			ac.SSHPublicKey.PropagationMethod.NoCloud = &kubevirtv1.NoCloudSSHPublicKeyAccessCredentialPropagation{}
 		case constants.AccessCredentialPropagationQemuGuestAgent:
-			userList := ssh[constants.FieldAccessCredentialUsers].([]interface{})
 			users := make([]string, 0, len(userList))
 			for _, u := range userList {
 				users = append(users, u.(string))
@@ -545,7 +566,7 @@ func parseAccessCredential(r map[string]interface{}) kubevirtv1.AccessCredential
 			},
 		}
 	}
-	return ac
+	return ac, nil
 }
 
 func Updater(c *client.Client, ctx context.Context, vm *kubevirtv1.VirtualMachine) util.Constructor {

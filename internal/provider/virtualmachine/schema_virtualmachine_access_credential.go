@@ -38,7 +38,7 @@ func resourceAccessCredentialSchema() map[string]*schema.Schema {
 						Elem: &schema.Schema{
 							Type: schema.TypeString,
 						},
-						Description: "List of guest users for qemuGuestAgent propagation (required when propagation_method is qemuGuestAgent)",
+						Description: "List of guest users to receive the SSH keys, only for qemuGuestAgent propagation (required with qemuGuestAgent, rejected with configDrive and noCloud)",
 					},
 				},
 			},
