@@ -111,4 +111,9 @@ const (
 	FieldAccessCredentialSecretName        = "secret_name"        // #nosec G101
 	FieldAccessCredentialPropagationMethod = "propagation_method" // #nosec G101
 	FieldAccessCredentialUsers             = "users"
+
+	// AccessCredentialPropagationQemuGuestAgent completes the cloud-init
+	// types of the Harvester builder (noCloud, configDrive) as SSH public key
+	// propagation methods.
+	AccessCredentialPropagationQemuGuestAgent = "qemuGuestAgent" // #nosec G101
 )
