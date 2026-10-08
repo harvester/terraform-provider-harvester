@@ -37,6 +37,7 @@ data "harvester_virtualmachine" "opensuse154" {
 
 ### Read-Only
 
+- `access_credentials` (List of Object) Access credentials for the VM (SSH public keys or user passwords) (see [below for nested schema](#nestedatt--access_credentials))
 - `cloudinit` (List of Object) (see [below for nested schema](#nestedatt--cloudinit))
 - `cpu` (Number)
 - `cpu_model` (String) CPU model for the virtual machine
@@ -73,6 +74,33 @@ For `ssh-user` tag, the value is added to `cloudinit.user_data` if:
 1. Both `cloudinit.user_data_base64` and `cloudinit.user_data_secret_name` are empty.
 2. There is no `user` field in `cloudinit.user_data`.
 - `tpm` (List of Object) (see [below for nested schema](#nestedatt--tpm))
+
+<a id="nestedatt--access_credentials"></a>
+### Nested Schema for `access_credentials`
+
+Read-Only:
+
+- `ssh_public_key` (List of Object) (see [below for nested schema](#nestedobjatt--access_credentials--ssh_public_key))
+- `user_password` (List of Object) (see [below for nested schema](#nestedobjatt--access_credentials--user_password))
+
+<a id="nestedobjatt--access_credentials--ssh_public_key"></a>
+### Nested Schema for `access_credentials.ssh_public_key`
+
+Read-Only:
+
+- `propagation_method` (String)
+- `secret_name` (String)
+- `users` (List of String)
+
+
+<a id="nestedobjatt--access_credentials--user_password"></a>
+### Nested Schema for `access_credentials.user_password`
+
+Read-Only:
+
+- `secret_name` (String)
+
+
 
 <a id="nestedatt--cloudinit"></a>
 ### Nested Schema for `cloudinit`

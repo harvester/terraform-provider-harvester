@@ -459,6 +459,10 @@ func (c *Constructor) Setup() util.Processors {
 				return nil
 			},
 		},
+		{
+			Field:  constants.FieldVirtualMachineAccessCredentials,
+			Parser: accessCredentialParser(vmBuilder),
+		},
 	}
 	return append(processors, customProcessors...)
 }
@@ -495,6 +499,76 @@ func Creator(c *client.Client, ctx context.Context, namespace, name string) util
 	return newVMConstructor(c, ctx, vmBuilder)
 }
 
+// accessCredentialParser appends the access credential of an
+// access_credentials block to the VM.
+func accessCredentialParser(vmBuilder *builder.VMBuilder) func(interface{}) error {
+	return func(i interface{}) error {
+		// Terraform passes nil for a block written without any attribute.
+		r, _ := i.(map[string]interface{})
+		accessCredential, err := parseAccessCredential(r)
+		if err != nil {
+			return err
+		}
+		vmBuilder.VirtualMachine.Spec.Template.Spec.AccessCredentials = append(
+			vmBuilder.VirtualMachine.Spec.Template.Spec.AccessCredentials, accessCredential)
+		return nil
+	}
+}
+
+// parseAccessCredential returns the access credential of an access_credentials
+// block. The KubeVirt webhook rejects a credential that sets none or both of
+// ssh_public_key and user_password, and a qemuGuestAgent propagation without
+// users.
+//
+// It returns an error when users is set with another propagation method:
+// the noCloud and configDrive propagations have no users field, so the list
+// would be dropped without notice and never read back, a perpetual diff.
+func parseAccessCredential(r map[string]interface{}) (kubevirtv1.AccessCredential, error) {
+	var ac kubevirtv1.AccessCredential
+	if sshList, _ := r[constants.FieldAccessCredentialSSHPublicKey].([]interface{}); len(sshList) > 0 {
+		ssh := sshList[0].(map[string]interface{})
+		ac.SSHPublicKey = &kubevirtv1.SSHPublicKeyAccessCredential{
+			Source: kubevirtv1.SSHPublicKeyAccessCredentialSource{
+				Secret: &kubevirtv1.AccessCredentialSecretSource{SecretName: ssh[constants.FieldAccessCredentialSecretName].(string)},
+			},
+		}
+		method := ssh[constants.FieldAccessCredentialPropagationMethod].(string)
+		userList := ssh[constants.FieldAccessCredentialUsers].([]interface{})
+		if len(userList) > 0 && method != constants.AccessCredentialPropagationQemuGuestAgent {
+			return kubevirtv1.AccessCredential{}, fmt.Errorf("%s.%s.%s only applies to the %s %s, remove it for %s",
+				constants.FieldVirtualMachineAccessCredentials, constants.FieldAccessCredentialSSHPublicKey,
+				constants.FieldAccessCredentialUsers, constants.AccessCredentialPropagationQemuGuestAgent,
+				constants.FieldAccessCredentialPropagationMethod, method)
+		}
+		switch method {
+		case builder.CloudInitTypeConfigDrive:
+			ac.SSHPublicKey.PropagationMethod.ConfigDrive = &kubevirtv1.ConfigDriveSSHPublicKeyAccessCredentialPropagation{}
+		case builder.CloudInitTypeNoCloud:
+			ac.SSHPublicKey.PropagationMethod.NoCloud = &kubevirtv1.NoCloudSSHPublicKeyAccessCredentialPropagation{}
+		case constants.AccessCredentialPropagationQemuGuestAgent:
+			users := make([]string, 0, len(userList))
+			for _, u := range userList {
+				users = append(users, u.(string))
+			}
+			ac.SSHPublicKey.PropagationMethod.QemuGuestAgent = &kubevirtv1.QemuGuestAgentSSHPublicKeyAccessCredentialPropagation{
+				Users: users,
+			}
+		}
+	}
+	if pwList, _ := r[constants.FieldAccessCredentialUserPassword].([]interface{}); len(pwList) > 0 {
+		pw := pwList[0].(map[string]interface{})
+		ac.UserPassword = &kubevirtv1.UserPasswordAccessCredential{
+			Source: kubevirtv1.UserPasswordAccessCredentialSource{
+				Secret: &kubevirtv1.AccessCredentialSecretSource{SecretName: pw[constants.FieldAccessCredentialSecretName].(string)},
+			},
+			PropagationMethod: kubevirtv1.UserPasswordAccessCredentialPropagationMethod{
+				QemuGuestAgent: &kubevirtv1.QemuGuestAgentUserPasswordAccessCredentialPropagation{},
+			},
+		}
+	}
+	return ac, nil
+}
+
 func Updater(c *client.Client, ctx context.Context, vm *kubevirtv1.VirtualMachine) util.Constructor {
 	vm.Spec.Template.Spec.Networks = []kubevirtv1.Network{}
 	vm.Spec.Template.Spec.Domain.Devices.TPM = nil
@@ -502,6 +576,7 @@ func Updater(c *client.Client, ctx context.Context, vm *kubevirtv1.VirtualMachin
 	vm.Spec.Template.Spec.Domain.Devices.Disks = []kubevirtv1.Disk{}
 	vm.Spec.Template.Spec.Domain.Devices.Inputs = []kubevirtv1.Input{}
 	vm.Spec.Template.Spec.Volumes = []kubevirtv1.Volume{}
+	vm.Spec.Template.Spec.AccessCredentials = nil
 	vm.Annotations[harvesterutil.AnnotationVolumeClaimTemplates] = "[]"
 	return newVMConstructor(c, ctx, &builder.VMBuilder{
 		VirtualMachine: vm,

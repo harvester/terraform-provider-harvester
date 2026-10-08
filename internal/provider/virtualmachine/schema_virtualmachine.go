@@ -200,6 +200,14 @@ please use %s instead of this deprecated field:
 				},
 			},
 		},
+		constants.FieldVirtualMachineAccessCredentials: {
+			Type:     schema.TypeList,
+			Optional: true,
+			Elem: &schema.Resource{
+				Schema: resourceAccessCredentialSchema(),
+			},
+			Description: "Access credentials for the VM (SSH public keys or user passwords)",
+		},
 	}
 	util.NamespacedSchemaWrap(s, false)
 	s[constants.FieldCommonTags].Description = "The tag is reflected as label on the VM.\n" +

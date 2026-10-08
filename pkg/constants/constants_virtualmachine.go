@@ -29,6 +29,7 @@ const (
 	FieldVirtualMachineNodeSelector          = "node_selector"
 	FieldVirtualMachineCreateInitialSnapshot = "create_initial_snapshot"
 	FieldVirtualMachineHostDevice            = "host_device"
+	FieldVirtualMachineAccessCredentials     = "access_credentials"
 
 	StateVirtualMachineStarting = "Starting"
 	StateVirtualMachineRunning  = "Running"
@@ -102,4 +103,17 @@ const (
 const (
 	FieldHostDeviceName       = "name"
 	FieldHostDeviceDeviceName = "device_name"
+)
+
+const (
+	FieldAccessCredentialSSHPublicKey      = "ssh_public_key"     // #nosec G101
+	FieldAccessCredentialUserPassword      = "user_password"      // #nosec G101
+	FieldAccessCredentialSecretName        = "secret_name"        // #nosec G101
+	FieldAccessCredentialPropagationMethod = "propagation_method" // #nosec G101
+	FieldAccessCredentialUsers             = "users"
+
+	// AccessCredentialPropagationQemuGuestAgent completes the cloud-init
+	// types of the Harvester builder (noCloud, configDrive) as SSH public key
+	// propagation methods.
+	AccessCredentialPropagationQemuGuestAgent = "qemuGuestAgent" // #nosec G101
 )

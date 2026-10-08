@@ -340,6 +340,39 @@ func (v *VMImporter) Volume() ([]map[string]interface{}, []map[string]interface{
 	return diskStates, cloudInitState, nil
 }
 
+// AccessCredentials returns the access_credentials blocks of the VM. The
+// KubeVirt webhook guarantees that each credential sets exactly one type, and
+// that its secret source is set.
+func (v *VMImporter) AccessCredentials() []map[string]interface{} {
+	acs := v.VirtualMachine.Spec.Template.Spec.AccessCredentials
+	result := make([]map[string]interface{}, 0, len(acs))
+	for _, ac := range acs {
+		entry := map[string]interface{}{}
+		if ac.SSHPublicKey != nil {
+			ssh := map[string]interface{}{
+				constants.FieldAccessCredentialSecretName: ac.SSHPublicKey.Source.Secret.SecretName,
+			}
+			pm := ac.SSHPublicKey.PropagationMethod
+			switch {
+			case pm.ConfigDrive != nil:
+				ssh[constants.FieldAccessCredentialPropagationMethod] = builder.CloudInitTypeConfigDrive
+			case pm.NoCloud != nil:
+				ssh[constants.FieldAccessCredentialPropagationMethod] = builder.CloudInitTypeNoCloud
+			case pm.QemuGuestAgent != nil:
+				ssh[constants.FieldAccessCredentialPropagationMethod] = constants.AccessCredentialPropagationQemuGuestAgent
+				ssh[constants.FieldAccessCredentialUsers] = pm.QemuGuestAgent.Users
+			}
+			entry[constants.FieldAccessCredentialSSHPublicKey] = []interface{}{ssh}
+		} else if ac.UserPassword != nil {
+			entry[constants.FieldAccessCredentialUserPassword] = []interface{}{map[string]interface{}{
+				constants.FieldAccessCredentialSecretName: ac.UserPassword.Source.Secret.SecretName,
+			}}
+		}
+		result = append(result, entry)
+	}
+	return result
+}
+
 func (v *VMImporter) NodeName() string {
 	if v.VirtualMachineInstance == nil {
 		return ""
@@ -436,6 +469,7 @@ func ResourceVirtualMachineStateGetter(vm *kubevirtv1.VirtualMachine, vmi *kubev
 			constants.FieldVirtualMachineCPUPinning:            vmImporter.DedicatedCPUPlacement(),
 			constants.FieldVirtualMachineIsolateEmulatorThread: vmImporter.IsolateEmulatorThread(),
 			constants.FieldVirtualMachineNodeSelector:          vm.Spec.Template.Spec.NodeSelector,
+			constants.FieldVirtualMachineAccessCredentials:     vmImporter.AccessCredentials(),
 		},
 	}, nil
 }
