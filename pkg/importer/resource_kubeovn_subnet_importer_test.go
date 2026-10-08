@@ -33,7 +33,7 @@ func TestResourceKubeOVNSubnetStateGetter(t *testing.T) {
 			name: "subnet with all fields",
 			subnet: &kubeovnv1.Subnet{
 				ObjectMeta: metav1.ObjectMeta{
-					Name: "test-subnet",
+					Name: testSubnetName,
 					Labels: map[string]string{
 						"tag.harvesterhci.io/env": "production",
 					},
@@ -56,7 +56,7 @@ func TestResourceKubeOVNSubnetStateGetter(t *testing.T) {
 					V4UsingIPs:     1,
 				},
 			},
-			expectedID:       helper.BuildID("", "test-subnet"),
+			expectedID:       helper.BuildID("", testSubnetName),
 			expectedState:    constants.StateCommonActive,
 			expectedVpc:      testVpcName,
 			expectedCIDR:     testCIDR,
