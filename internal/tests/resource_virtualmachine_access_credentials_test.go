@@ -54,6 +54,11 @@ resource %s "%s" {
 		}
 	}
 
+	# KubeVirt requires a noCloud volume for the noCloud propagation method.
+	cloudinit {
+		user_data = "#cloud-config\n"
+	}
+
 	network_interface {
 		name = "default"
 	}
