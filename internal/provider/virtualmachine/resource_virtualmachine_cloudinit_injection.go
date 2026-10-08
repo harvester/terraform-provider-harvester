@@ -17,6 +17,14 @@ import (
 	"github.com/harvester/terraform-provider-harvester/pkg/importer"
 )
 
+const (
+	// sshKeysLinePrefix starts the ssh_authorized_keys section of user data.
+	sshKeysLinePrefix = "ssh_authorized_keys:"
+	// sshKeySeparator separates the public keys in the ssh_authorized_keys
+	// section the constructor injects.
+	sshKeySeparator = "\n  - "
+)
+
 // injectSSHUserAndKeys returns the user data the constructor stores on the VM:
 // a `user:` line from the ssh-user tag when the user data sets no user, then
 // the public keys of ssh_keys when it has no ssh_authorized_keys section.
@@ -28,8 +36,8 @@ func injectSSHUserAndKeys(userData, sshUser string, publicKeys []string) string 
 			userData += fmt.Sprintf("\nuser: %s\n", sshUser)
 		}
 	}
-	if len(publicKeys) > 0 && !hasLinePrefix(userData, "ssh_authorized_keys:") {
-		keys := strings.Join(publicKeys, "\n  - ")
+	if len(publicKeys) > 0 && !hasLinePrefix(userData, sshKeysLinePrefix) {
+		keys := strings.Join(publicKeys, sshKeySeparator)
 		if userData == "" {
 			userData = fmt.Sprintf("#cloud-config\nssh_authorized_keys:\n  - %s", keys)
 		} else {
@@ -65,12 +73,76 @@ func keyPairPublicKeys(ctx context.Context, c *client.Client, namespace string, 
 	return publicKeys, nil
 }
 
+// listKeyPairPublicKeys returns the public keys of the key pairs in namespace
+// by name, read with a single List call.
+func listKeyPairPublicKeys(ctx context.Context, c *client.Client, namespace string) (map[string]string, error) {
+	keyPairs, err := c.HarvesterClient.HarvesterhciV1beta1().KeyPairs(namespace).List(ctx, metav1.ListOptions{})
+	if err != nil {
+		return nil, err
+	}
+	publicKeys := make(map[string]string, len(keyPairs.Items))
+	for _, keyPair := range keyPairs.Items {
+		publicKeys[keyPair.Name] = keyPair.Spec.PublicKey
+	}
+	return publicKeys, nil
+}
+
+// injectedKeys returns the public keys the constructor appended to the
+// configured user data, taken from the stored user data itself. ok is true
+// only when stored is exactly injectSSHUserAndKeys(configured, sshUser, keys)
+// with keyCount keys, or, when the constructor injects no keys (no ssh names,
+// or an ssh_authorized_keys section of its own), exactly configured with the
+// user injected.
+func injectedKeys(configured, stored, sshUser string, keyCount int) (keys []string, ok bool) {
+	withUser := injectSSHUserAndKeys(configured, sshUser, nil)
+	if keyCount == 0 || hasLinePrefix(withUser, sshKeysLinePrefix) {
+		return nil, stored == withUser
+	}
+	// injecting a single empty key gives the text that precedes the keys
+	rest, ok := strings.CutPrefix(stored, injectSSHUserAndKeys(withUser, "", []string{""}))
+	if !ok {
+		return nil, false
+	}
+	keys = strings.Split(rest, sshKeySeparator)
+	if len(keys) != keyCount {
+		return nil, false
+	}
+	return keys, true
+}
+
+// sameKeys reports whether keys are the public keys of the key pairs named by
+// sshNames, in the same order.
+func sameKeys(keys, sshNames []string, keyPairs func() (map[string]string, error)) bool {
+	publicKeys, err := keyPairs()
+	if err != nil {
+		return false
+	}
+	for i, sshName := range sshNames {
+		_, keyPairName, err := helper.NamespacedNameParts(sshName)
+		if err != nil {
+			return false
+		}
+		if publicKey, found := publicKeys[keyPairName]; !found || publicKey != keys[i] {
+			return false
+		}
+	}
+	return true
+}
+
 // keepConfiguredUserData sets the user data read from the VM back to the
-// configured one when they only differ by what the constructor injected.
+// configured one when the VM holds exactly what the constructor builds from
+// it, the ssh-user tag and as many keys as the ssh names annotation lists.
 // Any other difference is reported, so changes made outside Terraform still
-// show up in the plan. When the injection cannot be recomputed (for example a
-// key pair that cannot be read), the stored user data is reported.
-func keepConfiguredUserData(d *schema.ResourceData, vm *kubevirtv1.VirtualMachine, getter *importer.StateGetter, publicKeys func(sshNames []string) ([]string, error)) {
+// show up in the plan.
+//
+// This structural check reads nothing but the VM. It cannot tell whether the
+// injected keys are still those of the key pairs: when keyPairs is not nil,
+// they are compared with the public keys it returns, so a key edited on the
+// VM or changed in its key pair is reported, and so is the stored user data
+// when keyPairs fails. Read passes it; the polling that follows a create or
+// update does not, as the constructor has just injected the keys and the next
+// read compares them.
+func keepConfiguredUserData(d *schema.ResourceData, vm *kubevirtv1.VirtualMachine, getter *importer.StateGetter, keyPairs func() (map[string]string, error)) {
 	configured, ok := configuredUserData(d)
 	if !ok {
 		return
@@ -90,14 +162,15 @@ func keepConfiguredUserData(d *schema.ResourceData, vm *kubevirtv1.VirtualMachin
 			return
 		}
 	}
-	keys, err := publicKeys(sshNames)
-	if err != nil {
+	sshUser := vm.Labels[builder.LabelPrefixHarvesterTag+constants.LabelSSHUsername]
+	keys, ok := injectedKeys(configured, stored, sshUser, len(sshNames))
+	if !ok {
 		return
 	}
-	sshUser := vm.Labels[builder.LabelPrefixHarvesterTag+constants.LabelSSHUsername]
-	if injectSSHUserAndKeys(configured, sshUser, keys) == stored {
-		state[constants.FieldCloudInitUserData] = configured
+	if len(keys) > 0 && keyPairs != nil && !sameKeys(keys, sshNames, keyPairs) {
+		return
 	}
+	state[constants.FieldCloudInitUserData] = configured
 }
 
 // configuredUserData returns the user_data held by d: the configuration during

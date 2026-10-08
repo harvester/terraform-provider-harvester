@@ -160,7 +160,9 @@ func resourceVirtualMachineRead(ctx context.Context, d *schema.ResourceData, met
 		}
 		vmi = nil
 	}
-	return diag.FromErr(resourceVirtualMachineSetState(ctx, c, d, vm, vmi, ""))
+	return diag.FromErr(resourceVirtualMachineSetState(d, vm, vmi, "", func() (map[string]string, error) {
+		return listKeyPairPublicKeys(ctx, c, namespace)
+	}))
 }
 
 func resourceVirtualMachineDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -229,15 +231,14 @@ func resourceVirtualMachineImport(d *schema.ResourceData, vm *kubevirtv1.Virtual
 
 // resourceVirtualMachineSetState sets the resource state from the VM, like
 // resourceVirtualMachineImport, and keeps the configured cloud-init user data
-// when the VM only differs by what the constructor injected.
-func resourceVirtualMachineSetState(ctx context.Context, c *client.Client, d *schema.ResourceData, vm *kubevirtv1.VirtualMachine, vmi *kubevirtv1.VirtualMachineInstance, oldInstanceUID string) error {
+// when the VM only differs by what the constructor injected. keyPairs is
+// passed to keepConfiguredUserData.
+func resourceVirtualMachineSetState(d *schema.ResourceData, vm *kubevirtv1.VirtualMachine, vmi *kubevirtv1.VirtualMachineInstance, oldInstanceUID string, keyPairs func() (map[string]string, error)) error {
 	stateGetter, err := importer.ResourceVirtualMachineStateGetter(vm, vmi, oldInstanceUID)
 	if err != nil {
 		return err
 	}
-	keepConfiguredUserData(d, vm, stateGetter, func(sshNames []string) ([]string, error) {
-		return keyPairPublicKeys(ctx, c, vm.Namespace, sshNames)
-	})
+	keepConfiguredUserData(d, vm, stateGetter, keyPairs)
 	return util.ResourceStatesSet(d, stateGetter)
 }
 
@@ -288,7 +289,7 @@ func resourceVirtualMachineRefresh(ctx context.Context, d *schema.ResourceData, 
 			}
 			vmi = nil
 		}
-		if err = resourceVirtualMachineSetState(ctx, c, d, vm, vmi, oldInstanceUID); err != nil {
+		if err = resourceVirtualMachineSetState(d, vm, vmi, oldInstanceUID, nil); err != nil {
 			return vm, constants.StateCommonError, err
 		}
 		state := d.Get(constants.FieldCommonState).(string)
