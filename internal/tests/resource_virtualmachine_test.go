@@ -16,6 +16,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/harvester/harvester/pkg/builder"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
@@ -431,6 +432,36 @@ resource harvester_virtualmachine "disk_test" {
 `,
 				ExpectError: regexp.MustCompile(".*is not a parsable quantity.*"),
 				Check:       resource.ComposeTestCheckFunc(),
+			},
+			{
+				// No size: the disk gets the default size, which must not
+				// show up as a change after apply.
+				Config: `
+resource harvester_virtualmachine "disk_test" {
+	name = "disk-test"
+
+  cpu = 1
+  memory = "1Gi"
+
+  run_strategy = "Halted"
+  machine_type = "q35"
+
+  network_interface {
+    name         = "default"
+  }
+
+  disk {
+    name        = "rootdisk"
+    type        = "disk"
+    bus         = "virtio"
+    boot_order  = 1
+    auto_delete = true
+  }
+}
+`,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("harvester_virtualmachine.disk_test", constants.FieldVirtualMachineDisk+".0."+constants.FieldDiskSize, builder.DefaultDiskSize),
+				),
 			},
 		},
 	})
