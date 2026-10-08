@@ -109,7 +109,7 @@ func resourceVirtualMachineUpdate(ctx context.Context, d *schema.ResourceData, m
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	vm, err := c.HarvesterClient.KubevirtV1().VirtualMachines(namespace).Update(ctx, toUpdate.(*kubevirtv1.VirtualMachine), metav1.UpdateOptions{})
+	vm, err := updateVirtualMachine(ctx, c, d, toUpdate.(*kubevirtv1.VirtualMachine))
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -297,6 +297,45 @@ func IsNeedRestart(d *schema.ResourceData, runStrategy kubevirtv1.VirtualMachine
 		return d.Get(constants.FieldVirtualMachineRestartAfterUpdate).(bool)
 	}
 	return false
+}
+
+// updateVirtualMachine updates the VM, then deletes the PVCs created with
+// auto_delete for disks the VM no longer uses, as the Harvester eject action
+// does. The deletion of the VM only removes the PVCs it still uses, so these
+// were never deleted.
+func updateVirtualMachine(ctx context.Context, c *client.Client, d *schema.ResourceData, vm *kubevirtv1.VirtualMachine) (*kubevirtv1.VirtualMachine, error) {
+	updated, err := c.HarvesterClient.KubevirtV1().VirtualMachines(vm.Namespace).Update(ctx, vm, metav1.UpdateOptions{})
+	if err != nil {
+		return nil, err
+	}
+	oldDisks, _ := d.GetChange(constants.FieldVirtualMachineDisk)
+	for _, pvcName := range removedAutoDeletePVCs(oldDisks.([]any), updated) {
+		if err := c.KubeClient.CoreV1().PersistentVolumeClaims(vm.Namespace).Delete(ctx, pvcName, metav1.DeleteOptions{}); err != nil && !apierrors.IsNotFound(err) {
+			return nil, err
+		}
+	}
+	return updated, nil
+}
+
+// removedAutoDeletePVCs returns the PVCs of the previous disks that were
+// created with auto_delete and that vm no longer uses.
+func removedAutoDeletePVCs(oldDisks []any, vm *kubevirtv1.VirtualMachine) []string {
+	inUse := make(map[string]bool, len(vm.Spec.Template.Spec.Volumes))
+	for _, volume := range vm.Spec.Template.Spec.Volumes {
+		if volume.PersistentVolumeClaim != nil {
+			inUse[volume.PersistentVolumeClaim.ClaimName] = true
+		}
+	}
+	var removed []string
+	for _, oldDisk := range oldDisks {
+		disk := oldDisk.(map[string]any)
+		pvcName, _ := disk[constants.FieldDiskVolumeName].(string)
+		autoDelete, _ := disk[constants.FieldDiskAutoDelete].(bool)
+		if pvcName != "" && autoDelete && !inUse[pvcName] {
+			removed = append(removed, pvcName)
+		}
+	}
+	return removed
 }
 
 func getRemovedPVCs(d *schema.ResourceData, vm *kubevirtv1.VirtualMachine) []string {
