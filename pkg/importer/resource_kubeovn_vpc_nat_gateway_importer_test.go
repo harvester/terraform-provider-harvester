@@ -36,10 +36,10 @@ func TestResourceKubeOVNVpcNatGatewayStateGetter(t *testing.T) {
 					LanIP:           testInternalIP,
 					ExternalSubnets: []string{externalSubnet1, externalSubnet2},
 					Selector:        []string{"kubernetes.io/os=linux"},
-					QoSPolicy:       "test-qos",
+					QoSPolicy:       testQoSName,
 				},
 				Status: kubeovnv1.VpcNatGatewayStatus{
-					QoSPolicy:       "test-qos",
+					QoSPolicy:       testQoSName,
 					ExternalSubnets: []string{externalSubnet1, externalSubnet2},
 				},
 			},

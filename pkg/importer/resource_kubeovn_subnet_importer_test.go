@@ -35,10 +35,10 @@ func TestResourceKubeOVNSubnetStateGetter(t *testing.T) {
 				ObjectMeta: metav1.ObjectMeta{
 					Name: testSubnetName,
 					Labels: map[string]string{
-						"tag.harvesterhci.io/env": "production",
+						testTagKey: "production",
 					},
 					Annotations: map[string]string{
-						"field.cattle.io/description": "Test subnet",
+						testDescriptionKey: "Test subnet",
 					},
 				},
 				Spec: kubeovnv1.SubnetSpec{
