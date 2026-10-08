@@ -301,7 +301,7 @@ Required:
 
 Optional:
 
-- `users` (List of String) List of guest users for qemuGuestAgent propagation (required when propagation_method is qemuGuestAgent)
+- `users` (List of String) List of guest users to receive the SSH keys, only for qemuGuestAgent propagation (required with qemuGuestAgent, rejected with configDrive and noCloud)
 
 
 <a id="nestedblock--access_credentials--user_password"></a>
