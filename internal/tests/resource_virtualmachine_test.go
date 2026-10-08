@@ -582,11 +582,17 @@ resource "harvester_virtualmachine" "%s" {
     container_image_name = "kubevirt/fedora-cloud-container-disk-demo:v0.35.0"
   }
 
+  # Empty cd-rom, ready for an image: its volume fields are kept in the
+  # configuration but have no volume to be read back from.
   disk {
     name       = "cd1"
     type       = "cd-rom"
     bus        = "sata"
     boot_order = 2
+
+    size        = "1Gi"
+    hot_plug    = true
+    auto_delete = true
   }
 }
 `,
