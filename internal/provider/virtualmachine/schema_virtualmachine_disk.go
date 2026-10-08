@@ -1,6 +1,8 @@
 package virtualmachine
 
 import (
+	"strings"
+
 	"github.com/harvester/harvester/pkg/builder"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
@@ -8,6 +10,17 @@ import (
 	"github.com/harvester/terraform-provider-harvester/internal/util"
 	"github.com/harvester/terraform-provider-harvester/pkg/constants"
 )
+
+// suppressForEmptyCDRom ignores a change on a field of the disk volume when the
+// disk is an empty cd-rom: it has no volume, so the field is read back empty
+// whatever the configuration says.
+func suppressForEmptyCDRom(k, _, _ string, d *schema.ResourceData) bool {
+	disk := k[:strings.LastIndex(k, ".")+1]
+	return d.Get(disk+constants.FieldDiskType) == builder.DiskTypeCDRom &&
+		d.Get(disk+constants.FieldVolumeImage) == "" &&
+		d.Get(disk+constants.FieldDiskExistingVolumeName) == "" &&
+		d.Get(disk+constants.FieldDiskContainerImageName) == ""
+}
 
 func resourceDiskSchema() map[string]*schema.Schema {
 	s := map[string]*schema.Schema{
@@ -110,6 +123,17 @@ func resourceDiskSchema() map[string]*schema.Schema {
 			Computed:     true,
 			ValidateFunc: util.IsValidName,
 		},
+	}
+	volumeFields := []string{
+		constants.FieldDiskSize,
+		constants.FieldDiskAutoDelete,
+		constants.FieldDiskHotPlug,
+		constants.FieldVolumeStorageClassName,
+		constants.FieldVolumeMode,
+		constants.FieldVolumeAccessMode,
+	}
+	for _, field := range volumeFields {
+		s[field].DiffSuppressFunc = suppressForEmptyCDRom
 	}
 	return s
 }
