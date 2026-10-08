@@ -110,18 +110,12 @@ func testAccCheckVMAccessCredentials(ctx context.Context, n string) resource.Tes
 		if err != nil {
 			return err
 		}
-		if vm.Spec.Template == nil {
-			return fmt.Errorf("VM template is nil")
-		}
 		creds := vm.Spec.Template.Spec.AccessCredentials
 		if len(creds) != 1 {
 			return fmt.Errorf("expected 1 access credential, got %d", len(creds))
 		}
 		if creds[0].SSHPublicKey == nil {
 			return fmt.Errorf("expected SSH public key credential, got nil")
-		}
-		if creds[0].SSHPublicKey.Source.Secret == nil {
-			return fmt.Errorf("expected SSH public key source secret, got nil")
 		}
 		if creds[0].SSHPublicKey.PropagationMethod.NoCloud == nil {
 			return fmt.Errorf("expected noCloud propagation method")

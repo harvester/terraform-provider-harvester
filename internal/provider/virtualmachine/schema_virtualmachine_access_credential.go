@@ -4,6 +4,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 
+	"github.com/harvester/harvester/pkg/builder"
+
 	"github.com/harvester/terraform-provider-harvester/pkg/constants"
 )
 
@@ -24,9 +26,9 @@ func resourceAccessCredentialSchema() map[string]*schema.Schema {
 						Type:     schema.TypeString,
 						Required: true,
 						ValidateFunc: validation.StringInSlice([]string{
-							"configDrive",
-							"noCloud",
-							"qemuGuestAgent",
+							builder.CloudInitTypeConfigDrive,
+							builder.CloudInitTypeNoCloud,
+							constants.AccessCredentialPropagationQemuGuestAgent,
 						}, false),
 						Description: "Method to propagate SSH keys: configDrive, noCloud, or qemuGuestAgent",
 					},
