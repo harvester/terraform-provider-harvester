@@ -33,7 +33,7 @@ func TestResourceKubeOVNIPStateGetter(t *testing.T) {
 					Subnet:      "ovn-default",
 					IPAddress:   ipAddress,
 					MacAddress:  "00:00:00:12:34:56",
-					NodeName:    "node1",
+					NodeName:    testNode1,
 					V4IPAddress: ipAddress,
 					V6IPAddress: "",
 				},

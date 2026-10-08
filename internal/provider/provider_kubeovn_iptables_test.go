@@ -57,6 +57,9 @@ func TestKubeOVNReplacedFields(t *testing.T) {
 		{constants.ResourceTypeKubeOVNVpcNatGateway, constants.FieldKubeOVNVpcNatGwExternalSubnets, false},
 		{constants.ResourceTypeKubeOVNVpcNatGateway, constants.FieldKubeOVNVpcNatGwSelector, false},
 		{constants.ResourceTypeKubeOVNVpcNatGateway, constants.FieldKubeOVNVpcNatGwQoSPolicy, false},
+		{constants.ResourceTypeKubeOVNQoSPolicy, constants.FieldKubeOVNQoSShared, true},
+		{constants.ResourceTypeKubeOVNQoSPolicy, constants.FieldKubeOVNQoSBindingType, true},
+		{constants.ResourceTypeKubeOVNQoSPolicy, constants.FieldKubeOVNQoSBandwidthLimitRules, false},
 	}
 
 	for _, tc := range testcases {

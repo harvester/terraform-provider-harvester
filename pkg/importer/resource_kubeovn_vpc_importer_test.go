@@ -5,6 +5,7 @@ import (
 	"slices"
 	"testing"
 
+	"github.com/harvester/harvester/pkg/builder"
 	kubeovnv1 "github.com/kubeovn/kube-ovn/pkg/apis/kubeovn/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -23,6 +24,20 @@ const (
 	testEIPName        = "test-eip"
 	testExternalIP     = "192.168.1.100"
 	testInternalIP     = "10.0.0.100"
+	testQoSName        = "test-qos"
+	testCIDR1          = "10.1.0.0/16"
+	testCIDR2          = "10.2.0.0/16"
+	testNamespace1     = "ns1"
+	testNamespace2     = "ns2"
+	testNode1          = "node1"
+	testNode2          = "node2"
+	testNode3          = "node3"
+	testInterface0     = "eth0"
+	testInterface1     = "eth1"
+	testInterface2     = "eth2"
+	testTagKey         = builder.LabelPrefixHarvesterTag + "env"
+	testTagValue       = "test"
+	testDescriptionKey = builder.AnnotationPrefixCattleField + constants.FieldCommonDescription
 )
 
 // blockStrings returns the string field of every exported block, in order.
@@ -54,14 +69,14 @@ func TestResourceKubeOVNVpcStateGetter(t *testing.T) {
 				ObjectMeta: metav1.ObjectMeta{
 					Name: testVpcName,
 					Labels: map[string]string{
-						"tag.harvesterhci.io/env": "test",
+						testTagKey: testTagValue,
 					},
 					Annotations: map[string]string{
-						"field.cattle.io/description": "Test VPC",
+						testDescriptionKey: "Test VPC",
 					},
 				},
 				Spec: kubeovnv1.VpcSpec{
-					Namespaces:     []string{"ns1", "ns2"},
+					Namespaces:     []string{testNamespace1, testNamespace2},
 					EnableExternal: true,
 					EnableBfd:      false,
 					StaticRoutes: []*kubeovnv1.StaticRoute{
@@ -76,15 +91,15 @@ func TestResourceKubeOVNVpcStateGetter(t *testing.T) {
 					Standby:              true,
 					DefaultLogicalSwitch: "test-vpc-default",
 					Router:               "test-vpc-router",
-					Subnets:              []string{"subnet1"},
+					Subnets:              []string{testSubnetName},
 				},
 			},
 			expectedState:        constants.StateCommonActive,
 			expectedExternal:     true,
-			expectedNamespaces:   []string{"ns1", "ns2"},
+			expectedNamespaces:   []string{testNamespace1, testNamespace2},
 			expectedStaticRoutes: []string{testCIDR},
 			expectedDesc:         "Test VPC",
-			expectedTags:         map[string]string{"env": "test"},
+			expectedTags:         map[string]string{"env": testTagValue},
 		},
 		{
 			name: "several static and policy routes keep their order",
@@ -93,8 +108,8 @@ func TestResourceKubeOVNVpcStateGetter(t *testing.T) {
 				Spec: kubeovnv1.VpcSpec{
 					EnableBfd: true,
 					StaticRoutes: []*kubeovnv1.StaticRoute{
-						{CIDR: "10.2.0.0/16", NextHopIP: "10.0.0.2"},
-						{CIDR: "10.1.0.0/16", NextHopIP: testGatewayIP},
+						{CIDR: testCIDR2, NextHopIP: "10.0.0.2"},
+						{CIDR: testCIDR1, NextHopIP: testGatewayIP},
 						{CIDR: "0.0.0.0/0", NextHopIP: "10.0.0.254"},
 					},
 					PolicyRoutes: []*kubeovnv1.PolicyRoute{
@@ -105,7 +120,7 @@ func TestResourceKubeOVNVpcStateGetter(t *testing.T) {
 			},
 			expectedState:        constants.StateCommonActive,
 			expectedBfd:          true,
-			expectedStaticRoutes: []string{"10.2.0.0/16", "10.1.0.0/16", "0.0.0.0/0"},
+			expectedStaticRoutes: []string{testCIDR2, testCIDR1, "0.0.0.0/0"},
 			expectedPolicyRoutes: []string{"ip4.src == 10.1.0.0/16", "ip4.dst == 10.2.0.0/16"},
 		},
 		{
