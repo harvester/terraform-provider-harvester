@@ -27,6 +27,7 @@ func resourceDiskSchema() map[string]*schema.Schema {
 		constants.FieldDiskSize: {
 			Type:     schema.TypeString,
 			Optional: true,
+			Computed: true,
 		},
 		constants.FieldDiskBus: {
 			Type:     schema.TypeString,
