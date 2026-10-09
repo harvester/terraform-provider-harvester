@@ -8,7 +8,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/utils/ptr"
 	kubevirtv1 "kubevirt.io/api/core/v1"
 
 	"github.com/harvester/harvester/pkg/builder"
@@ -266,7 +265,7 @@ func (c *Constructor) Setup() util.Processors {
 					disks := vmBuilder.VirtualMachine.Spec.Template.Spec.Domain.Devices.Disks
 					for i := range disks {
 						if disks[i].Name == diskName {
-							disks[i].DedicatedIOThread = ptr.To(true)
+							disks[i].DedicatedIOThread = new(true)
 							break
 						}
 					}
@@ -410,10 +409,10 @@ func (c *Constructor) Setup() util.Processors {
 		},
 		{
 			Field: constants.FieldVirtualMachineNetworkInterfaceMultiqueue,
-			Parser: func(i interface{}) error {
+			Parser: func(i any) error {
 				var multiqueue *bool
 				if i.(bool) {
-					multiqueue = ptr.To(true)
+					multiqueue = new(true)
 				}
 				vmBuilder.VirtualMachine.Spec.Template.Spec.Domain.Devices.NetworkInterfaceMultiQueue = multiqueue
 				return nil
@@ -422,10 +421,10 @@ func (c *Constructor) Setup() util.Processors {
 		},
 		{
 			Field: constants.FieldVirtualMachineBlockMultiQueue,
-			Parser: func(i interface{}) error {
+			Parser: func(i any) error {
 				var multiqueue *bool
 				if i.(bool) {
-					multiqueue = ptr.To(true)
+					multiqueue = new(true)
 				}
 				vmBuilder.VirtualMachine.Spec.Template.Spec.Domain.Devices.BlockMultiQueue = multiqueue
 				return nil
@@ -434,10 +433,10 @@ func (c *Constructor) Setup() util.Processors {
 		},
 		{
 			Field: constants.FieldVirtualMachineIOThreadsPolicy,
-			Parser: func(i interface{}) error {
+			Parser: func(i any) error {
 				var ioThreadsPolicy *kubevirtv1.IOThreadsPolicy
 				if policy := i.(string); policy != "" {
-					ioThreadsPolicy = ptr.To(kubevirtv1.IOThreadsPolicy(policy))
+					ioThreadsPolicy = new(kubevirtv1.IOThreadsPolicy(policy))
 				}
 				vmBuilder.VirtualMachine.Spec.Template.Spec.Domain.IOThreadsPolicy = ioThreadsPolicy
 				return nil
@@ -446,7 +445,7 @@ func (c *Constructor) Setup() util.Processors {
 		},
 		{
 			Field: constants.FieldVirtualMachineIOThreadsCount,
-			Parser: func(i interface{}) error {
+			Parser: func(i any) error {
 				var ioThreads *kubevirtv1.DiskIOThreads
 				if count := i.(int); count > 0 {
 					ioThreadsPolicy := vmBuilder.VirtualMachine.Spec.Template.Spec.Domain.IOThreadsPolicy
@@ -454,7 +453,7 @@ func (c *Constructor) Setup() util.Processors {
 						return fmt.Errorf("%s can only be set when %s is %q", constants.FieldVirtualMachineIOThreadsCount, constants.FieldVirtualMachineIOThreadsPolicy, kubevirtv1.IOThreadsPolicySupplementalPool)
 					}
 					ioThreads = &kubevirtv1.DiskIOThreads{
-						SupplementalPoolThreadCount: ptr.To(uint32(count)), // nolint: gosec
+						SupplementalPoolThreadCount: new(uint32(count)), // nolint: gosec
 					}
 				}
 				vmBuilder.VirtualMachine.Spec.Template.Spec.Domain.IOThreads = ioThreads
