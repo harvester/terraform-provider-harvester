@@ -200,6 +200,33 @@ please use %s instead of this deprecated field:
 				},
 			},
 		},
+		constants.FieldVirtualMachineNodeAffinity: {
+			Type:        schema.TypeList,
+			Optional:    true,
+			MaxItems:    1,
+			Description: "Node affinity rules for scheduling VMs based on node labels. Set a required or a preferred block",
+			Elem: &schema.Resource{
+				Schema: resourceNodeAffinitySchema(),
+			},
+		},
+		constants.FieldVirtualMachinePodAffinity: {
+			Type:        schema.TypeList,
+			Optional:    true,
+			MaxItems:    1,
+			Description: "Pod affinity rules to co-locate VMs with matching pods. Set a required or a preferred block",
+			Elem: &schema.Resource{
+				Schema: resourcePodAffinitySchema(),
+			},
+		},
+		constants.FieldVirtualMachinePodAntiAffinity: {
+			Type:        schema.TypeList,
+			Optional:    true,
+			MaxItems:    1,
+			Description: "Pod anti-affinity rules to separate VMs from matching pods. Set a required or a preferred block. The VM always keeps the default preferred anti-affinity on the harvesterhci.io/creator label, which spreads VMs across nodes, and these rules are added to it",
+			Elem: &schema.Resource{
+				Schema: resourcePodAffinitySchema(),
+			},
+		},
 	}
 	util.NamespacedSchemaWrap(s, false)
 	s[constants.FieldCommonTags].Description = "The tag is reflected as label on the VM.\n" +
