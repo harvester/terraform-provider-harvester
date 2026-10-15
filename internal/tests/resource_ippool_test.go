@@ -25,7 +25,7 @@ resource "harvester_ippool" "test_ippool" {
 	name = "test-ippool"
 }
 `,
-				ExpectError: regexp.MustCompile(`The argument "range" is required, but no definition was found.`),
+				ExpectError: regexp.MustCompile(`Insufficient range blocks`),
 			},
 		},
 	})
