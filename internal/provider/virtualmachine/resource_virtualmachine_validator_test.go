@@ -171,7 +171,7 @@ func Test_checkIOThreadsPolicy(t *testing.T) {
 	tests := []struct {
 		name    string
 		c       *Constructor
-		wantErr bool
+		wantErr error
 	}{
 		{
 			name: "no IO threads policy, io thread count not set, no disks with dedicated io threads",
@@ -193,7 +193,7 @@ func Test_checkIOThreadsPolicy(t *testing.T) {
 					},
 				},
 			},
-			wantErr: false,
+			wantErr: nil,
 		},
 		{
 			name: "no IO threads policy, io thread count set to nil pointer, no disks with dedicated io threads",
@@ -217,7 +217,7 @@ func Test_checkIOThreadsPolicy(t *testing.T) {
 					},
 				},
 			},
-			wantErr: false,
+			wantErr: nil,
 		},
 		{
 			name: "no IO threads policy, io thread count set to 0, no disks with dedicated io threads",
@@ -241,7 +241,7 @@ func Test_checkIOThreadsPolicy(t *testing.T) {
 					},
 				},
 			},
-			wantErr: false,
+			wantErr: nil,
 		},
 		{
 			name: "no IO threads policy, io thread count not 0, no disks with dedicated io threads",
@@ -265,7 +265,7 @@ func Test_checkIOThreadsPolicy(t *testing.T) {
 					},
 				},
 			},
-			wantErr: true,
+			wantErr: ErrIOThreadCountSetButIOThreadPolicyNotSupplementalPool,
 		},
 		{
 			name: "IO threads policy auto, io thread count not 0, no disks with dedicated io threads",
@@ -290,7 +290,7 @@ func Test_checkIOThreadsPolicy(t *testing.T) {
 					},
 				},
 			},
-			wantErr: true,
+			wantErr: ErrIOThreadCountSetButIOThreadPolicyNotSupplementalPool,
 		},
 		{
 			name: "IO threads policy shared, io thread count not 0, no disks with dedicated io threads",
@@ -315,7 +315,7 @@ func Test_checkIOThreadsPolicy(t *testing.T) {
 					},
 				},
 			},
-			wantErr: true,
+			wantErr: ErrIOThreadCountSetButIOThreadPolicyNotSupplementalPool,
 		},
 		{
 			name: "IO threads policy supplemental-pool, io thread count not 0, no disks with dedicated io threads",
@@ -340,13 +340,86 @@ func Test_checkIOThreadsPolicy(t *testing.T) {
 					},
 				},
 			},
-			wantErr: false,
+			wantErr: nil,
+		},
+		{
+			name: "no IO threads policy, io thread count not set, no disks with dedicated io threads",
+			c: &Constructor{
+				Builder: &builder.VMBuilder{
+					VirtualMachine: &kubevirtv1.VirtualMachine{
+						Spec: kubevirtv1.VirtualMachineSpec{
+							Template: &kubevirtv1.VirtualMachineInstanceTemplateSpec{
+								Spec: kubevirtv1.VirtualMachineInstanceSpec{
+									Domain: kubevirtv1.DomainSpec{
+										Devices: kubevirtv1.Devices{
+											Disks: []kubevirtv1.Disk{},
+										},
+										IOThreads:       nil,
+										IOThreadsPolicy: new(kubevirtv1.IOThreadsPolicySupplementalPool),
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			wantErr: ErrIOThreadPolicySupplementalPoolButThreadCountNotSet,
+		},
+		{
+			name: "no IO threads policy, io thread count set to nil pointer, no disks with dedicated io threads",
+			c: &Constructor{
+				Builder: &builder.VMBuilder{
+					VirtualMachine: &kubevirtv1.VirtualMachine{
+						Spec: kubevirtv1.VirtualMachineSpec{
+							Template: &kubevirtv1.VirtualMachineInstanceTemplateSpec{
+								Spec: kubevirtv1.VirtualMachineInstanceSpec{
+									Domain: kubevirtv1.DomainSpec{
+										Devices: kubevirtv1.Devices{
+											Disks: []kubevirtv1.Disk{},
+										},
+										IOThreads: &kubevirtv1.DiskIOThreads{
+											SupplementalPoolThreadCount: nil,
+										},
+										IOThreadsPolicy: new(kubevirtv1.IOThreadsPolicySupplementalPool),
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			wantErr: ErrIOThreadPolicySupplementalPoolButThreadCountNotSet,
+		},
+		{
+			name: "IO threads policy supplemental-pool, io thread count 0, no disks with dedicated io threads",
+			c: &Constructor{
+				Builder: &builder.VMBuilder{
+					VirtualMachine: &kubevirtv1.VirtualMachine{
+						Spec: kubevirtv1.VirtualMachineSpec{
+							Template: &kubevirtv1.VirtualMachineInstanceTemplateSpec{
+								Spec: kubevirtv1.VirtualMachineInstanceSpec{
+									Domain: kubevirtv1.DomainSpec{
+										Devices: kubevirtv1.Devices{
+											Disks: []kubevirtv1.Disk{},
+										},
+										IOThreads: &kubevirtv1.DiskIOThreads{
+											SupplementalPoolThreadCount: new(uint32(0)),
+										},
+										IOThreadsPolicy: new(kubevirtv1.IOThreadsPolicySupplementalPool),
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			wantErr: ErrIOThreadPolicySupplementalPoolButThreadCountNotPositive,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if err := tt.c.checkIOThreadsPolicy(); (err != nil) != tt.wantErr {
+			if err := tt.c.checkIOThreadsPolicy(); err != tt.wantErr {
 				t.Errorf("checkIOThreadsPolicy() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
