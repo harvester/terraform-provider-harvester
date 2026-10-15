@@ -2,6 +2,7 @@ package virtualmachine
 
 import (
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -15,6 +16,12 @@ import (
 
 const (
 	userDataSecretKey = "userdata"
+)
+
+var (
+	ErrIOThreadPolicySupplementalPoolButThreadCountNotSet      = errors.New("IO thread policy not `supplemental-pool`, but IO thread count not set")
+	ErrIOThreadPolicySupplementalPoolButThreadCountNotPositive = errors.New("IO thread policy not `supplemental-pool`, but IO thread count not > 0")
+	ErrIOThreadCountSetButIOThreadPolicyNotSupplementalPool    = errors.New("IO thread count > 0, but IO thread policy not `supplemental-pool`")
 )
 
 func (c *Constructor) getKeyPairs(sshNames []string, defaultNamespace string) ([]*harvsterv1.KeyPair, error) {
@@ -127,17 +134,21 @@ func (c *Constructor) checkIOThreadsPolicy() error {
 	domain := c.Builder.VirtualMachine.Spec.Template.Spec.Domain
 	ioThreadsPolicy := domain.IOThreadsPolicy
 
+	if ioThreadsPolicy != nil && *ioThreadsPolicy == kubevirtv1.IOThreadsPolicySupplementalPool {
+		if domain.IOThreads != nil && domain.IOThreads.SupplementalPoolThreadCount != nil {
+			if *domain.IOThreads.SupplementalPoolThreadCount <= 0 {
+				return ErrIOThreadPolicySupplementalPoolButThreadCountNotPositive
+			}
+		} else {
+			return ErrIOThreadPolicySupplementalPoolButThreadCountNotSet
+		}
+	}
+
 	if domain.IOThreads != nil &&
 		domain.IOThreads.SupplementalPoolThreadCount != nil &&
 		*domain.IOThreads.SupplementalPoolThreadCount > 0 {
 		if ioThreadsPolicy == nil || *ioThreadsPolicy != kubevirtv1.IOThreadsPolicySupplementalPool {
-			return fmt.Errorf("IO thread count > 0, but IO thread policy not `supplemental-pool`")
-		}
-	}
-
-	for _, disk := range domain.Devices.Disks {
-		if *disk.DedicatedIOThread && ioThreadsPolicy == nil {
-			return fmt.Errorf("disk with dedicated IO thread, but no IO thread policy is set")
+			return ErrIOThreadCountSetButIOThreadPolicyNotSupplementalPool
 		}
 	}
 
