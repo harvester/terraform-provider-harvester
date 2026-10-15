@@ -60,7 +60,7 @@ build: $(ROOT)/bin $(ROOT)/docs
 # ---- Test ----
 test: validate
 	$(BANNER)
-	$(DOCKER_BUILD) $(if $(MK_CODECOV_TOKEN),$(MK_CODECOV_SECRET_ARG)) --target test
+	$(DOCKER_BUILD) --target test --network=host $(if $(MK_CODECOV_TOKEN),$(MK_CODECOV_SECRET_ARG))
 
 # ---- Package harvester-terraform-provider image ----
 package: build
