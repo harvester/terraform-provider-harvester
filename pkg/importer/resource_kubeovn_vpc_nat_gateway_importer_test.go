@@ -1,0 +1,98 @@
+package importer
+
+import (
+	"slices"
+	"testing"
+
+	kubeovnv1 "github.com/kubeovn/kube-ovn/pkg/apis/kubeovn/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/harvester/terraform-provider-harvester/pkg/constants"
+	"github.com/harvester/terraform-provider-harvester/pkg/helper"
+)
+
+func TestResourceKubeOVNVpcNatGatewayStateGetter(t *testing.T) {
+	const (
+		externalSubnet1 = "ext-sub-1"
+		externalSubnet2 = "ext-sub-2"
+	)
+
+	testcases := []struct {
+		name            string
+		gw              *kubeovnv1.VpcNatGateway
+		expectedID      string
+		expectedVpc     string
+		expectedSubnet  string
+		expectedLanIP   string
+		expectedExtSubs []string
+	}{
+		{
+			name: "gateway with all fields",
+			gw: &kubeovnv1.VpcNatGateway{
+				ObjectMeta: metav1.ObjectMeta{Name: testNatGatewayName},
+				Spec: kubeovnv1.VpcNatGatewaySpec{
+					Vpc:             "test-vpc",
+					Subnet:          testSubnetName,
+					LanIP:           testInternalIP,
+					ExternalSubnets: []string{externalSubnet1, externalSubnet2},
+					Selector:        []string{"kubernetes.io/os=linux"},
+					QoSPolicy:       testQoSName,
+				},
+				Status: kubeovnv1.VpcNatGatewayStatus{
+					QoSPolicy:       testQoSName,
+					ExternalSubnets: []string{externalSubnet1, externalSubnet2},
+				},
+			},
+			expectedID:      helper.BuildID("", testNatGatewayName),
+			expectedVpc:     "test-vpc",
+			expectedSubnet:  testSubnetName,
+			expectedLanIP:   testInternalIP,
+			expectedExtSubs: []string{externalSubnet1, externalSubnet2},
+		},
+		{
+			name: "empty gateway",
+			gw: &kubeovnv1.VpcNatGateway{
+				ObjectMeta: metav1.ObjectMeta{Name: "empty-gw"},
+			},
+			expectedID:     helper.BuildID("", "empty-gw"),
+			expectedVpc:    "",
+			expectedSubnet: "",
+			expectedLanIP:  "",
+		},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			getter, err := ResourceKubeOVNVpcNatGatewayStateGetter(tc.gw)
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+			if getter.ID != tc.expectedID {
+				t.Errorf("ID: expected %q, got %q", tc.expectedID, getter.ID)
+			}
+			if getter.ResourceType != constants.ResourceTypeKubeOVNVpcNatGateway {
+				t.Errorf("ResourceType: expected %q, got %q", constants.ResourceTypeKubeOVNVpcNatGateway, getter.ResourceType)
+			}
+			state := getter.States[constants.FieldCommonState].(string)
+			if state != constants.StateCommonActive {
+				t.Errorf("State: expected %q, got %q", constants.StateCommonActive, state)
+			}
+			vpc := getter.States[constants.FieldKubeOVNVpcNatGwVpc].(string)
+			if vpc != tc.expectedVpc {
+				t.Errorf("Vpc: expected %q, got %q", tc.expectedVpc, vpc)
+			}
+			subnet := getter.States[constants.FieldKubeOVNVpcNatGwSubnet].(string)
+			if subnet != tc.expectedSubnet {
+				t.Errorf("Subnet: expected %q, got %q", tc.expectedSubnet, subnet)
+			}
+			lanIP := getter.States[constants.FieldKubeOVNVpcNatGwLanIP].(string)
+			if lanIP != tc.expectedLanIP {
+				t.Errorf("LanIP: expected %q, got %q", tc.expectedLanIP, lanIP)
+			}
+			extSubs := getter.States[constants.FieldKubeOVNVpcNatGwExternalSubnets].([]string)
+			if !slices.Equal(extSubs, tc.expectedExtSubs) {
+				t.Errorf("ExternalSubnets: expected %v, got %v", tc.expectedExtSubs, extSubs)
+			}
+		})
+	}
+}
