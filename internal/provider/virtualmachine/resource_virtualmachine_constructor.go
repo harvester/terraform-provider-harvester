@@ -488,10 +488,6 @@ func (c *Constructor) Setup() util.Processors {
 			Parser: func(i any) error {
 				var ioThreads *kubevirtv1.DiskIOThreads
 				if count := i.(int); count > 0 {
-					ioThreadsPolicy := vmBuilder.VirtualMachine.Spec.Template.Spec.Domain.IOThreadsPolicy
-					if ioThreadsPolicy == nil || *ioThreadsPolicy != kubevirtv1.IOThreadsPolicySupplementalPool {
-						return fmt.Errorf("%s can only be set when %s is %q", constants.FieldVirtualMachineIOThreadsCount, constants.FieldVirtualMachineIOThreadsPolicy, kubevirtv1.IOThreadsPolicySupplementalPool)
-					}
 					ioThreads = &kubevirtv1.DiskIOThreads{
 						SupplementalPoolThreadCount: new(uint32(count)), // nolint: gosec
 					}
