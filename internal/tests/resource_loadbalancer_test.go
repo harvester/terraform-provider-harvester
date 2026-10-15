@@ -33,7 +33,7 @@ resource "harvester_loadbalancer" "test_loadbalancer" {
 	name = "test-loadbalancer"
 }
 `,
-				ExpectError: regexp.MustCompile(`The argument "listener" is required, but no definition was found.`),
+				ExpectError: regexp.MustCompile(`Insufficient listener blocks`),
 			},
 		},
 	})
