@@ -134,6 +134,25 @@ func (v *VMImporter) TPM() []map[string]interface{} {
 	return tpmStates
 }
 
+// networkInterfaceType returns the interface type the provider wrote for a VM
+// interface.
+func networkInterfaceType(networkInterface kubevirtv1.Interface) (string, error) {
+	switch {
+	case networkInterface.Bridge != nil:
+		return builder.NetworkInterfaceTypeBridge, nil
+	case networkInterface.Masquerade != nil:
+		return builder.NetworkInterfaceTypeMasquerade, nil
+	case networkInterface.Binding != nil && networkInterface.Binding.Name == constants.NetworkInterfaceBindingManagedTap:
+		// The Harvester VM webhook replaces the bridge binding the provider
+		// writes with managedtap on KubeOVN subnets with DHCP. Report the type
+		// that was requested: reporting managedtap would show a change on every
+		// plan, and the webhook would replace bridge again.
+		return builder.NetworkInterfaceTypeBridge, nil
+	default:
+		return "", fmt.Errorf("unsupported type found on network %s. ", networkInterface.Name)
+	}
+}
+
 func (v *VMImporter) NetworkInterface() ([]map[string]interface{}, error) {
 	var (
 		waitForLeaseInterfaces   []string
@@ -161,13 +180,9 @@ func (v *VMImporter) NetworkInterface() ([]map[string]interface{}, error) {
 	interfaces := v.VirtualMachine.Spec.Template.Spec.Domain.Devices.Interfaces
 	var networkInterfaceStates = make([]map[string]interface{}, 0, len(interfaces))
 	for _, networkInterface := range interfaces {
-		var interfaceType string
-		if networkInterface.Bridge != nil {
-			interfaceType = builder.NetworkInterfaceTypeBridge
-		} else if networkInterface.Masquerade != nil {
-			interfaceType = builder.NetworkInterfaceTypeMasquerade
-		} else {
-			return nil, fmt.Errorf("unsupported type found on network %s. ", networkInterface.Name)
+		interfaceType, err := networkInterfaceType(networkInterface)
+		if err != nil {
+			return nil, err
 		}
 		var networkName string
 		for _, network := range v.VirtualMachine.Spec.Template.Spec.Networks {
