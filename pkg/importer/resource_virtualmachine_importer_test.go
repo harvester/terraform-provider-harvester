@@ -1,6 +1,8 @@
 package importer
 
 import (
+	"fmt"
+	"slices"
 	"testing"
 
 	corev1 "k8s.io/api/core/v1"
@@ -776,6 +778,65 @@ func TestVolume(t *testing.T) {
 			}
 			if hasCloudInit := len(cloudInitState) > 0; hasCloudInit != tc.wantCloudInit {
 				t.Errorf("cloud-init present = %v, want %v", hasCloudInit, tc.wantCloudInit)
+			}
+		})
+	}
+}
+
+// TestNetworkInterfaceBinding checks the interface type read back for each
+// binding: managedtap, set by the Harvester webhook on KubeOVN subnets with
+// DHCP, is reported as the bridge type the provider wrote.
+func TestNetworkInterfaceBinding(t *testing.T) {
+	bridge := kubevirtv1.InterfaceBindingMethod{Bridge: &kubevirtv1.InterfaceBridge{}}
+	masquerade := kubevirtv1.InterfaceBindingMethod{Masquerade: &kubevirtv1.InterfaceMasquerade{}}
+	managedTap := &kubevirtv1.PluginBinding{Name: constants.NetworkInterfaceBindingManagedTap}
+	testcases := []struct {
+		name       string
+		interfaces []kubevirtv1.Interface
+		expected   []string
+		wantErr    bool
+	}{
+		{name: "bridge", interfaces: []kubevirtv1.Interface{{InterfaceBindingMethod: bridge}}, expected: []string{builder.NetworkInterfaceTypeBridge}},
+		{name: "masquerade", interfaces: []kubevirtv1.Interface{{InterfaceBindingMethod: masquerade}}, expected: []string{builder.NetworkInterfaceTypeMasquerade}},
+		{name: "managedtap set by the Harvester webhook", interfaces: []kubevirtv1.Interface{{Binding: managedTap}}, expected: []string{builder.NetworkInterfaceTypeBridge}},
+		{
+			name:       "several interfaces keep their order",
+			interfaces: []kubevirtv1.Interface{{InterfaceBindingMethod: masquerade}, {Binding: managedTap}, {InterfaceBindingMethod: bridge}},
+			expected:   []string{builder.NetworkInterfaceTypeMasquerade, builder.NetworkInterfaceTypeBridge, builder.NetworkInterfaceTypeBridge},
+		},
+		{name: "other binding plugin", interfaces: []kubevirtv1.Interface{{Binding: &kubevirtv1.PluginBinding{Name: "passt"}}}, wantErr: true},
+		{name: "no binding", interfaces: []kubevirtv1.Interface{{}}, wantErr: true},
+		{name: "unsupported binding after a valid one", interfaces: []kubevirtv1.Interface{{InterfaceBindingMethod: bridge}, {Binding: &kubevirtv1.PluginBinding{Name: "passt"}}}, wantErr: true},
+	}
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			networks := make([]kubevirtv1.Network, 0, len(tc.interfaces))
+			for i := range tc.interfaces {
+				tc.interfaces[i].Name = fmt.Sprintf("nic-%d", i)
+				networks = append(networks, kubevirtv1.Network{Name: tc.interfaces[i].Name, NetworkSource: kubevirtv1.NetworkSource{Multus: &kubevirtv1.MultusNetwork{NetworkName: "default/ovn-overlay"}}})
+			}
+			importer := &VMImporter{VirtualMachine: &kubevirtv1.VirtualMachine{Spec: kubevirtv1.VirtualMachineSpec{Template: &kubevirtv1.VirtualMachineInstanceTemplateSpec{
+				Spec: kubevirtv1.VirtualMachineInstanceSpec{
+					Domain:   kubevirtv1.DomainSpec{Devices: kubevirtv1.Devices{Interfaces: tc.interfaces}},
+					Networks: networks,
+				},
+			}}}}
+			states, err := importer.NetworkInterface()
+			if tc.wantErr {
+				if err == nil {
+					t.Fatal("NetworkInterface() error = nil, want an error")
+				}
+				return
+			}
+			if err != nil {
+				t.Fatalf("NetworkInterface() error = %v", err)
+			}
+			got := make([]string, 0, len(states))
+			for _, state := range states {
+				got = append(got, state[constants.FieldNetworkInterfaceType].(string))
+			}
+			if !slices.Equal(got, tc.expected) {
+				t.Errorf("types = %v, want %v", got, tc.expected)
 			}
 		})
 	}
