@@ -261,6 +261,15 @@ func (c *Constructor) Setup() util.Processors {
 					}
 				}
 
+				if r[constants.FieldDiskDedicatedIOThread].(bool) {
+					disks := vmBuilder.VirtualMachine.Spec.Template.Spec.Domain.Devices.Disks
+					for i := range disks {
+						if disks[i].Name == diskName {
+							disks[i].DedicatedIOThread = new(true)
+							break
+						}
+					}
+				}
 				if existingVolumeName != "" {
 					vmBuilder.ExistingPVCVolume(diskName, existingVolumeName, hotPlug)
 				} else if containerImageName != "" {
@@ -399,6 +408,56 @@ func (c *Constructor) Setup() util.Processors {
 			},
 		},
 		{
+			Field: constants.FieldVirtualMachineNetworkInterfaceMultiqueue,
+			Parser: func(i any) error {
+				var multiqueue *bool
+				if i.(bool) {
+					multiqueue = new(true)
+				}
+				vmBuilder.VirtualMachine.Spec.Template.Spec.Domain.Devices.NetworkInterfaceMultiQueue = multiqueue
+				return nil
+			},
+			Required: true,
+		},
+		{
+			Field: constants.FieldVirtualMachineBlockMultiQueue,
+			Parser: func(i any) error {
+				var multiqueue *bool
+				if i.(bool) {
+					multiqueue = new(true)
+				}
+				vmBuilder.VirtualMachine.Spec.Template.Spec.Domain.Devices.BlockMultiQueue = multiqueue
+				return nil
+			},
+			Required: true,
+		},
+		{
+			Field: constants.FieldVirtualMachineIOThreadsPolicy,
+			Parser: func(i any) error {
+				var ioThreadsPolicy *kubevirtv1.IOThreadsPolicy
+				if policy := i.(string); policy != "" {
+					ioThreadsPolicy = new(kubevirtv1.IOThreadsPolicy(policy))
+				}
+				vmBuilder.VirtualMachine.Spec.Template.Spec.Domain.IOThreadsPolicy = ioThreadsPolicy
+				return nil
+			},
+			Required: true,
+		},
+		{
+			Field: constants.FieldVirtualMachineIOThreadsCount,
+			Parser: func(i any) error {
+				var ioThreads *kubevirtv1.DiskIOThreads
+				if count := i.(int); count > 0 {
+					ioThreads = &kubevirtv1.DiskIOThreads{
+						SupplementalPoolThreadCount: new(uint32(count)), // nolint: gosec
+					}
+				}
+				vmBuilder.VirtualMachine.Spec.Template.Spec.Domain.IOThreads = ioThreads
+				return nil
+			},
+			Required: true,
+		},
+		{
 			Field: constants.FieldVirtualMachineNodeSelector,
 			Parser: func(i interface{}) error {
 				v := i.(map[string]interface{})
@@ -432,7 +491,18 @@ func (c *Constructor) Validate() error {
 	if err != nil {
 		return err
 	}
-	return c.checkKeyPairsInCloudInit(keyPairs)
+
+	err = c.checkKeyPairsInCloudInit(keyPairs)
+	if err != nil {
+		return err
+	}
+
+	err = c.checkIOThreadsPolicy()
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (c *Constructor) Result() (interface{}, error) {

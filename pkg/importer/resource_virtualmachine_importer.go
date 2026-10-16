@@ -81,6 +81,32 @@ func (v *VMImporter) IsolateEmulatorThread() bool {
 	return bool(v.VirtualMachine.Spec.Template.Spec.Domain.CPU.IsolateEmulatorThread)
 }
 
+func (v *VMImporter) NetworkInterfaceMultiQueue() bool {
+	multiQueue := v.VirtualMachine.Spec.Template.Spec.Domain.Devices.NetworkInterfaceMultiQueue
+	return multiQueue != nil && *multiQueue
+}
+
+func (v *VMImporter) BlockMultiQueue() bool {
+	multiQueue := v.VirtualMachine.Spec.Template.Spec.Domain.Devices.BlockMultiQueue
+	return multiQueue != nil && *multiQueue
+}
+
+func (v *VMImporter) IOThreadsPolicy() string {
+	ioThreadsPolicy := v.VirtualMachine.Spec.Template.Spec.Domain.IOThreadsPolicy
+	if ioThreadsPolicy == nil {
+		return ""
+	}
+	return string(*ioThreadsPolicy)
+}
+
+func (v *VMImporter) IOThreadsCount() int {
+	ioThreads := v.VirtualMachine.Spec.Template.Spec.Domain.IOThreads
+	if ioThreads == nil || ioThreads.SupplementalPoolThreadCount == nil {
+		return 0
+	}
+	return int(*ioThreads.SupplementalPoolThreadCount)
+}
+
 func (v *VMImporter) EFI() bool {
 	firmware := v.VirtualMachine.Spec.Template.Spec.Domain.Firmware
 	return firmware != nil && firmware.Bootloader != nil && firmware.Bootloader.EFI != nil
@@ -322,6 +348,7 @@ func (v *VMImporter) Volume() ([]map[string]interface{}, []map[string]interface{
 		diskState[constants.FieldDiskName] = disk.Name
 		diskState[constants.FieldDiskBootOrder] = disk.BootOrder
 		diskState[constants.FieldDiskCacheMode] = disk.Cache
+		diskState[constants.FieldDiskDedicatedIOThread] = disk.DedicatedIOThread != nil && *disk.DedicatedIOThread
 
 		if hasVolume {
 			switch {
@@ -410,32 +437,36 @@ func ResourceVirtualMachineStateGetter(vm *kubevirtv1.VirtualMachine, vmi *kubev
 		Name:         vm.Name,
 		ResourceType: constants.ResourceTypeVirtualMachine,
 		States: map[string]interface{}{
-			constants.FieldCommonNamespace:                     vm.Namespace,
-			constants.FieldCommonName:                          vm.Name,
-			constants.FieldCommonDescription:                   GetDescriptions(vm.Annotations),
-			constants.FieldCommonTags:                          GetTags(vm.Labels),
-			constants.FieldCommonLabels:                        GetLabels(vm.Labels),
-			constants.FieldCommonState:                         vmImporter.State(networkInterface, oldInstanceUID),
-			constants.FieldVirtualMachineCPU:                   vmImporter.CPU(),
-			constants.FieldVirtualMachineCPUModel:              vmImporter.CPUModel(),
-			constants.FieldVirtualMachineMemory:                vmImporter.Memory(),
-			constants.FieldVirtualMachineRequests:              vmImporter.Requests(),
-			constants.FieldVirtualMachineHostname:              vmImporter.HostName(),
-			constants.FieldVirtualMachineReservedMemory:        vmImporter.ReservedMemory(),
-			constants.FieldVirtualMachineMachineType:           vmImporter.MachineType(),
-			constants.FieldVirtualMachineRunStrategy:           string(runStrategy),
-			constants.FieldVirtualMachineNetworkInterface:      networkInterface,
-			constants.FieldVirtualMachineDisk:                  disk,
-			constants.FieldVirtualMachineInput:                 input,
-			constants.FieldVirtualMachineTPM:                   vmImporter.TPM(),
-			constants.FieldVirtualMachineCloudInit:             cloudInit,
-			constants.FieldVirtualMachineSSHKeys:               sshKeys,
-			constants.FieldVirtualMachineInstanceNodeName:      vmImporter.NodeName(),
-			constants.FieldVirtualMachineEFI:                   vmImporter.EFI(),
-			constants.FieldVirtualMachineSecureBoot:            vmImporter.SecureBoot(),
-			constants.FieldVirtualMachineCPUPinning:            vmImporter.DedicatedCPUPlacement(),
-			constants.FieldVirtualMachineIsolateEmulatorThread: vmImporter.IsolateEmulatorThread(),
-			constants.FieldVirtualMachineNodeSelector:          vm.Spec.Template.Spec.NodeSelector,
+			constants.FieldCommonNamespace:                          vm.Namespace,
+			constants.FieldCommonName:                               vm.Name,
+			constants.FieldCommonDescription:                        GetDescriptions(vm.Annotations),
+			constants.FieldCommonTags:                               GetTags(vm.Labels),
+			constants.FieldCommonLabels:                             GetLabels(vm.Labels),
+			constants.FieldCommonState:                              vmImporter.State(networkInterface, oldInstanceUID),
+			constants.FieldVirtualMachineCPU:                        vmImporter.CPU(),
+			constants.FieldVirtualMachineCPUModel:                   vmImporter.CPUModel(),
+			constants.FieldVirtualMachineMemory:                     vmImporter.Memory(),
+			constants.FieldVirtualMachineRequests:                   vmImporter.Requests(),
+			constants.FieldVirtualMachineHostname:                   vmImporter.HostName(),
+			constants.FieldVirtualMachineReservedMemory:             vmImporter.ReservedMemory(),
+			constants.FieldVirtualMachineMachineType:                vmImporter.MachineType(),
+			constants.FieldVirtualMachineRunStrategy:                string(runStrategy),
+			constants.FieldVirtualMachineNetworkInterface:           networkInterface,
+			constants.FieldVirtualMachineDisk:                       disk,
+			constants.FieldVirtualMachineInput:                      input,
+			constants.FieldVirtualMachineTPM:                        vmImporter.TPM(),
+			constants.FieldVirtualMachineCloudInit:                  cloudInit,
+			constants.FieldVirtualMachineSSHKeys:                    sshKeys,
+			constants.FieldVirtualMachineInstanceNodeName:           vmImporter.NodeName(),
+			constants.FieldVirtualMachineEFI:                        vmImporter.EFI(),
+			constants.FieldVirtualMachineSecureBoot:                 vmImporter.SecureBoot(),
+			constants.FieldVirtualMachineCPUPinning:                 vmImporter.DedicatedCPUPlacement(),
+			constants.FieldVirtualMachineIsolateEmulatorThread:      vmImporter.IsolateEmulatorThread(),
+			constants.FieldVirtualMachineNetworkInterfaceMultiqueue: vmImporter.NetworkInterfaceMultiQueue(),
+			constants.FieldVirtualMachineBlockMultiQueue:            vmImporter.BlockMultiQueue(),
+			constants.FieldVirtualMachineIOThreadsPolicy:            vmImporter.IOThreadsPolicy(),
+			constants.FieldVirtualMachineIOThreadsCount:             vmImporter.IOThreadsCount(),
+			constants.FieldVirtualMachineNodeSelector:               vm.Spec.Template.Spec.NodeSelector,
 		},
 	}, nil
 }

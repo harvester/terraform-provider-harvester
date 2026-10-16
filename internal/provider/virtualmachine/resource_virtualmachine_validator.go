@@ -2,18 +2,26 @@ package virtualmachine
 
 import (
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"strings"
 
 	harvsterv1 "github.com/harvester/harvester/pkg/apis/harvesterhci.io/v1beta1"
 	yaml "go.yaml.in/yaml/v3"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	kubevirtv1 "kubevirt.io/api/core/v1"
 
 	"github.com/harvester/terraform-provider-harvester/pkg/helper"
 )
 
 const (
 	userDataSecretKey = "userdata"
+)
+
+var (
+	ErrIOThreadPolicySupplementalPoolButThreadCountNotSet      = errors.New("IO thread policy not `supplemental-pool`, but IO thread count not set")
+	ErrIOThreadPolicySupplementalPoolButThreadCountNotPositive = errors.New("IO thread policy not `supplemental-pool`, but IO thread count not > 0")
+	ErrIOThreadCountSetButIOThreadPolicyNotSupplementalPool    = errors.New("IO thread count > 0, but IO thread policy not `supplemental-pool`")
 )
 
 func (c *Constructor) getKeyPairs(sshNames []string, defaultNamespace string) ([]*harvsterv1.KeyPair, error) {
@@ -116,4 +124,33 @@ func inCloudConfig(parentKey, parent, key any, value string) bool {
 		}
 	}
 	return false
+}
+
+// Check that the IO threads policy is compatible with other IO threads settings.
+// 1) `io_threads_count` requires that the IO threads policy is set to `supplemental-pool`.
+// 2) if there is a disk with dedicated IO thread configured, then an IO thread policy needs to be
+// set.
+func (c *Constructor) checkIOThreadsPolicy() error {
+	domain := c.Builder.VirtualMachine.Spec.Template.Spec.Domain
+	ioThreadsPolicy := domain.IOThreadsPolicy
+
+	if ioThreadsPolicy != nil && *ioThreadsPolicy == kubevirtv1.IOThreadsPolicySupplementalPool {
+		if domain.IOThreads != nil && domain.IOThreads.SupplementalPoolThreadCount != nil {
+			if *domain.IOThreads.SupplementalPoolThreadCount <= 0 {
+				return ErrIOThreadPolicySupplementalPoolButThreadCountNotPositive
+			}
+		} else {
+			return ErrIOThreadPolicySupplementalPoolButThreadCountNotSet
+		}
+	}
+
+	if domain.IOThreads != nil &&
+		domain.IOThreads.SupplementalPoolThreadCount != nil &&
+		*domain.IOThreads.SupplementalPoolThreadCount > 0 {
+		if ioThreadsPolicy == nil || *ioThreadsPolicy != kubevirtv1.IOThreadsPolicySupplementalPool {
+			return ErrIOThreadCountSetButIOThreadPolicyNotSupplementalPool
+		}
+	}
+
+	return nil
 }
