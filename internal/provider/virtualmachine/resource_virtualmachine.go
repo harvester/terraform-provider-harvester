@@ -14,6 +14,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	corev1client "k8s.io/client-go/kubernetes/typed/core/v1"
 	kubevirtv1 "kubevirt.io/api/core/v1"
 
 	"github.com/harvester/terraform-provider-harvester/internal/config"
@@ -109,7 +110,7 @@ func resourceVirtualMachineUpdate(ctx context.Context, d *schema.ResourceData, m
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	vm, err := c.HarvesterClient.KubevirtV1().VirtualMachines(namespace).Update(ctx, toUpdate.(*kubevirtv1.VirtualMachine), metav1.UpdateOptions{})
+	vm, warnings, err := updateVirtualMachine(ctx, c, d, toUpdate.(*kubevirtv1.VirtualMachine))
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -133,7 +134,7 @@ func resourceVirtualMachineUpdate(ctx context.Context, d *schema.ResourceData, m
 			return diag.FromErr(err)
 		}
 	}
-	return diag.FromErr(resourceVirtualMachineWaitForState(ctx, d, meta, runStrategy, namespace, name, schema.TimeoutUpdate, oldInstanceUID))
+	return append(warnings, diag.FromErr(resourceVirtualMachineWaitForState(ctx, d, meta, runStrategy, namespace, name, schema.TimeoutUpdate, oldInstanceUID))...)
 }
 
 func resourceVirtualMachineRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -297,6 +298,56 @@ func IsNeedRestart(d *schema.ResourceData, runStrategy kubevirtv1.VirtualMachine
 		return d.Get(constants.FieldVirtualMachineRestartAfterUpdate).(bool)
 	}
 	return false
+}
+
+// updateVirtualMachine updates the VM, then deletes the PVCs created with
+// auto_delete for disks the VM no longer uses, as the Harvester eject action
+// does. The deletion of the VM only removes the PVCs it still uses, so these
+// were never deleted. A PVC that cannot be deleted is reported as a warning:
+// the VM is already updated and its state must still be saved.
+func updateVirtualMachine(ctx context.Context, c *client.Client, d *schema.ResourceData, vm *kubevirtv1.VirtualMachine) (*kubevirtv1.VirtualMachine, diag.Diagnostics, error) {
+	updated, err := c.HarvesterClient.KubevirtV1().VirtualMachines(vm.Namespace).Update(ctx, vm, metav1.UpdateOptions{})
+	if err != nil {
+		return nil, nil, err
+	}
+	oldDisks, _ := d.GetChange(constants.FieldVirtualMachineDisk)
+	pvcs := c.KubeClient.CoreV1().PersistentVolumeClaims(vm.Namespace)
+	return updated, deleteRemovedPVCs(ctx, pvcs, removedAutoDeletePVCs(oldDisks.([]any), updated)), nil
+}
+
+func deleteRemovedPVCs(ctx context.Context, pvcs corev1client.PersistentVolumeClaimInterface, names []string) diag.Diagnostics {
+	var warnings diag.Diagnostics
+	for _, name := range names {
+		if err := pvcs.Delete(ctx, name, metav1.DeleteOptions{}); err != nil && !apierrors.IsNotFound(err) {
+			warnings = append(warnings, diag.Diagnostic{
+				Severity: diag.Warning,
+				Summary:  fmt.Sprintf("PVC %s of a removed disk was not deleted", name),
+				Detail:   err.Error(),
+			})
+		}
+	}
+	return warnings
+}
+
+// removedAutoDeletePVCs returns the PVCs of the previous disks that were
+// created with auto_delete and that vm no longer uses.
+func removedAutoDeletePVCs(oldDisks []any, vm *kubevirtv1.VirtualMachine) []string {
+	inUse := make(map[string]bool, len(vm.Spec.Template.Spec.Volumes))
+	for _, volume := range vm.Spec.Template.Spec.Volumes {
+		if volume.PersistentVolumeClaim != nil {
+			inUse[volume.PersistentVolumeClaim.ClaimName] = true
+		}
+	}
+	var removed []string
+	for _, oldDisk := range oldDisks {
+		disk := oldDisk.(map[string]any)
+		pvcName := disk[constants.FieldDiskVolumeName].(string)
+		autoDelete := disk[constants.FieldDiskAutoDelete].(bool)
+		if pvcName != "" && autoDelete && !inUse[pvcName] {
+			removed = append(removed, pvcName)
+		}
+	}
+	return removed
 }
 
 func getRemovedPVCs(d *schema.ResourceData, vm *kubevirtv1.VirtualMachine) []string {
