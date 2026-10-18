@@ -24,3 +24,8 @@ const (
 	FieldKubeOVNPolicyRouteAction    = "action"
 	FieldKubeOVNPolicyRouteNextHopIP = "next_hop_ip"
 )
+
+// LabelPrefixKubeOVN is the prefix of the labels the kube-ovn controller sets
+// on the objects it manages. They are neither read into nor removed by the
+// provider.
+const LabelPrefixKubeOVN = "ovn.kubernetes.io/"
