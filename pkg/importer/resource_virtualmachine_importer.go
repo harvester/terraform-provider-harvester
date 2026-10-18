@@ -134,6 +134,18 @@ func (v *VMImporter) TPM() []map[string]interface{} {
 	return tpmStates
 }
 
+func (v *VMImporter) HostDevice() []map[string]interface{} {
+	hostDevices := v.VirtualMachine.Spec.Template.Spec.Domain.Devices.HostDevices
+	hostDeviceStates := make([]map[string]interface{}, 0, len(hostDevices))
+	for _, hostDevice := range hostDevices {
+		hostDeviceStates = append(hostDeviceStates, map[string]interface{}{
+			constants.FieldHostDeviceName:       hostDevice.Name,
+			constants.FieldHostDeviceDeviceName: hostDevice.DeviceName,
+		})
+	}
+	return hostDeviceStates
+}
+
 func (v *VMImporter) NetworkInterface() ([]map[string]interface{}, error) {
 	var (
 		waitForLeaseInterfaces   []string
@@ -436,6 +448,7 @@ func ResourceVirtualMachineStateGetter(vm *kubevirtv1.VirtualMachine, vmi *kubev
 			constants.FieldVirtualMachineCPUPinning:            vmImporter.DedicatedCPUPlacement(),
 			constants.FieldVirtualMachineIsolateEmulatorThread: vmImporter.IsolateEmulatorThread(),
 			constants.FieldVirtualMachineNodeSelector:          vm.Spec.Template.Spec.NodeSelector,
+			constants.FieldVirtualMachineHostDevice:            vmImporter.HostDevice(),
 		},
 	}, nil
 }

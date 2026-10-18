@@ -461,6 +461,7 @@ func Updater(c *client.Client, ctx context.Context, vm *kubevirtv1.VirtualMachin
 	vm.Spec.Template.Spec.Domain.Devices.Interfaces = []kubevirtv1.Interface{}
 	vm.Spec.Template.Spec.Domain.Devices.Disks = []kubevirtv1.Disk{}
 	vm.Spec.Template.Spec.Domain.Devices.Inputs = []kubevirtv1.Input{}
+	vm.Spec.Template.Spec.Domain.Devices.HostDevices = []kubevirtv1.HostDevice{}
 	vm.Spec.Template.Spec.Volumes = []kubevirtv1.Volume{}
 	vm.Annotations[harvesterutil.AnnotationVolumeClaimTemplates] = "[]"
 	return newVMConstructor(c, ctx, &builder.VMBuilder{

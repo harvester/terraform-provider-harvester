@@ -1,6 +1,7 @@
 package importer
 
 import (
+	"reflect"
 	"testing"
 
 	corev1 "k8s.io/api/core/v1"
@@ -776,6 +777,55 @@ func TestVolume(t *testing.T) {
 			}
 			if hasCloudInit := len(cloudInitState) > 0; hasCloudInit != tc.wantCloudInit {
 				t.Errorf("cloud-init present = %v, want %v", hasCloudInit, tc.wantCloudInit)
+			}
+		})
+	}
+}
+
+func TestHostDevice(t *testing.T) {
+	gpu := kubevirtv1.HostDevice{Name: "gpu", DeviceName: "nvidia.com/GA100_A30"}
+	gmm := kubevirtv1.HostDevice{Name: "gmm", DeviceName: "intel.com/1911"}
+	runStrategy := kubevirtv1.RunStrategyHalted
+	build := func(hostDevices ...kubevirtv1.HostDevice) *kubevirtv1.VirtualMachine {
+		return &kubevirtv1.VirtualMachine{Spec: kubevirtv1.VirtualMachineSpec{RunStrategy: &runStrategy, Template: &kubevirtv1.VirtualMachineInstanceTemplateSpec{ObjectMeta: metav1.ObjectMeta{Annotations: map[string]string{builder.AnnotationKeyVirtualMachineSSHNames: "[]"}}, Spec: kubevirtv1.VirtualMachineInstanceSpec{Domain: kubevirtv1.DomainSpec{CPU: &kubevirtv1.CPU{}, Machine: &kubevirtv1.Machine{Type: "q35"}, Devices: kubevirtv1.Devices{HostDevices: hostDevices}}}}}}
+	}
+	state := func(hostDevice kubevirtv1.HostDevice) map[string]interface{} {
+		return map[string]interface{}{constants.FieldHostDeviceName: hostDevice.Name, constants.FieldHostDeviceDeviceName: hostDevice.DeviceName}
+	}
+
+	testcases := []struct {
+		name     string
+		vm       *kubevirtv1.VirtualMachine
+		expected []map[string]interface{}
+	}{
+		{
+			name:     "no host device",
+			vm:       build(),
+			expected: []map[string]interface{}{},
+		},
+		{
+			name:     "one host device",
+			vm:       build(gmm),
+			expected: []map[string]interface{}{state(gmm)},
+		},
+		{
+			name:     "several host devices keep their order",
+			vm:       build(gpu, gmm),
+			expected: []map[string]interface{}{state(gpu), state(gmm)},
+		},
+	}
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			stateGetter, err := ResourceVirtualMachineStateGetter(tc.vm, nil, "")
+			if err != nil {
+				t.Fatalf("ResourceVirtualMachineStateGetter() error: %v", err)
+			}
+			got, ok := stateGetter.States[constants.FieldVirtualMachineHostDevice]
+			if !ok {
+				t.Fatalf("%s is not read back", constants.FieldVirtualMachineHostDevice)
+			}
+			if !reflect.DeepEqual(got, tc.expected) {
+				t.Errorf("%s = %v, want %v", constants.FieldVirtualMachineHostDevice, got, tc.expected)
 			}
 		})
 	}
