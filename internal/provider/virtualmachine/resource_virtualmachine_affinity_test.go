@@ -341,11 +341,14 @@ func TestPodAntiAffinityParser(t *testing.T) {
 // affinity field, reads it back with the importer and checks that the state
 // equals the configuration, so that no field is lost or added on the way.
 func TestAffinityRoundTrip(t *testing.T) {
-	const otherNamespace = "other"
+	const (
+		namespace      = "default"
+		otherNamespace = "other"
+	)
 	labelSelector := []interface{}{map[string]interface{}{constants.FieldMatchLabels: map[string]interface{}{affinityTestLabel: affinityTestValue}}}
 	raw := map[string]interface{}{
 		constants.FieldCommonName:      "round-trip",
-		constants.FieldCommonNamespace: "default",
+		constants.FieldCommonNamespace: namespace,
 		constants.FieldVirtualMachineNodeAffinity: []interface{}{map[string]interface{}{
 			constants.FieldNodeAffinityRequired: []interface{}{map[string]interface{}{
 				constants.FieldNodeSelectorTerm: []interface{}{map[string]interface{}{
@@ -364,7 +367,7 @@ func TestAffinityRoundTrip(t *testing.T) {
 			constants.FieldPodAffinityRequired: []interface{}{map[string]interface{}{
 				constants.FieldTopologyKey:   corev1.LabelHostname,
 				constants.FieldLabelSelector: labelSelector,
-				constants.FieldNamespaces:    []interface{}{"default", otherNamespace},
+				constants.FieldNamespaces:    []interface{}{namespace, otherNamespace},
 			}},
 		}},
 		constants.FieldVirtualMachinePodAntiAffinity: []interface{}{map[string]interface{}{
@@ -381,7 +384,7 @@ func TestAffinityRoundTrip(t *testing.T) {
 	}
 	ctx := context.Background()
 	config := schema.TestResourceDataRaw(t, Schema(), raw)
-	obj, err := util.ResourceConstruct(ctx, config, Creator(nil, ctx, "default", "round-trip"))
+	obj, err := util.ResourceConstruct(ctx, config, Creator(nil, ctx, namespace, "round-trip"))
 	if err != nil {
 		t.Fatal(err)
 	}
