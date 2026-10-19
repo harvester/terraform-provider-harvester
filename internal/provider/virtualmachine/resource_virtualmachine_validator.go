@@ -127,26 +127,26 @@ func inCloudConfig(parentKey, parent, key any, value string) bool {
 }
 
 // Check that the IO threads policy is compatible with other IO threads settings.
-// 1) `io_threads_count` requires that the IO threads policy is set to `supplemental-pool`.
-// 2) if there is a disk with dedicated IO thread configured, then an IO thread policy needs to be
-// set.
+// `io_threads_count` requires that the IO threads policy is set to `supplemental-pool`.
 func (c *Constructor) checkIOThreadsPolicy() error {
 	domain := c.Builder.VirtualMachine.Spec.Template.Spec.Domain
 	ioThreadsPolicy := domain.IOThreadsPolicy
+	threadCountSet := domain.IOThreads != nil &&
+		domain.IOThreads.SupplementalPoolThreadCount != nil
 
+	// if the IO thread policy is "supplemental-pool", then we want to have a non-zero thread count
+	// set.
 	if ioThreadsPolicy != nil && *ioThreadsPolicy == kubevirtv1.IOThreadsPolicySupplementalPool {
-		if domain.IOThreads != nil && domain.IOThreads.SupplementalPoolThreadCount != nil {
-			if *domain.IOThreads.SupplementalPoolThreadCount <= 0 {
-				return ErrIOThreadPolicySupplementalPoolButThreadCountNotPositive
-			}
-		} else {
+		if !threadCountSet {
 			return ErrIOThreadPolicySupplementalPoolButThreadCountNotSet
+		}
+		if *domain.IOThreads.SupplementalPoolThreadCount == 0 {
+			return ErrIOThreadPolicySupplementalPoolButThreadCountNotPositive
 		}
 	}
 
-	if domain.IOThreads != nil &&
-		domain.IOThreads.SupplementalPoolThreadCount != nil &&
-		*domain.IOThreads.SupplementalPoolThreadCount > 0 {
+	// if the thread count is set, we want to have the IO thread policy "supplemental-pool"
+	if threadCountSet && *domain.IOThreads.SupplementalPoolThreadCount > 0 {
 		if ioThreadsPolicy == nil || *ioThreadsPolicy != kubevirtv1.IOThreadsPolicySupplementalPool {
 			return ErrIOThreadCountSetButIOThreadPolicyNotSupplementalPool
 		}

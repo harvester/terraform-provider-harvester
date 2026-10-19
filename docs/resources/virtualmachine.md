@@ -254,7 +254,7 @@ Optional:
 - `bus` (String)
 - `cache_mode` (String)
 - `container_image_name` (String)
-- `dedicated_io_thread` (Boolean) Dedicate an IOThread to this disk. Requires io_threads_policy to be set on the virtual machine.
+- `dedicated_io_thread` (Boolean) Dedicate an IOThread to this disk
 - `existing_volume_name` (String)
 - `hot_plug` (Boolean)
 - `image` (String)
