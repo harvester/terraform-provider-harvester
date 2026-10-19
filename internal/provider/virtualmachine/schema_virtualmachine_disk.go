@@ -120,7 +120,7 @@ func resourceDiskSchema() map[string]*schema.Schema {
 		},
 		constants.FieldDiskDedicatedIOThread: {
 			Type:        schema.TypeBool,
-			Description: "Dedicate an IOThread to this disk. Requires io_threads_policy to be set on the virtual machine.",
+			Description: "Dedicate an IOThread to this disk",
 			Optional:    true,
 			Default:     false,
 		},

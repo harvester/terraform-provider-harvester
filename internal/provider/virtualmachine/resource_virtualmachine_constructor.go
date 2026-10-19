@@ -16,6 +16,7 @@ import (
 	"github.com/harvester/terraform-provider-harvester/internal/util"
 	"github.com/harvester/terraform-provider-harvester/pkg/client"
 	"github.com/harvester/terraform-provider-harvester/pkg/constants"
+	"github.com/harvester/terraform-provider-harvester/pkg/conversion"
 	"github.com/harvester/terraform-provider-harvester/pkg/helper"
 )
 
@@ -448,8 +449,12 @@ func (c *Constructor) Setup() util.Processors {
 			Parser: func(i any) error {
 				var ioThreads *kubevirtv1.DiskIOThreads
 				if count := i.(int); count > 0 {
+					threads, err := conversion.IntToUint32(count)
+					if err != nil {
+						return fmt.Errorf("error converting %s: %w", constants.FieldVirtualMachineIOThreadsCount, err)
+					}
 					ioThreads = &kubevirtv1.DiskIOThreads{
-						SupplementalPoolThreadCount: new(uint32(count)), // nolint: gosec
+						SupplementalPoolThreadCount: new(uint32(threads)), // nolint: gosec
 					}
 				}
 				vmBuilder.VirtualMachine.Spec.Template.Spec.Domain.IOThreads = ioThreads
@@ -483,23 +488,22 @@ func (c *Constructor) Setup() util.Processors {
 }
 
 func (c *Constructor) Validate() error {
-	if len(c.Builder.SSHNames) == 0 {
-		return nil
-	}
-
-	keyPairs, err := c.getKeyPairs(c.Builder.SSHNames, c.Builder.VirtualMachine.Namespace)
+	err := c.checkIOThreadsPolicy()
 	if err != nil {
 		return err
 	}
 
-	err = c.checkKeyPairsInCloudInit(keyPairs)
-	if err != nil {
-		return err
-	}
+	// check SSh keys only if necessary
+	if len(c.Builder.SSHNames) != 0 {
+		keyPairs, err := c.getKeyPairs(c.Builder.SSHNames, c.Builder.VirtualMachine.Namespace)
+		if err != nil {
+			return err
+		}
 
-	err = c.checkIOThreadsPolicy()
-	if err != nil {
-		return err
+		err = c.checkKeyPairsInCloudInit(keyPairs)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
