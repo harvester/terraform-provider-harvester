@@ -32,7 +32,8 @@ type Constructor struct {
 	Client  *client.Client
 	Context context.Context
 
-	Builder *builder.VMBuilder
+	Builder            *builder.VMBuilder
+	RestartAfterUpdate bool
 }
 
 func (c *Constructor) Setup() util.Processors {
@@ -483,12 +484,24 @@ func (c *Constructor) Setup() util.Processors {
 				return nil
 			},
 		},
+		{
+			Field: constants.FieldVirtualMachineRestartAfterUpdate,
+			Parser: func(i any) error {
+				c.RestartAfterUpdate = i.(bool)
+				return nil
+			},
+		},
 	}
 	return append(processors, customProcessors...)
 }
 
 func (c *Constructor) Validate() error {
 	err := c.checkIOThreadsPolicy()
+	if err != nil {
+		return err
+	}
+
+	err = c.checkHotplugDisks()
 	if err != nil {
 		return err
 	}

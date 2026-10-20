@@ -554,3 +554,124 @@ runcmd:
 		})
 	}
 }
+
+func Test_checkHotplugDisks(t *testing.T) {
+	tests := []struct {
+		name    string
+		c       *Constructor
+		wantErr error
+	}{
+		{
+			name: "restart_after_update false and no hot-pluggable disks present",
+			c: &Constructor{
+				Builder: &builder.VMBuilder{
+					VirtualMachine: &kubevirtv1.VirtualMachine{
+						Spec: kubevirtv1.VirtualMachineSpec{
+							Template: &kubevirtv1.VirtualMachineInstanceTemplateSpec{
+								Spec: kubevirtv1.VirtualMachineInstanceSpec{
+									Volumes: []kubevirtv1.Volume{
+										{
+											VolumeSource: kubevirtv1.VolumeSource{
+												PersistentVolumeClaim: &kubevirtv1.PersistentVolumeClaimVolumeSource{
+													Hotpluggable: false,
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+				RestartAfterUpdate: false,
+			},
+			wantErr: nil,
+		},
+		{
+			name: "restart_after_update true and no hot-pluggable disks present",
+			c: &Constructor{
+				Builder: &builder.VMBuilder{
+					VirtualMachine: &kubevirtv1.VirtualMachine{
+						Spec: kubevirtv1.VirtualMachineSpec{
+							Template: &kubevirtv1.VirtualMachineInstanceTemplateSpec{
+								Spec: kubevirtv1.VirtualMachineInstanceSpec{
+									Volumes: []kubevirtv1.Volume{
+										{
+											VolumeSource: kubevirtv1.VolumeSource{
+												PersistentVolumeClaim: &kubevirtv1.PersistentVolumeClaimVolumeSource{
+													Hotpluggable: false,
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+				RestartAfterUpdate: true,
+			},
+			wantErr: nil,
+		},
+		{
+			name: "restart_after_update false and hot-pluggable disks present",
+			c: &Constructor{
+				Builder: &builder.VMBuilder{
+					VirtualMachine: &kubevirtv1.VirtualMachine{
+						Spec: kubevirtv1.VirtualMachineSpec{
+							Template: &kubevirtv1.VirtualMachineInstanceTemplateSpec{
+								Spec: kubevirtv1.VirtualMachineInstanceSpec{
+									Volumes: []kubevirtv1.Volume{
+										{
+											VolumeSource: kubevirtv1.VolumeSource{
+												PersistentVolumeClaim: &kubevirtv1.PersistentVolumeClaimVolumeSource{
+													Hotpluggable: true,
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+				RestartAfterUpdate: false,
+			},
+			wantErr: nil,
+		},
+		{
+			name: "restart_after_update true and hot-pluggable disks present",
+			c: &Constructor{
+				Builder: &builder.VMBuilder{
+					VirtualMachine: &kubevirtv1.VirtualMachine{
+						Spec: kubevirtv1.VirtualMachineSpec{
+							Template: &kubevirtv1.VirtualMachineInstanceTemplateSpec{
+								Spec: kubevirtv1.VirtualMachineInstanceSpec{
+									Volumes: []kubevirtv1.Volume{
+										{
+											VolumeSource: kubevirtv1.VolumeSource{
+												PersistentVolumeClaim: &kubevirtv1.PersistentVolumeClaimVolumeSource{
+													Hotpluggable: true,
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+				RestartAfterUpdate: true,
+			},
+			wantErr: ErrRestartAfterUpdateWithHotplugDisk,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if err := tt.c.checkHotplugDisks(); err != tt.wantErr {
+				t.Errorf("checkIOThreadsPolicy() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
