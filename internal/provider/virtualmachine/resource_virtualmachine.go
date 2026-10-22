@@ -8,6 +8,7 @@ import (
 
 	harvsterv1 "github.com/harvester/harvester/pkg/apis/harvesterhci.io/v1beta1"
 	harvesterutil "github.com/harvester/harvester/pkg/util"
+	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -34,6 +35,9 @@ func ResourceVirtualMachine() *schema.Resource {
 			StateContext: schema.ImportStatePassthroughContext,
 		},
 		Schema: Schema(),
+		ValidateRawResourceConfigFuncs: []schema.ValidateRawResourceConfigFunc{
+			warnRestartWithHotPlug,
+		},
 		Timeouts: &schema.ResourceTimeout{
 			Create:  schema.DefaultTimeout(2 * time.Minute),
 			Read:    schema.DefaultTimeout(2 * time.Minute),
@@ -307,11 +311,46 @@ func updateLocalFields(d *schema.ResourceData, keys ...string) error {
 }
 
 func IsNeedRestart(d *schema.ResourceData, runStrategy kubevirtv1.VirtualMachineRunStrategy) bool {
-	switch runStrategy {
-	case kubevirtv1.RunStrategyAlways, kubevirtv1.RunStrategyRerunOnFailure:
-		return d.Get(constants.FieldVirtualMachineRestartAfterUpdate).(bool)
+	return restartsOnUpdate(runStrategy) && d.Get(constants.FieldVirtualMachineRestartAfterUpdate).(bool)
+}
+
+// restartsOnUpdate reports whether restart_after_update restarts a VM with
+// this run strategy.
+func restartsOnUpdate(runStrategy kubevirtv1.VirtualMachineRunStrategy) bool {
+	return runStrategy == kubevirtv1.RunStrategyAlways || runStrategy == kubevirtv1.RunStrategyRerunOnFailure
+}
+
+// warnRestartWithHotPlug warns that restart_after_update restarts the VM
+// after every update, also when only hot-pluggable disks change, which
+// KubeVirt attaches and detaches without a restart.
+func warnRestartWithHotPlug(_ context.Context, req schema.ValidateResourceConfigFuncRequest, resp *schema.ValidateResourceConfigFuncResponse) {
+	config := req.RawConfig
+	runStrategy := Schema()[constants.FieldVirtualMachineRunStrategy].Default.(string)
+	if v := config.GetAttr(constants.FieldVirtualMachineRunStrategy); v.IsKnown() && !v.IsNull() {
+		runStrategy = v.AsString()
 	}
-	return false
+	if !knownTrue(config.GetAttr(constants.FieldVirtualMachineRestartAfterUpdate)) || !restartsOnUpdate(kubevirtv1.VirtualMachineRunStrategy(runStrategy)) {
+		return
+	}
+	disks := config.GetAttr(constants.FieldVirtualMachineDisk)
+	if !disks.IsKnown() || disks.IsNull() {
+		return
+	}
+	for it := disks.ElementIterator(); it.Next(); {
+		if _, disk := it.Element(); disk.IsKnown() && knownTrue(disk.GetAttr(constants.FieldDiskHotPlug)) {
+			resp.Diagnostics = append(resp.Diagnostics, diag.Diagnostic{
+				Severity:      diag.Warning,
+				Summary:       "The VM restarts after every update, hot-plugged disks included",
+				Detail:        "restart_after_update restarts the VM after every update. A disk or cd-rom with hot_plug = true is attached and detached without a restart, so restart_after_update is not needed for it.",
+				AttributePath: cty.GetAttrPath(constants.FieldVirtualMachineRestartAfterUpdate),
+			})
+			return
+		}
+	}
+}
+
+func knownTrue(v cty.Value) bool {
+	return v.IsKnown() && !v.IsNull() && v.True()
 }
 
 func getRemovedPVCs(d *schema.ResourceData, vm *kubevirtv1.VirtualMachine) []string {
