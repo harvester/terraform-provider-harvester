@@ -438,9 +438,6 @@ func exportLabelSelector(selector *metav1.LabelSelector) []map[string]interface{
 		result[constants.FieldMatchExpressions] = exportLabelSelectorRequirements(selector.MatchExpressions)
 	}
 
-	if len(result) == 0 {
-		return nil
-	}
 	return []map[string]interface{}{result}
 }
 
