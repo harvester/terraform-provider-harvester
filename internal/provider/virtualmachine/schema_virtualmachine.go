@@ -11,8 +11,229 @@ import (
 	"github.com/harvester/terraform-provider-harvester/pkg/constants"
 )
 
+func resourceVirtualMachineFeaturesSchema() map[string]*schema.Schema {
+	s := map[string]*schema.Schema{
+		constants.FieldFeatureACPI: {
+			Type:        schema.TypeBool,
+			Optional:    true,
+			Default:     true,
+			Description: "ACPI enables/disables ACPI inside the guest. Defaults to enabled.",
+		},
+		constants.FieldFeatureAPIC: {
+			Type:        schema.TypeList,
+			Optional:    true,
+			MaxItems:    1,
+			Description: "APIC settings for the guest VM.",
+			Elem: &schema.Resource{
+				Schema: map[string]*schema.Schema{
+					constants.FieldFeatureAPICEnabled: {
+						Type:     schema.TypeBool,
+						Optional: true,
+						Default:  true,
+						Description: "Enabled determines if the feature should be enabled or disabled on the" +
+							"guest. Defaults to true.",
+					},
+					constants.FieldFeatureAPICEndOfInterrupt: {
+						Type:     schema.TypeBool,
+						Optional: true,
+						Default:  false,
+						Description: "EndOfInterrupt enables the end of interrupt notification in the guest." +
+							" Defaults to false.",
+					},
+				},
+			},
+		},
+		constants.FieldFeatureHyperV: {
+			Type:        schema.TypeList,
+			Optional:    true,
+			MaxItems:    1,
+			Description: "Defaults to the machine type setting.",
+			Elem: &schema.Resource{
+				Schema: map[string]*schema.Schema{
+					constants.FieldFeatureHyperVEVMCS: {
+						Type:     schema.TypeBool,
+						Optional: true,
+						Computed: true,
+						Description: "EVMCS Speeds up L2 vmexits, but disables other virtualization features. " +
+							"Requires vapic. Defaults to the machine type setting.",
+					},
+					constants.FieldFeatureHyperVFrequencies: {
+						Type:     schema.TypeBool,
+						Optional: true,
+						Computed: true,
+						Description: "Frequencies improves the TSC clock source handling for Hyper-V on KVM. " +
+							"Defaults to the machine type setting.",
+					},
+					constants.FieldFeatureHyperVIPI: {
+						Type:     schema.TypeBool,
+						Optional: true,
+						Computed: true,
+						Description: "IPI improves performances in overcommited environments. Requires vpindex. " +
+							"Defaults to the machine type setting.",
+					},
+					constants.FieldFeatureHyperVReenlightenment: {
+						Type:     schema.TypeBool,
+						Optional: true,
+						Computed: true,
+						Description: "Reenlightenment enables the notifications on TSC frequency changes. " +
+							"Defaults to the machine type setting.",
+					},
+					constants.FieldFeatureHyperVRelaxed: {
+						Type:     schema.TypeBool,
+						Optional: true,
+						Computed: true,
+						Description: "Relaxed instructs the guest OS to disable watchdog timeouts. " +
+							"Defaults to the machine type setting.",
+					},
+					constants.FieldFeatureHyperVReset: {
+						Type:     schema.TypeBool,
+						Optional: true,
+						Computed: true,
+						Description: "Reset enables Hyperv reboot/reset for the vmi. Requires synic. " +
+							"Defaults to the machine type setting.",
+					},
+					constants.FieldFeatureHyperVRuntime: {
+						Type:     schema.TypeBool,
+						Optional: true,
+						Computed: true,
+						Description: "Runtime improves the time accounting to improve scheduling in the guest. " +
+							"Defaults to the machine type setting.",
+					},
+					constants.FieldFeatureHyperVSpinlocks: {
+						Type:        schema.TypeList,
+						Optional:    true,
+						MaxItems:    1,
+						Description: "Spinlocks allows to configure the spinlock retry attempts.",
+						Elem: &schema.Resource{
+							Schema: map[string]*schema.Schema{
+								constants.FieldFeatureHyperVSpinlocksEnabled: {
+									Type:     schema.TypeBool,
+									Optional: true,
+									Default:  true,
+									Description: "Enabled determines if the feature should be enabled or disabled on " +
+										"the guest. Defaults to true.",
+								},
+								constants.FieldFeatureHyperVSpinlocksRetries: {
+									Type:     schema.TypeInt,
+									Optional: true,
+									Default:  4096,
+									Description: "Retries indicates the number of retries. Must be a value greater or " +
+										"equal 4096. Defaults to 4096.",
+									ValidateFunc: validation.IntAtLeast(4096),
+								},
+							},
+						},
+					},
+					constants.FieldFeatureHyperVSyNIC: {
+						Type:     schema.TypeBool,
+						Optional: true,
+						Computed: true,
+						Description: "SyNIC enables the Synthetic Interrupt Controller. " +
+							"Defaults to the machine type setting.",
+					},
+					constants.FieldFeatureHyperVSyNICTimer: {
+						Type:     schema.TypeList,
+						Optional: true,
+						MaxItems: 1,
+						Description: "SyNICTimer enables Synthetic Interrupt Controller Timers, reducing CPU " +
+							"load. Defaults to the machine type setting.",
+						Elem: &schema.Resource{
+							Schema: map[string]*schema.Schema{
+								constants.FieldFeatureHyperVSyNICTimerEnabled: {
+									Type:     schema.TypeBool,
+									Optional: true,
+									Computed: true,
+								},
+								constants.FieldFeatureHyperVSyNICTimerDirect: {
+									Type:     schema.TypeBool,
+									Optional: true,
+									Default:  true,
+								},
+							},
+						},
+					},
+					constants.FieldFeatureHyperVTLBFlush: {
+						Type:     schema.TypeBool,
+						Optional: true,
+						Computed: true,
+						Description: "TLBFlush improves performances in overcommited environments. " +
+							"Requires vpindex. Defaults to the machine type setting.",
+					},
+					constants.FieldFeatureHyperVVAPIC: {
+						Type:     schema.TypeBool,
+						Optional: true,
+						Computed: true,
+						Description: "VAPIC improves the paravirtualized handling of interrupts. " +
+							"Defaults to the machine type setting.",
+					},
+					constants.FieldFeatureHyperVVendorId: {
+						Type:     schema.TypeString,
+						Optional: true,
+						Description: "VendorID sets the hypervisor vendor id, visible to the vmi. " +
+							"String up to twelve characters.",
+					},
+					constants.FieldFeatureHyperVVPIndex: {
+						Type:     schema.TypeBool,
+						Optional: true,
+						Computed: true,
+						Description: "VPIndex enables the Virtual Processor Index to help windows identifying " +
+							"virtual processors. Defaults to the machine type setting.",
+					},
+				},
+			},
+		},
+		constants.FieldFeatureHyperVPassthrough: {
+			Type:     schema.TypeBool,
+			Optional: true,
+			Default:  false,
+			Description: "This enables all supported hyperv flags automatically. Bear in mind that if " +
+				"this enabled hyperV features cannot be enabled explicitly. In addition, a Virtual " +
+				"Machine using it will be non-migratable.",
+		},
+		constants.FieldFeatureKVM: {
+			Type:        schema.TypeList,
+			Optional:    true,
+			MaxItems:    1,
+			Description: "Configure how KVM presence is exposed to the guest.",
+			Elem: &schema.Resource{
+				Schema: map[string]*schema.Schema{
+					constants.FieldFeatureKVMHidden: {
+						Type:     schema.TypeBool,
+						Optional: true,
+						Default:  false,
+						Description: "Hide the KVM hypervisor from standard MSR based discovery. Defaults to" +
+							" false",
+					},
+				},
+			},
+		},
+		constants.FieldFeaturePVSpinLock: {
+			Type:     schema.TypeBool,
+			Optional: true,
+			Default:  true,
+			Description: "Notify the guest that the host supports paravirtual spinlocks. For older " +
+				"kernels this feature should be explicitly disabled.",
+		},
+		constants.FieldFeatureSMM: {
+			Type:        schema.TypeBool,
+			Optional:    true,
+			Default:     true,
+			Description: "SMM enables/disables System Management Mode. TSEG not yet implemented.",
+		},
+	}
+	return s
+}
+
 func Schema() map[string]*schema.Schema {
 	s := map[string]*schema.Schema{
+		constants.FieldVirtualMachineFeatures: {
+			Type:     schema.TypeList,
+			Optional: true,
+			MaxItems: 1,
+			Elem: &schema.Resource{
+				Schema: resourceVirtualMachineFeaturesSchema(),
+			},
+		},
 		constants.FieldVirtualMachineMachineType: {
 			Type:     schema.TypeString,
 			Optional: true,

@@ -13,6 +13,7 @@ const (
 	FieldVirtualMachineCreateInitialSnapshot      = "create_initial_snapshot"
 	FieldVirtualMachineDisk                       = "disk"
 	FieldVirtualMachineEFI                        = "efi"
+	FieldVirtualMachineFeatures                   = "features"
 	FieldVirtualMachineHostDevice                 = "host_device"
 	FieldVirtualMachineHostname                   = "hostname"
 	FieldVirtualMachineIOThreadsCount             = "io_threads_count"
@@ -114,4 +115,46 @@ const (
 const (
 	FieldHostDeviceName       = "name"
 	FieldHostDeviceDeviceName = "device_name"
+)
+
+const (
+	FieldFeatureACPI = "acpi" // enabled/disabled
+
+	FieldFeatureAPIC               = "apic"
+	FieldFeatureAPICEnabled        = "enabled"
+	FieldFeatureAPICEndOfInterrupt = "end_of_interrupt"
+
+	FieldFeatureHyperV                = "hyperv"
+	FieldFeatureHyperVEVMCS           = "evmcs"           //enabled/disabled
+	FieldFeatureHyperVFrequencies     = "frequencies"     //enabled/disabled
+	FieldFeatureHyperVIPI             = "ipi"             //enabled/disabled
+	FieldFeatureHyperVReenlightenment = "reenlightenment" //enabled/disabled
+	FieldFeatureHyperVRelaxed         = "relaxed"         //enabled/disabled
+	FieldFeatureHyperVReset           = "reset"           //enabled/disabled
+	FieldFeatureHyperVRuntime         = "runtime"         //enabled/disabled
+
+	FieldFeatureHyperVSpinlocks        = "spinlocks"
+	FieldFeatureHyperVSpinlocksEnabled = "enabled"
+	FieldFeatureHyperVSpinlocksRetries = "retries"
+
+	FieldFeatureHyperVSyNIC = "synic" //enabled/disabled
+
+	FieldFeatureHyperVSyNICTimer        = "synic_timer"
+	FieldFeatureHyperVSyNICTimerEnabled = "enabled"
+	FieldFeatureHyperVSyNICTimerDirect  = "direct"
+
+	FieldFeatureHyperVTLBFlush = "tlb_flush" //enabled/disabled
+	FieldFeatureHyperVVAPIC    = "vapic"     //enabled/disabled
+
+	FieldFeatureHyperVVendorId = "vendorid" // string, enabled if given
+
+	FieldFeatureHyperVVPIndex = "vpindex" //enabled/disabled
+
+	FieldFeatureHyperVPassthrough = "hyperv_passthrough" //gosec:disable G101 -- false positive, enable/disable
+
+	FieldFeatureKVM       = "kvm"
+	FieldFeatureKVMHidden = "hidden"
+
+	FieldFeaturePVSpinLock = "pvspinlock"
+	FieldFeatureSMM        = "smm"
 )
