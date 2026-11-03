@@ -1,7 +1,7 @@
 package importer
 
 import (
-	"regexp"
+	"strconv"
 	"strings"
 
 	"github.com/harvester/harvester/pkg/builder"
@@ -26,14 +26,12 @@ func GetTags(labels map[string]string) map[string]string {
 	return tags
 }
 
-// vmDeleteProtectionValue is the value check KubeVirt uses for the delete
-// protection label: only "true" and "True" enable it.
-var vmDeleteProtectionValue = regexp.MustCompile(`^(true|True)$`)
-
 // IsVMDeleteProtected reports whether the KubeVirt delete protection label
-// enables protection.
+// enables protection. It uses strconv.ParseBool, the same check as the
+// Harvester webhook, so the provider reports exactly what the cluster enforces.
 func IsVMDeleteProtected(labels map[string]string) bool {
-	return vmDeleteProtectionValue.MatchString(labels[constants.LabelVMDeleteProtection])
+	protected, err := strconv.ParseBool(labels[constants.LabelVMDeleteProtection])
+	return err == nil && protected
 }
 
 func GetLabels(labels map[string]string) map[string]string {

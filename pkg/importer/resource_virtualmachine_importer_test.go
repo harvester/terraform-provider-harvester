@@ -901,7 +901,12 @@ func TestVMDeleteProtection(t *testing.T) {
 		{labels: nil, wantProtected: false},
 		{labels: map[string]string{constants.LabelVMDeleteProtection: strconv.FormatBool(true)}, wantProtected: true},
 		{labels: map[string]string{constants.LabelVMDeleteProtection: "True"}, wantProtected: true},
-		{labels: map[string]string{constants.LabelVMDeleteProtection: "TRUE"}, wantProtected: false},
+		{labels: map[string]string{constants.LabelVMDeleteProtection: "TRUE"}, wantProtected: true},
+		{labels: map[string]string{constants.LabelVMDeleteProtection: "1"}, wantProtected: true},
+		// The Harvester webhook uses strconv.ParseBool, which does not trim
+		// spaces, so the cluster does not protect this value.
+		{labels: map[string]string{constants.LabelVMDeleteProtection: " true "}, wantProtected: false},
+		{labels: map[string]string{constants.LabelVMDeleteProtection: "yes"}, wantProtected: false},
 		{labels: map[string]string{constants.LabelVMDeleteProtection: "false"}, wantProtected: false},
 	}
 	for _, tc := range testcases {

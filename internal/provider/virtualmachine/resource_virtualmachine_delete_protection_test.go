@@ -17,8 +17,6 @@ const (
 	labelFalse = "false"
 )
 
-func boolPtr(b bool) *bool { return &b }
-
 // TestDeleteProtectionFromRawConfig checks that an explicit false is told
 // apart from an unset field.
 func TestDeleteProtectionFromRawConfig(t *testing.T) {
@@ -40,8 +38,8 @@ func TestDeleteProtectionFromRawConfig(t *testing.T) {
 		{name: "no config", raw: cty.NullVal(objectType), want: nil},
 		{name: "unset", raw: config(cty.NullVal(cty.Bool)), want: nil},
 		{name: "unknown", raw: config(cty.UnknownVal(cty.Bool)), want: nil},
-		{name: "enabled", raw: config(cty.True), want: boolPtr(true)},
-		{name: "disabled", raw: config(cty.False), want: boolPtr(false)},
+		{name: "enabled", raw: config(cty.True), want: new(true)},
+		{name: "disabled", raw: config(cty.False), want: new(false)},
 	}
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -74,8 +72,8 @@ func TestSetDeleteProtectionLabel(t *testing.T) {
 	}{
 		{name: "unset keeps a missing label missing", enabled: nil, wantSet: false},
 		{name: "unset keeps the existing value", labels: map[string]string{constants.LabelVMDeleteProtection: labelTrue}, enabled: nil, want: labelTrue, wantSet: true},
-		{name: "enable", enabled: boolPtr(true), want: labelTrue, wantSet: true},
-		{name: "disable overrides true", labels: map[string]string{constants.LabelVMDeleteProtection: "True"}, enabled: boolPtr(false), want: labelFalse, wantSet: true},
+		{name: "enable", enabled: new(true), want: labelTrue, wantSet: true},
+		{name: "disable overrides true", labels: map[string]string{constants.LabelVMDeleteProtection: "True"}, enabled: new(false), want: labelFalse, wantSet: true},
 	}
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
