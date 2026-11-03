@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"reflect"
 	"slices"
+	"strconv"
 	"testing"
 
 	corev1 "k8s.io/api/core/v1"
@@ -898,7 +899,7 @@ func TestVMDeleteProtection(t *testing.T) {
 		wantProtected bool
 	}{
 		{labels: nil, wantProtected: false},
-		{labels: map[string]string{constants.LabelVMDeleteProtection: "true"}, wantProtected: true},
+		{labels: map[string]string{constants.LabelVMDeleteProtection: strconv.FormatBool(true)}, wantProtected: true},
 		{labels: map[string]string{constants.LabelVMDeleteProtection: "True"}, wantProtected: true},
 		{labels: map[string]string{constants.LabelVMDeleteProtection: "TRUE"}, wantProtected: false},
 		{labels: map[string]string{constants.LabelVMDeleteProtection: "false"}, wantProtected: false},
@@ -910,7 +911,7 @@ func TestVMDeleteProtection(t *testing.T) {
 	}
 
 	labels := vmLabels(map[string]string{
-		constants.LabelVMDeleteProtection: "true",
+		constants.LabelVMDeleteProtection: strconv.FormatBool(true),
 		"app":                             "web",
 	})
 	if _, ok := labels[constants.LabelVMDeleteProtection]; ok {
