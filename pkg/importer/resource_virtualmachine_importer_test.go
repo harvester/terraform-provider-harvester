@@ -891,3 +891,32 @@ func TestNetworkInterfaceBinding(t *testing.T) {
 		})
 	}
 }
+
+func TestVMDeleteProtection(t *testing.T) {
+	testcases := []struct {
+		labels        map[string]string
+		wantProtected bool
+	}{
+		{labels: nil, wantProtected: false},
+		{labels: map[string]string{constants.LabelVMDeleteProtection: "true"}, wantProtected: true},
+		{labels: map[string]string{constants.LabelVMDeleteProtection: "True"}, wantProtected: true},
+		{labels: map[string]string{constants.LabelVMDeleteProtection: "TRUE"}, wantProtected: false},
+		{labels: map[string]string{constants.LabelVMDeleteProtection: "false"}, wantProtected: false},
+	}
+	for _, tc := range testcases {
+		if got := IsVMDeleteProtected(tc.labels); got != tc.wantProtected {
+			t.Errorf("labels %v: protected = %v, want %v", tc.labels, got, tc.wantProtected)
+		}
+	}
+
+	labels := vmLabels(map[string]string{
+		constants.LabelVMDeleteProtection: "true",
+		"app":                             "web",
+	})
+	if _, ok := labels[constants.LabelVMDeleteProtection]; ok {
+		t.Errorf("labels = %v, want the delete protection label left out", labels)
+	}
+	if labels["app"] != "web" {
+		t.Errorf("labels = %v, want app=web kept", labels)
+	}
+}

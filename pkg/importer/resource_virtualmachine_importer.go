@@ -437,6 +437,14 @@ func NewVMImporter(vm *kubevirtv1.VirtualMachine, vmi *kubevirtv1.VirtualMachine
 	}
 }
 
+// vmLabels returns the user labels of the VM. The delete protection label is
+// reported by delete_protection, so it is left out of `labels`.
+func vmLabels(labels map[string]string) map[string]string {
+	out := GetLabels(labels)
+	delete(out, constants.LabelVMDeleteProtection)
+	return out
+}
+
 func ResourceVirtualMachineStateGetter(vm *kubevirtv1.VirtualMachine, vmi *kubevirtv1.VirtualMachineInstance, oldInstanceUID string) (*StateGetter, error) {
 	vmImporter := NewVMImporter(vm, vmi)
 	networkInterface, err := vmImporter.NetworkInterface()
@@ -468,7 +476,8 @@ func ResourceVirtualMachineStateGetter(vm *kubevirtv1.VirtualMachine, vmi *kubev
 			constants.FieldCommonName:                               vm.Name,
 			constants.FieldCommonDescription:                        GetDescriptions(vm.Annotations),
 			constants.FieldCommonTags:                               GetTags(vm.Labels),
-			constants.FieldCommonLabels:                             GetLabels(vm.Labels),
+			constants.FieldCommonLabels:                             vmLabels(vm.Labels),
+			constants.FieldVirtualMachineDeleteProtection:           IsVMDeleteProtected(vm.Labels),
 			constants.FieldCommonState:                              vmImporter.State(networkInterface, oldInstanceUID),
 			constants.FieldVirtualMachineCPU:                        vmImporter.CPU(),
 			constants.FieldVirtualMachineCPUModel:                   vmImporter.CPUModel(),

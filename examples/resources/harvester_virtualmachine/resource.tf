@@ -117,6 +117,10 @@ resource "harvester_virtualmachine" "opensuse154" {
   hostname     = "opensuse154"
   machine_type = "q35"
 
+  # Harvester rejects deleting this VM while it is true. Set it to false and
+  # apply before running terraform destroy.
+  delete_protection = true
+
   ssh_keys = [
     harvester_ssh_key.mysshkey.id
   ]
