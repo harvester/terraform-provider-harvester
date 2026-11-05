@@ -4,6 +4,8 @@ import (
 	"strings"
 
 	"github.com/harvester/harvester/pkg/builder"
+
+	"github.com/harvester/terraform-provider-harvester/pkg/constants"
 )
 
 type StateGetter struct {
@@ -32,8 +34,11 @@ func GetLabels(labels map[string]string) map[string]string {
 		// Labels with the prefix harvesterhci.io/ are ignored as well, because they
 		// are automatically added and should never appear in the user-specified
 		// `labels` blocks in the .tf files.
+		// Labels with the prefix ovn.kubernetes.io/ are ignored because they are
+		// automatically added by the KubeOVN controller.
 		if !strings.HasPrefix(key, builder.LabelPrefixHarvesterTag) &&
-			!strings.HasPrefix(key, builder.LabelAnnotationPrefixHarvester) {
+			!strings.HasPrefix(key, builder.LabelAnnotationPrefixHarvester) &&
+			!strings.HasPrefix(key, constants.LabelPrefixKubeOVN) {
 			nottags[key] = value
 		}
 	}
