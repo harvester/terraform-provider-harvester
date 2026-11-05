@@ -7,6 +7,7 @@ import (
 
 	harvsterv1 "github.com/harvester/harvester/pkg/apis/harvesterhci.io/v1beta1"
 	harvsterutil "github.com/harvester/harvester/pkg/util"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 
 	"github.com/harvester/terraform-provider-harvester/internal/util"
 	"github.com/harvester/terraform-provider-harvester/pkg/constants"
@@ -144,12 +145,12 @@ func (c *Constructor) Setup() util.Processors {
 	return append(processors, customProcessors...)
 }
 
-func (c *Constructor) Validate() error {
-	return nil
+func (c *Constructor) Validate() diag.Diagnostics {
+	return diag.Diagnostics{}
 }
 
-func (c *Constructor) Result() (interface{}, error) {
-	return c.Image, nil
+func (c *Constructor) Result() (any, diag.Diagnostics) {
+	return c.Image, diag.Diagnostics{}
 }
 
 func newImageConstructor(image *harvsterv1.VirtualMachineImage) util.Constructor {

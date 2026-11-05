@@ -44,10 +44,11 @@ func resourceIPPoolCreate(ctx context.Context, data *schema.ResourceData, meta i
 		return diag.FromErr(err)
 	}
 	name := data.Get(constants.FieldCommonName).(string)
-	toCreate, err := util.ResourceConstruct(ctx, data, Creator(name))
-	if err != nil {
-		return diag.FromErr(err)
+	toCreate, dia := util.ResourceConstruct(ctx, data, Creator(name))
+	if dia.HasError() {
+		return dia
 	}
+
 	ippool, err := c.HarvesterLoadbalancerClient.
 		LoadbalancerV1beta1().
 		IPPools().
@@ -56,7 +57,7 @@ func resourceIPPoolCreate(ctx context.Context, data *schema.ResourceData, meta i
 		return diag.FromErr(err)
 	}
 	data.SetId(helper.BuildID("", name))
-	return diag.FromErr(resourceIPPoolImport(data, ippool))
+	return append(dia, diag.FromErr(resourceIPPoolImport(data, ippool))...)
 }
 
 func resourceIPPoolRead(ctx context.Context, data *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -98,9 +99,9 @@ func resourceIPPoolUpdate(ctx context.Context, data *schema.ResourceData, meta i
 		return diag.FromErr(err)
 	}
 
-	toUpdate, err := util.ResourceConstruct(ctx, data, Updater(obj))
-	if err != nil {
-		return diag.FromErr(err)
+	toUpdate, dia := util.ResourceConstruct(ctx, data, Updater(obj))
+	if dia.HasError() {
+		return dia
 	}
 
 	ippool, err := c.HarvesterLoadbalancerClient.
@@ -110,7 +111,7 @@ func resourceIPPoolUpdate(ctx context.Context, data *schema.ResourceData, meta i
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	return diag.FromErr(resourceIPPoolImport(data, ippool))
+	return append(dia, diag.FromErr(resourceIPPoolImport(data, ippool))...)
 }
 
 func resourceIPPoolDelete(ctx context.Context, data *schema.ResourceData, meta interface{}) diag.Diagnostics {

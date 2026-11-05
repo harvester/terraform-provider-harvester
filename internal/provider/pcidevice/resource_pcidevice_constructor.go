@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	devicesv1 "github.com/harvester/pcidevices/pkg/apis/devices.harvesterhci.io/v1beta1"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -44,16 +45,16 @@ func (c *Constructor) Setup() util.Processors {
 	return append(processors, customProcessors...)
 }
 
-func (c *Constructor) Validate() error {
+func (c *Constructor) Validate() diag.Diagnostics {
 	if c.Enabled && c.PCIDeviceClaim == nil {
-		return fmt.Errorf("can't enable PCI passthrough for PCI device %s", c.PCIDevice.Name)
+		return diag.FromErr(fmt.Errorf("can't enable PCI passthrough for PCI device %s", c.PCIDevice.Name))
 	}
 
-	return c.Error
+	return diag.FromErr(c.Error)
 }
 
-func (c *Constructor) Result() (interface{}, error) {
-	return c.PCIDeviceClaim, c.Error
+func (c *Constructor) Result() (interface{}, diag.Diagnostics) {
+	return c.PCIDeviceClaim, diag.FromErr(c.Error)
 }
 
 func Creator(ctx context.Context, client *client.Client, pcidevice *devicesv1.PCIDevice) util.Constructor {

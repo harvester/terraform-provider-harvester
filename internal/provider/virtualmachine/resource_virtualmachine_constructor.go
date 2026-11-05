@@ -12,6 +12,7 @@ import (
 
 	"github.com/harvester/harvester/pkg/builder"
 	harvesterutil "github.com/harvester/harvester/pkg/util"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 
 	"github.com/harvester/terraform-provider-harvester/internal/util"
 	"github.com/harvester/terraform-provider-harvester/pkg/client"
@@ -495,35 +496,43 @@ func (c *Constructor) Setup() util.Processors {
 	return append(processors, customProcessors...)
 }
 
-func (c *Constructor) Validate() error {
+func (c *Constructor) Validate() diag.Diagnostics {
+	var dia diag.Diagnostics
+
 	err := c.checkIOThreadsPolicy()
 	if err != nil {
-		return err
+		dia = append(dia, diag.FromErr(err)...)
 	}
 
 	err = c.checkHotplugDisks()
 	if err != nil {
-		return err
+		dia = append(dia, diag.Diagnostic{
+			Severity: diag.Warning,
+			Summary:  err.Error(),
+			Detail: `With "restart_after_update = true", the virtual machine will be restarted after
+any update with the Terraform provider, even after attaching a hot-plug disk.`,
+		})
 	}
 
 	// check SSh keys only if necessary
 	if len(c.Builder.SSHNames) != 0 {
 		keyPairs, err := c.getKeyPairs(c.Builder.SSHNames, c.Builder.VirtualMachine.Namespace)
 		if err != nil {
-			return err
+			dia = append(dia, diag.FromErr(err)...)
 		}
 
 		err = c.checkKeyPairsInCloudInit(keyPairs)
 		if err != nil {
-			return err
+			dia = append(dia, diag.FromErr(err)...)
 		}
 	}
 
-	return nil
+	return dia
 }
 
-func (c *Constructor) Result() (interface{}, error) {
-	return c.Builder.VM()
+func (c *Constructor) Result() (interface{}, diag.Diagnostics) {
+	vm, err := c.Builder.VM()
+	return vm, diag.FromErr(err)
 }
 
 func newVMConstructor(c *client.Client, ctx context.Context, vmBuilder *builder.VMBuilder) util.Constructor {

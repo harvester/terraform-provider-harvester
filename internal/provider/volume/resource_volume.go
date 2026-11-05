@@ -46,15 +46,15 @@ func resourceVolumeCreate(ctx context.Context, d *schema.ResourceData, meta inte
 	}
 	namespace := d.Get(constants.FieldCommonNamespace).(string)
 	name := d.Get(constants.FieldCommonName).(string)
-	toCreate, err := util.ResourceConstruct(ctx, d, Creator(namespace, name))
-	if err != nil {
-		return diag.FromErr(err)
+	toCreate, dia := util.ResourceConstruct(ctx, d, Creator(namespace, name))
+	if dia.HasError() {
+		return dia
 	}
 	obj, err := c.KubeClient.CoreV1().PersistentVolumeClaims(namespace).Create(ctx, toCreate.(*corev1.PersistentVolumeClaim), metav1.CreateOptions{})
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	return diag.FromErr(resourceVolumeImport(d, c, obj))
+	return append(dia, diag.FromErr(resourceVolumeImport(d, c, obj))...)
 }
 
 func resourceVolumeUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -74,15 +74,15 @@ func resourceVolumeUpdate(ctx context.Context, d *schema.ResourceData, meta inte
 		}
 		return diag.FromErr(err)
 	}
-	toUpdate, err := util.ResourceConstruct(ctx, d, Updater(obj))
-	if err != nil {
-		return diag.FromErr(err)
+	toUpdate, dia := util.ResourceConstruct(ctx, d, Updater(obj))
+	if dia.HasError() {
+		return dia
 	}
 	_, err = c.KubeClient.CoreV1().PersistentVolumeClaims(namespace).Update(ctx, toUpdate.(*corev1.PersistentVolumeClaim), metav1.UpdateOptions{})
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	return resourceVolumeRead(ctx, d, meta)
+	return append(dia, resourceVolumeRead(ctx, d, meta)...)
 }
 
 func resourceVolumeRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {

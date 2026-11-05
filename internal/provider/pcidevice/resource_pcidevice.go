@@ -55,9 +55,9 @@ func resourcePCIDeviceCreate(ctx context.Context, d *schema.ResourceData, meta i
 		}
 		return diag.FromErr(err)
 	}
-	toCreate, err := util.ResourceConstruct(ctx, d, Creator(ctx, c, obj))
-	if err != nil {
-		return diag.FromErr(err)
+	toCreate, dia := util.ResourceConstruct(ctx, d, Creator(ctx, c, obj))
+	if dia.HasError() {
+		return dia
 	}
 
 	if toCreate != nil && enabled {
@@ -66,7 +66,7 @@ func resourcePCIDeviceCreate(ctx context.Context, d *schema.ResourceData, meta i
 			return diag.FromErr(err)
 		}
 	}
-	return diag.FromErr(resourcePCIDeviceWaitForState(ctx, d, meta, schema.TimeoutCreate))
+	return append(dia, diag.FromErr(resourcePCIDeviceWaitForState(ctx, d, meta, schema.TimeoutCreate))...)
 }
 
 func resourcePCIDeviceRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -120,9 +120,9 @@ func resourcePCIDeviceDelete(ctx context.Context, d *schema.ResourceData, meta i
 		}
 		return diag.FromErr(err)
 	}
-	toDelete, err := util.ResourceConstruct(ctx, d, Deleter(ctx, c, obj))
-	if err != nil {
-		return diag.FromErr(err)
+	toDelete, dia := util.ResourceConstruct(ctx, d, Deleter(ctx, c, obj))
+	if dia.HasError() {
+		return dia
 	}
 	if toDelete.(*devicesv1.PCIDeviceClaim) != nil {
 		err = c.HarvesterDeviceClient.DevicesV1beta1().PCIDeviceClaims().Delete(ctx, toDelete.(*devicesv1.PCIDeviceClaim).Name, metav1.DeleteOptions{})
@@ -133,7 +133,7 @@ func resourcePCIDeviceDelete(ctx context.Context, d *schema.ResourceData, meta i
 		}
 	}
 	d.SetId("")
-	return diag.FromErr(resourcePCIDeviceWaitForState(ctx, d, meta, schema.TimeoutDelete))
+	return append(dia, diag.FromErr(resourcePCIDeviceWaitForState(ctx, d, meta, schema.TimeoutDelete))...)
 }
 
 func resourcePCIDeviceUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -153,18 +153,18 @@ func resourcePCIDeviceUpdate(ctx context.Context, d *schema.ResourceData, meta i
 	}
 
 	if enabled {
-		toUpdate, err := util.ResourceConstruct(ctx, d, Updater(ctx, c, obj))
-		if err != nil {
-			return diag.FromErr(err)
+		toUpdate, dia := util.ResourceConstruct(ctx, d, Updater(ctx, c, obj))
+		if dia.HasError() {
+			return dia
 		}
 		_, err = c.HarvesterDeviceClient.DevicesV1beta1().PCIDeviceClaims().Create(ctx, toUpdate.(*devicesv1.PCIDeviceClaim), metav1.CreateOptions{})
 		if err != nil {
 			return diag.FromErr(err)
 		}
 	} else {
-		toDelete, err := util.ResourceConstruct(ctx, d, Deleter(ctx, c, obj))
-		if err != nil {
-			return diag.FromErr(err)
+		toDelete, dia := util.ResourceConstruct(ctx, d, Deleter(ctx, c, obj))
+		if dia.HasError() {
+			return dia
 		}
 		if toDelete != nil {
 			err = c.HarvesterDeviceClient.DevicesV1beta1().PCIDeviceClaims().Delete(ctx, toDelete.(*devicesv1.PCIDeviceClaim).Name, metav1.DeleteOptions{})

@@ -47,16 +47,19 @@ func resourceClusterNetworkCreate(ctx context.Context, d *schema.ResourceData, m
 	if name == constants.ManagementClusterNetworkName {
 		return diag.FromErr(fmt.Errorf("can not create the existing %s clusternetwork, to avoid this error and continue with the plan, use `terraform import harvester_clusternetwork.%s %s` to import it first", name, name, name))
 	}
-	toCreate, err := util.ResourceConstruct(ctx, d, Creator(name))
-	if err != nil {
-		return diag.FromErr(err)
+
+	toCreate, dia := util.ResourceConstruct(ctx, d, Creator(name))
+	if dia.HasError() {
+		return dia
 	}
+
 	obj, err := c.HarvesterNetworkClient.NetworkV1beta1().ClusterNetworks().Create(ctx, toCreate.(*harvsternetworkv1.ClusterNetwork), metav1.CreateOptions{})
 	if err != nil {
 		return diag.FromErr(err)
 	}
 	d.SetId(helper.BuildID("", name))
-	return diag.FromErr(resourceClusterNetworkImport(d, obj))
+
+	return append(dia, diag.FromErr(resourceClusterNetworkImport(d, obj))...)
 }
 
 func resourceClusterNetworkUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -76,15 +79,17 @@ func resourceClusterNetworkUpdate(ctx context.Context, d *schema.ResourceData, m
 		}
 		return diag.FromErr(err)
 	}
-	toUpdate, err := util.ResourceConstruct(ctx, d, Updater(obj))
-	if err != nil {
-		return diag.FromErr(err)
+
+	toUpdate, dia := util.ResourceConstruct(ctx, d, Updater(obj))
+	if dia.HasError() {
+		return dia
 	}
+
 	_, err = c.HarvesterNetworkClient.NetworkV1beta1().ClusterNetworks().Update(ctx, toUpdate.(*harvsternetworkv1.ClusterNetwork), metav1.UpdateOptions{})
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	return resourceClusterNetworkRead(ctx, d, meta)
+	return append(dia, resourceClusterNetworkRead(ctx, d, meta)...)
 }
 
 func resourceClusterNetworkRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {

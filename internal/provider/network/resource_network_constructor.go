@@ -9,6 +9,7 @@ import (
 	networkapi "github.com/harvester/harvester-network-controller/pkg/apis/network.harvesterhci.io"
 	networkutils "github.com/harvester/harvester-network-controller/pkg/utils"
 	"github.com/harvester/harvester/pkg/builder"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	nadv1 "github.com/k8snetworkplumbingwg/network-attachment-definition-client/pkg/apis/k8s.cni.cncf.io/v1"
 
 	"github.com/harvester/terraform-provider-harvester/internal/util"
@@ -112,15 +113,15 @@ func (c *Constructor) Setup() util.Processors {
 	return append(processors, customProcessors...)
 }
 
-func (c *Constructor) Validate() error {
+func (c *Constructor) Validate() diag.Diagnostics {
 	if err := c.waitForClusterNetworkReady(c.ClusterNetworkName, 1*time.Minute); err != nil {
-		return fmt.Errorf("can not use the unready clusternetwork %s in networks, err: %v", c.ClusterNetworkName, err)
+		return diag.FromErr(fmt.Errorf("can not use the unready clusternetwork %s in networks, err: %v", c.ClusterNetworkName, err))
 	}
 	return nil
 }
 
-func (c *Constructor) Result() (interface{}, error) {
-	return c.Network, nil
+func (c *Constructor) Result() (interface{}, diag.Diagnostics) {
+	return c.Network, diag.Diagnostics{}
 }
 
 func newNetworkConstructor(c *client.Client, ctx context.Context, clusterNetworkName string, network *nadv1.NetworkAttachmentDefinition) util.Constructor {

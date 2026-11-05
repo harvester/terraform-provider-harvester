@@ -7,6 +7,7 @@ import (
 	loadbalancerv1 "github.com/harvester/harvester-load-balancer/pkg/apis/loadbalancer.harvesterhci.io/v1beta1"
 	corev1 "k8s.io/api/core/v1"
 
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 	"github.com/harvester/terraform-provider-harvester/internal/util"
@@ -65,12 +66,12 @@ func (c *Constructor) Setup() util.Processors {
 	return append(processors, subresourceProcessors...)
 }
 
-func (c *Constructor) Validate() error {
-	return nil
+func (c *Constructor) Validate() diag.Diagnostics {
+	return diag.Diagnostics{}
 }
 
-func (c *Constructor) Result() (interface{}, error) {
-	return c.LoadBalancer, nil
+func (c *Constructor) Result() (any, diag.Diagnostics) {
+	return c.LoadBalancer, diag.Diagnostics{}
 }
 
 func newLoadBalancerConstructor(loadbalancer *loadbalancerv1.LoadBalancer) util.Constructor {

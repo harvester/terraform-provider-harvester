@@ -8,6 +8,7 @@ import (
 
 	"github.com/harvester/terraform-provider-harvester/internal/util"
 	"github.com/harvester/terraform-provider-harvester/pkg/constants"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 )
 
 var (
@@ -69,12 +70,12 @@ func (c *Constructor) Setup() util.Processors {
 	return append(processors, customProcessors...)
 }
 
-func (c *Constructor) Validate() error {
-	return nil
+func (c *Constructor) Validate() diag.Diagnostics {
+	return diag.Diagnostics{}
 }
 
-func (c *Constructor) Result() (interface{}, error) {
-	return c.CloudInitSecret, nil
+func (c *Constructor) Result() (any, diag.Diagnostics) {
+	return c.CloudInitSecret, diag.Diagnostics{}
 }
 
 func newCloudInitSecretConstructor(cloudInitSecret *corev1.Secret) util.Constructor {

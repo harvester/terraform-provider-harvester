@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/harvester/harvester/pkg/builder"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 
@@ -93,12 +94,12 @@ func (c *Constructor) Setup() util.Processors {
 	return append(processors, customProcessors...)
 }
 
-func (c *Constructor) Validate() error {
-	return nil
+func (c *Constructor) Validate() diag.Diagnostics {
+	return diag.Diagnostics{}
 }
 
-func (c *Constructor) Result() (interface{}, error) {
-	return c.Volume, nil
+func (c *Constructor) Result() (interface{}, diag.Diagnostics) {
+	return c.Volume, diag.Diagnostics{}
 }
 
 func newVolumeConstructor(volume *corev1.PersistentVolumeClaim) util.Constructor {

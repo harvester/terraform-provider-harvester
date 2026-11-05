@@ -46,16 +46,16 @@ func resourceCloudInitSecretCreate(ctx context.Context, d *schema.ResourceData, 
 	}
 	namespace := d.Get(constants.FieldCommonNamespace).(string)
 	name := d.Get(constants.FieldCommonName).(string)
-	toCreate, err := util.ResourceConstruct(ctx, d, Creator(namespace, name))
-	if err != nil {
-		return diag.FromErr(err)
+	toCreate, dia := util.ResourceConstruct(ctx, d, Creator(namespace, name))
+	if dia.HasError() {
+		return dia
 	}
 	obj, err := c.KubeClient.CoreV1().Secrets(namespace).Create(ctx, toCreate.(*corev1.Secret), metav1.CreateOptions{})
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	return diag.FromErr(resourceCloudInitSecretImport(d, obj))
+	return append(dia, diag.FromErr(resourceCloudInitSecretImport(d, obj))...)
 }
 
 func resourceCloudInitSecretUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -75,16 +75,16 @@ func resourceCloudInitSecretUpdate(ctx context.Context, d *schema.ResourceData, 
 		}
 		return diag.FromErr(err)
 	}
-	toUpdate, err := util.ResourceConstruct(ctx, d, Updater(obj))
-	if err != nil {
-		return diag.FromErr(err)
+	toUpdate, dia := util.ResourceConstruct(ctx, d, Updater(obj))
+	if dia.HasError() {
+		return dia
 	}
 	_, err = c.KubeClient.CoreV1().Secrets(namespace).Update(ctx, toUpdate.(*corev1.Secret), metav1.UpdateOptions{})
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	return resourceCloudInitSecretRead(ctx, d, meta)
+	return append(dia, resourceCloudInitSecretRead(ctx, d, meta)...)
 }
 
 func resourceCloudInitSecretRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {

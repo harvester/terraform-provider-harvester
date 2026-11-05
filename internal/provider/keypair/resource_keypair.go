@@ -44,17 +44,19 @@ func resourceKeypairCreate(ctx context.Context, d *schema.ResourceData, meta int
 	}
 	namespace := d.Get(constants.FieldCommonNamespace).(string)
 	name := d.Get(constants.FieldCommonName).(string)
-	toCreate, err := util.ResourceConstruct(ctx, d, Creator(namespace, name))
-	if err != nil {
-		return diag.FromErr(err)
+
+	toCreate, dia := util.ResourceConstruct(ctx, d, Creator(namespace, name))
+	if dia.HasError() {
+		return dia
 	}
+
 	obj, err := c.HarvesterClient.HarvesterhciV1beta1().KeyPairs(namespace).Create(ctx, toCreate.(*harvsterv1.KeyPair), metav1.CreateOptions{})
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
 	d.SetId(helper.BuildID(namespace, name))
-	return diag.FromErr(resourceKeyPairImport(d, obj))
+	return append(dia, diag.FromErr(resourceKeyPairImport(d, obj))...)
 }
 
 func resourceKeypairUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -74,16 +76,18 @@ func resourceKeypairUpdate(ctx context.Context, d *schema.ResourceData, meta int
 		}
 		return diag.FromErr(err)
 	}
-	toUpdate, err := util.ResourceConstruct(ctx, d, Updater(obj))
-	if err != nil {
-		return diag.FromErr(err)
+
+	toUpdate, dia := util.ResourceConstruct(ctx, d, Updater(obj))
+	if dia.HasError() {
+		return dia
 	}
+
 	_, err = c.HarvesterClient.HarvesterhciV1beta1().KeyPairs(namespace).Update(ctx, toUpdate.(*harvsterv1.KeyPair), metav1.UpdateOptions{})
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	return resourceKeypairRead(ctx, d, meta)
+	return append(dia, resourceKeypairRead(ctx, d, meta)...)
 }
 
 func resourceKeypairRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
