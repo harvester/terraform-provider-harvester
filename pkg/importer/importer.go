@@ -1,9 +1,12 @@
 package importer
 
 import (
+	"regexp"
 	"strings"
 
 	"github.com/harvester/harvester/pkg/builder"
+
+	"github.com/harvester/terraform-provider-harvester/pkg/constants"
 )
 
 type StateGetter struct {
@@ -21,6 +24,16 @@ func GetTags(labels map[string]string) map[string]string {
 		}
 	}
 	return tags
+}
+
+// vmDeleteProtectionValue matches the label values that enable delete
+// protection: only "true" and "True", as in KubeVirt and the Harvester webhook.
+var vmDeleteProtectionValue = regexp.MustCompile(`^(true|True)$`)
+
+// IsVMDeleteProtected reports whether the KubeVirt delete protection label
+// enables protection, using the same check as the Harvester webhook.
+func IsVMDeleteProtected(labels map[string]string) bool {
+	return vmDeleteProtectionValue.MatchString(labels[constants.LabelVMDeleteProtection])
 }
 
 func GetLabels(labels map[string]string) map[string]string {

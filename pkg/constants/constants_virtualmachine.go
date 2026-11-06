@@ -11,6 +11,7 @@ const (
 	FieldVirtualMachineCPUPinning                 = "cpu_pinning"
 	FieldVirtualMachineCloudInit                  = "cloudinit"
 	FieldVirtualMachineCreateInitialSnapshot      = "create_initial_snapshot"
+	FieldVirtualMachineDeleteProtection           = "delete_protection"
 	FieldVirtualMachineDisk                       = "disk"
 	FieldVirtualMachineEFI                        = "efi"
 	FieldVirtualMachineHostDevice                 = "host_device"
@@ -103,6 +104,11 @@ const (
 
 const (
 	LabelSSHUsername = "ssh-user"
+
+	// LabelVMDeleteProtection is the KubeVirt label that protects a VM from
+	// deletion while its value is "true" or "True". Harvester enforces it in
+	// its VM validating webhook.
+	LabelVMDeleteProtection = "kubevirt.io/vm-delete-protection"
 )
 
 const (

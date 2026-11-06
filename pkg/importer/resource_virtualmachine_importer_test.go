@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"reflect"
 	"slices"
+	"strconv"
 	"testing"
 
 	corev1 "k8s.io/api/core/v1"
@@ -889,5 +890,39 @@ func TestNetworkInterfaceBinding(t *testing.T) {
 				t.Errorf("types = %v, want %v", got, tc.expected)
 			}
 		})
+	}
+}
+
+func TestVMDeleteProtection(t *testing.T) {
+	testcases := []struct {
+		labels        map[string]string
+		wantProtected bool
+	}{
+		{labels: nil, wantProtected: false},
+		{labels: map[string]string{constants.LabelVMDeleteProtection: strconv.FormatBool(true)}, wantProtected: true},
+		{labels: map[string]string{constants.LabelVMDeleteProtection: "True"}, wantProtected: true},
+		// Only "true" and "True" enable protection, as in KubeVirt and the
+		// Harvester webhook.
+		{labels: map[string]string{constants.LabelVMDeleteProtection: "TRUE"}, wantProtected: false},
+		{labels: map[string]string{constants.LabelVMDeleteProtection: "1"}, wantProtected: false},
+		{labels: map[string]string{constants.LabelVMDeleteProtection: " true "}, wantProtected: false},
+		{labels: map[string]string{constants.LabelVMDeleteProtection: "yes"}, wantProtected: false},
+		{labels: map[string]string{constants.LabelVMDeleteProtection: "false"}, wantProtected: false},
+	}
+	for _, tc := range testcases {
+		if got := IsVMDeleteProtected(tc.labels); got != tc.wantProtected {
+			t.Errorf("labels %v: protected = %v, want %v", tc.labels, got, tc.wantProtected)
+		}
+	}
+
+	labels := vmLabels(map[string]string{
+		constants.LabelVMDeleteProtection: strconv.FormatBool(true),
+		"app":                             "web",
+	})
+	if _, ok := labels[constants.LabelVMDeleteProtection]; ok {
+		t.Errorf("labels = %v, want the delete protection label left out", labels)
+	}
+	if labels["app"] != "web" {
+		t.Errorf("labels = %v, want app=web kept", labels)
 	}
 }

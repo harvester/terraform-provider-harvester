@@ -55,6 +55,7 @@ func resourceVirtualMachineCreate(ctx context.Context, d *schema.ResourceData, m
 	if err != nil {
 		return diag.FromErr(err)
 	}
+	setDeleteProtectionLabel(toCreate.(*kubevirtv1.VirtualMachine), deleteProtectionFromConfig(d))
 	vm, err := c.HarvesterClient.KubevirtV1().VirtualMachines(namespace).Create(ctx, toCreate.(*kubevirtv1.VirtualMachine), metav1.CreateOptions{})
 	if err != nil {
 		return diag.FromErr(err)
@@ -109,6 +110,7 @@ func resourceVirtualMachineUpdate(ctx context.Context, d *schema.ResourceData, m
 	if err != nil {
 		return diag.FromErr(err)
 	}
+	setDeleteProtectionLabel(toUpdate.(*kubevirtv1.VirtualMachine), deleteProtectionFromConfig(d))
 	vm, err := c.HarvesterClient.KubevirtV1().VirtualMachines(namespace).Update(ctx, toUpdate.(*kubevirtv1.VirtualMachine), metav1.UpdateOptions{})
 	if err != nil {
 		return diag.FromErr(err)
@@ -180,6 +182,13 @@ func resourceVirtualMachineDelete(ctx context.Context, d *schema.ResourceData, m
 			d.SetId("")
 			return nil
 		}
+		return diag.FromErr(err)
+	}
+
+	// Harvester rejects the delete of a protected VM. Stop before writing the
+	// removed-PVCs annotation, so a refused delete leaves no stale request to
+	// remove disks behind.
+	if err = deleteProtectionError(vm); err != nil {
 		return diag.FromErr(err)
 	}
 
