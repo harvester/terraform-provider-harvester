@@ -7,6 +7,15 @@ import (
 	"github.com/harvester/terraform-provider-harvester/pkg/constants"
 )
 
+const (
+	labelKeyClusterNetwork = "network.harvesterhci.io/clusternetwork"
+	labelKeyReady          = "network.harvesterhci.io/ready"
+	labelKeyType           = "network.harvesterhci.io/type"
+	labelKeyVlanID         = "network.harvesterhci.io/vlan-id"
+	labelKeyEnvironment    = "environment"
+	labelValueDev          = "dev"
+)
+
 // TestProcessorsLabels checks that constructing an update keeps the labels
 // Harvester owns on the object while the ones the user manages are rebuilt
 // from the configuration.
@@ -20,54 +29,54 @@ func TestProcessorsLabels(t *testing.T) {
 		{
 			name: "controller labels survive an empty configuration",
 			labels: map[string]string{
-				"network.harvesterhci.io/clusternetwork": "public",
-				"network.harvesterhci.io/ready":          "true",
-				"network.harvesterhci.io/type":           "L2VlanNetwork",
-				"network.harvesterhci.io/vlan-id":        "2166",
+				labelKeyClusterNetwork: "public",
+				labelKeyReady:          "true",
+				labelKeyType:           "L2VlanNetwork",
+				labelKeyVlanID:         "2166",
 			},
 			configured: map[string]interface{}{},
 			expected: map[string]string{
-				"network.harvesterhci.io/clusternetwork": "public",
-				"network.harvesterhci.io/ready":          "true",
-				"network.harvesterhci.io/type":           "L2VlanNetwork",
-				"network.harvesterhci.io/vlan-id":        "2166",
+				labelKeyClusterNetwork: "public",
+				labelKeyReady:          "true",
+				labelKeyType:           "L2VlanNetwork",
+				labelKeyVlanID:         "2166",
 			},
 		},
 		{
 			name: "a removed user label is dropped",
 			labels: map[string]string{
-				"network.harvesterhci.io/vlan-id": "2166",
-				"environment":                     "dev",
+				labelKeyVlanID:      "2166",
+				labelKeyEnvironment: labelValueDev,
 			},
 			configured: map[string]interface{}{},
 			expected: map[string]string{
-				"network.harvesterhci.io/vlan-id": "2166",
+				labelKeyVlanID: "2166",
 			},
 		},
 		{
 			name: "a configured user label is applied",
 			labels: map[string]string{
-				"network.harvesterhci.io/vlan-id": "2166",
-				"environment":                     "dev",
+				labelKeyVlanID:      "2166",
+				labelKeyEnvironment: labelValueDev,
 			},
 			configured: map[string]interface{}{
-				"environment": "prod",
+				labelKeyEnvironment: "prod",
 			},
 			expected: map[string]string{
-				"network.harvesterhci.io/vlan-id": "2166",
-				"environment":                     "prod",
+				labelKeyVlanID:      "2166",
+				labelKeyEnvironment: "prod",
 			},
 		},
 		{
 			name:   "a configured reserved label is ignored",
 			labels: map[string]string{},
 			configured: map[string]interface{}{
-				"network.harvesterhci.io/ready": "false",
-				"harvesterhci.io/creator":       "me",
-				"environment":                   "dev",
+				labelKeyReady:             "false",
+				"harvesterhci.io/creator": "me",
+				labelKeyEnvironment:       labelValueDev,
 			},
 			expected: map[string]string{
-				"environment": "dev",
+				labelKeyEnvironment: labelValueDev,
 			},
 		},
 	}
