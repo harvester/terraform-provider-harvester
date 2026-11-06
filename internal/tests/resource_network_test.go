@@ -73,6 +73,7 @@ func TestAccNetwork_basic(t *testing.T) {
 					resource.TestCheckResourceAttr(testAccNetworkResourceName, constants.FieldCommonName, testAccNetworkName),
 					resource.TestCheckResourceAttr(testAccNetworkResourceName, constants.FieldCommonDescription, testAccNetworkDescription),
 					resource.TestCheckResourceAttr(testAccNetworkResourceName, constants.FieldNetworkVlanID, testAccNetworkVlanID),
+					resource.TestCheckResourceAttr(testAccNetworkResourceName, constants.FieldCommonLabels+".%", "0"),
 				),
 			},
 		},
