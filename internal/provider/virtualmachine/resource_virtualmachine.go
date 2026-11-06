@@ -51,9 +51,9 @@ func resourceVirtualMachineCreate(ctx context.Context, d *schema.ResourceData, m
 	}
 	namespace := d.Get(constants.FieldCommonNamespace).(string)
 	name := d.Get(constants.FieldCommonName).(string)
-	toCreate, err := util.ResourceConstruct(ctx, d, Creator(c, ctx, namespace, name))
-	if err != nil {
-		return diag.FromErr(err)
+	toCreate, dia := util.ResourceConstruct(ctx, d, Creator(c, ctx, namespace, name))
+	if dia.HasError() {
+		return dia
 	}
 	vm, err := c.HarvesterClient.KubevirtV1().VirtualMachines(namespace).Create(ctx, toCreate.(*kubevirtv1.VirtualMachine), metav1.CreateOptions{})
 	if err != nil {
@@ -75,17 +75,15 @@ func resourceVirtualMachineCreate(ctx context.Context, d *schema.ResourceData, m
 	// Create initial snapshot if requested
 	if d.Get(constants.FieldVirtualMachineCreateInitialSnapshot).(bool) {
 		if err := createInitialSnapshot(ctx, c, namespace, name); err != nil {
-			return diag.Diagnostics{
-				diag.Diagnostic{
-					Severity: diag.Warning,
-					Summary:  "Failed to create initial snapshot",
-					Detail:   fmt.Sprintf("VM created successfully but initial snapshot failed: %v", err),
-				},
-			}
+			return append(dia, diag.Diagnostic{
+				Severity: diag.Warning,
+				Summary:  "Failed to create initial snapshot",
+				Detail:   fmt.Sprintf("VM created successfully but initial snapshot failed: %v", err),
+			})
 		}
 	}
 
-	return nil
+	return dia
 }
 
 func resourceVirtualMachineUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -105,9 +103,9 @@ func resourceVirtualMachineUpdate(ctx context.Context, d *schema.ResourceData, m
 		}
 		return diag.FromErr(err)
 	}
-	toUpdate, err := util.ResourceConstruct(ctx, d, Updater(c, ctx, obj))
-	if err != nil {
-		return diag.FromErr(err)
+	toUpdate, dia := util.ResourceConstruct(ctx, d, Updater(c, ctx, obj))
+	if dia.HasError() {
+		return dia
 	}
 	vm, err := c.HarvesterClient.KubevirtV1().VirtualMachines(namespace).Update(ctx, toUpdate.(*kubevirtv1.VirtualMachine), metav1.UpdateOptions{})
 	if err != nil {
@@ -133,7 +131,7 @@ func resourceVirtualMachineUpdate(ctx context.Context, d *schema.ResourceData, m
 			return diag.FromErr(err)
 		}
 	}
-	return diag.FromErr(resourceVirtualMachineWaitForState(ctx, d, meta, runStrategy, namespace, name, schema.TimeoutUpdate, oldInstanceUID))
+	return append(dia, diag.FromErr(resourceVirtualMachineWaitForState(ctx, d, meta, runStrategy, namespace, name, schema.TimeoutUpdate, oldInstanceUID))...)
 }
 
 func resourceVirtualMachineRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {

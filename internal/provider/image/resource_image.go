@@ -56,10 +56,12 @@ func resourceImageCreate(ctx context.Context, d *schema.ResourceData, meta inter
 	}
 	namespace := d.Get(constants.FieldCommonNamespace).(string)
 	name := d.Get(constants.FieldCommonName).(string)
-	toCreate, err := util.ResourceConstruct(ctx, d, Creator(namespace, name))
-	if err != nil {
-		return diag.FromErr(err)
+
+	toCreate, dia := util.ResourceConstruct(ctx, d, Creator(namespace, name))
+	if dia.HasError() {
+		return dia
 	}
+
 	_, err = c.HarvesterClient.HarvesterhciV1beta1().VirtualMachineImages(namespace).Create(ctx, toCreate.(*harvsterv1.VirtualMachineImage), metav1.CreateOptions{})
 	if err != nil {
 		return diag.FromErr(err)
@@ -74,7 +76,7 @@ func resourceImageCreate(ctx context.Context, d *schema.ResourceData, meta inter
 		}
 	}
 
-	return diag.FromErr(resourceImageWaitForState(ctx, d, meta, schema.TimeoutCreate))
+	return append(dia, diag.FromErr(resourceImageWaitForState(ctx, d, meta, schema.TimeoutCreate))...)
 }
 
 func resourceImageUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -94,15 +96,17 @@ func resourceImageUpdate(ctx context.Context, d *schema.ResourceData, meta inter
 		}
 		return diag.FromErr(err)
 	}
-	toUpdate, err := util.ResourceConstruct(ctx, d, Updater(obj))
-	if err != nil {
-		return diag.FromErr(err)
+
+	toUpdate, dia := util.ResourceConstruct(ctx, d, Updater(obj))
+	if dia.HasError() {
+		return dia
 	}
+
 	_, err = c.HarvesterClient.HarvesterhciV1beta1().VirtualMachineImages(namespace).Update(ctx, toUpdate.(*harvsterv1.VirtualMachineImage), metav1.UpdateOptions{})
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	return resourceImageRead(ctx, d, meta)
+	return append(dia, resourceImageRead(ctx, d, meta)...)
 }
 
 func resourceImageRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {

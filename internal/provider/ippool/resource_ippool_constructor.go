@@ -2,6 +2,7 @@ package ippool
 
 import (
 	loadbalancerv1 "github.com/harvester/harvester-load-balancer/pkg/apis/loadbalancer.harvesterhci.io/v1beta1"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 
 	"github.com/harvester/terraform-provider-harvester/internal/util"
 	"github.com/harvester/terraform-provider-harvester/pkg/constants"
@@ -38,12 +39,12 @@ func (c *Constructor) Setup() util.Processors {
 	return append(processors, subresourceProcessors...)
 }
 
-func (c *Constructor) Validate() error {
-	return nil
+func (c *Constructor) Validate() diag.Diagnostics {
+	return diag.Diagnostics{}
 }
 
-func (c *Constructor) Result() (interface{}, error) {
-	return c.IPPool, nil
+func (c *Constructor) Result() (any, diag.Diagnostics) {
+	return c.IPPool, diag.Diagnostics{}
 }
 
 func newIPPoolConstructor(ippool *loadbalancerv1.IPPool) util.Constructor {

@@ -43,16 +43,16 @@ func resourceStorageClassCreate(ctx context.Context, d *schema.ResourceData, met
 		return diag.FromErr(err)
 	}
 	name := d.Get(constants.FieldCommonName).(string)
-	toCreate, err := util.ResourceConstruct(ctx, d, Creator(name))
-	if err != nil {
-		return diag.FromErr(err)
+	toCreate, dia := util.ResourceConstruct(ctx, d, Creator(name))
+	if dia.HasError() {
+		return dia
 	}
 	obj, err := c.StorageClassClient.StorageClasses().Create(ctx, toCreate.(*storagev1.StorageClass), metav1.CreateOptions{})
 	if err != nil {
 		return diag.FromErr(err)
 	}
 	d.SetId(helper.BuildID("", name))
-	return diag.FromErr(resourceStorageClassImport(d, obj))
+	return append(dia, diag.FromErr(resourceStorageClassImport(d, obj))...)
 }
 
 func resourceStorageClassUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -72,15 +72,15 @@ func resourceStorageClassUpdate(ctx context.Context, d *schema.ResourceData, met
 		}
 		return diag.FromErr(err)
 	}
-	toUpdate, err := util.ResourceConstruct(ctx, d, Updater(obj))
-	if err != nil {
-		return diag.FromErr(err)
+	toUpdate, dia := util.ResourceConstruct(ctx, d, Updater(obj))
+	if dia.HasError() {
+		return dia
 	}
 	_, err = c.StorageClassClient.StorageClasses().Update(ctx, toUpdate.(*storagev1.StorageClass), metav1.UpdateOptions{})
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	return resourceStorageClassRead(ctx, d, meta)
+	return append(dia, resourceStorageClassRead(ctx, d, meta)...)
 }
 
 func resourceStorageClassRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {

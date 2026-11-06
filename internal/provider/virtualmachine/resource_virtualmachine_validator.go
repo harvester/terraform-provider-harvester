@@ -22,6 +22,8 @@ var (
 	ErrIOThreadPolicySupplementalPoolButThreadCountNotSet      = errors.New("IO thread policy not `supplemental-pool`, but IO thread count not set")
 	ErrIOThreadPolicySupplementalPoolButThreadCountNotPositive = errors.New("IO thread policy not `supplemental-pool`, but IO thread count not > 0")
 	ErrIOThreadCountSetButIOThreadPolicyNotSupplementalPool    = errors.New("IO thread count > 0, but IO thread policy not `supplemental-pool`")
+
+	ErrRestartAfterUpdateWithHotplugDisk = errors.New("`restart_after_update` is set and a hot-pluggable disk is configured")
 )
 
 func (c *Constructor) getKeyPairs(sshNames []string, defaultNamespace string) ([]*harvsterv1.KeyPair, error) {
@@ -152,5 +154,17 @@ func (c *Constructor) checkIOThreadsPolicy() error {
 		}
 	}
 
+	return nil
+}
+
+func (c *Constructor) checkHotplugDisks() error {
+	if c.RestartAfterUpdate {
+		volumes := c.Builder.VirtualMachine.Spec.Template.Spec.Volumes
+		for _, v := range volumes {
+			if v.PersistentVolumeClaim != nil && v.PersistentVolumeClaim.Hotpluggable {
+				return ErrRestartAfterUpdateWithHotplugDisk
+			}
+		}
+	}
 	return nil
 }

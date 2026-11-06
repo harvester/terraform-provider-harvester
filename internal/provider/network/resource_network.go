@@ -46,15 +46,15 @@ func resourceNetworkCreate(ctx context.Context, d *schema.ResourceData, meta int
 	namespace := d.Get(constants.FieldCommonNamespace).(string)
 	name := d.Get(constants.FieldCommonName).(string)
 	clusterNetworkName := d.Get(constants.FieldNetworkClusterNetworkName).(string)
-	toCreate, err := util.ResourceConstruct(ctx, d, Creator(c, ctx, namespace, name, clusterNetworkName))
-	if err != nil {
-		return diag.FromErr(err)
+	toCreate, dia := util.ResourceConstruct(ctx, d, Creator(c, ctx, namespace, name, clusterNetworkName))
+	if dia.HasError() {
+		return dia
 	}
 	obj, err := c.HarvesterClient.K8sCniCncfIoV1().NetworkAttachmentDefinitions(namespace).Create(ctx, toCreate.(*nadv1.NetworkAttachmentDefinition), metav1.CreateOptions{})
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	return diag.FromErr(resourceNetworkImport(d, obj))
+	return append(dia, diag.FromErr(resourceNetworkImport(d, obj))...)
 }
 
 func resourceNetworkUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -74,15 +74,15 @@ func resourceNetworkUpdate(ctx context.Context, d *schema.ResourceData, meta int
 		}
 		return diag.FromErr(err)
 	}
-	toUpdate, err := util.ResourceConstruct(ctx, d, Updater(c, ctx, obj))
-	if err != nil {
-		return diag.FromErr(err)
+	toUpdate, dia := util.ResourceConstruct(ctx, d, Updater(c, ctx, obj))
+	if dia.HasError() {
+		return dia
 	}
 	_, err = c.HarvesterClient.K8sCniCncfIoV1().NetworkAttachmentDefinitions(namespace).Update(ctx, toUpdate.(*nadv1.NetworkAttachmentDefinition), metav1.UpdateOptions{})
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	return resourceNetworkRead(ctx, d, meta)
+	return append(dia, resourceNetworkRead(ctx, d, meta)...)
 }
 
 func resourceNetworkRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {

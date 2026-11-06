@@ -4,6 +4,7 @@ import (
 	"context"
 
 	devicesv1 "github.com/harvester/pcidevices/pkg/apis/devices.harvesterhci.io/v1beta1"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 
 	"github.com/harvester/terraform-provider-harvester/internal/util"
 	"github.com/harvester/terraform-provider-harvester/pkg/constants"
@@ -38,12 +39,12 @@ func (c *Constructor) Setup() util.Processors {
 	return append(processors, customProcessors...)
 }
 
-func (c *Constructor) Validate() error {
-	return nil
+func (c *Constructor) Validate() diag.Diagnostics {
+	return diag.Diagnostics{}
 }
 
-func (c *Constructor) Result() (interface{}, error) {
-	return c.SRIOVNetworkDevice, nil
+func (c *Constructor) Result() (any, diag.Diagnostics) {
+	return c.SRIOVNetworkDevice, diag.Diagnostics{}
 }
 
 func newSRIOVNetworkDeviceConstructor(ctx context.Context, SRIOVNetworkDevice *devicesv1.SRIOVNetworkDevice) util.Constructor {

@@ -80,9 +80,9 @@ func resourceSRIOVNetworkDeviceUpdate(ctx context.Context, d *schema.ResourceDat
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	toUpdate, err := util.ResourceConstruct(ctx, d, Updater(ctx, obj))
-	if err != nil {
-		return diag.FromErr(err)
+	toUpdate, dia := util.ResourceConstruct(ctx, d, Updater(ctx, obj))
+	if dia.HasError() {
+		return dia
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("numVFs: %d", toUpdate.(*devicesv1.SRIOVNetworkDevice).Spec.NumVFs))
@@ -91,7 +91,7 @@ func resourceSRIOVNetworkDeviceUpdate(ctx context.Context, d *schema.ResourceDat
 		return diag.FromErr(err)
 	}
 
-	return diag.FromErr(resourceSRIOVNetworkDeviceWaitForState(ctx, d, meta, schema.TimeoutUpdate))
+	return append(dia, diag.FromErr(resourceSRIOVNetworkDeviceWaitForState(ctx, d, meta, schema.TimeoutUpdate))...)
 }
 
 func resourceSRIOVNetworkDeviceWaitForState(ctx context.Context, d *schema.ResourceData, meta interface{}, timeoutKey string) error {

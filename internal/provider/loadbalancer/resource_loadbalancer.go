@@ -46,9 +46,9 @@ func resourceLoadBalancerCreate(ctx context.Context, data *schema.ResourceData, 
 	}
 	namespace := data.Get(constants.FieldCommonNamespace).(string)
 	name := data.Get(constants.FieldCommonName).(string)
-	toCreate, err := util.ResourceConstruct(ctx, data, Creator(namespace, name))
-	if err != nil {
-		return diag.FromErr(err)
+	toCreate, dia := util.ResourceConstruct(ctx, data, Creator(namespace, name))
+	if dia.HasError() {
+		return dia
 	}
 
 	_, err = c.HarvesterLoadbalancerClient.
@@ -66,7 +66,7 @@ func resourceLoadBalancerCreate(ctx context.Context, data *schema.ResourceData, 
 		return diag.FromErr(err)
 	}
 
-	return diag.FromErr(resourceLoadBalancerImport(data, loadbalancer))
+	return append(dia, diag.FromErr(resourceLoadBalancerImport(data, loadbalancer))...)
 }
 
 func resourceLoadBalancerWaitIPAddress(ctx context.Context, meta interface{}, name, namespace string) (*loadbalancerv1.LoadBalancer, error) {
@@ -142,9 +142,9 @@ func resourceLoadBalancerUpdate(ctx context.Context, data *schema.ResourceData, 
 		return diag.FromErr(err)
 	}
 
-	toUpdate, err := util.ResourceConstruct(ctx, data, Updater(obj))
-	if err != nil {
-		return diag.FromErr(err)
+	toUpdate, dia := util.ResourceConstruct(ctx, data, Updater(obj))
+	if dia.HasError() {
+		return dia
 	}
 
 	_, err = c.HarvesterLoadbalancerClient.
@@ -160,7 +160,7 @@ func resourceLoadBalancerUpdate(ctx context.Context, data *schema.ResourceData, 
 		return diag.FromErr(err)
 	}
 
-	return diag.FromErr(resourceLoadBalancerImport(data, loadbalancer))
+	return append(dia, diag.FromErr(resourceLoadBalancerImport(data, loadbalancer))...)
 }
 
 func resourceLoadBalancerDelete(ctx context.Context, data *schema.ResourceData, meta interface{}) diag.Diagnostics {

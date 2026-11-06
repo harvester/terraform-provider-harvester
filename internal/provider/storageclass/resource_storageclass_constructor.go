@@ -1,6 +1,7 @@
 package storageclass
 
 import (
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	corev1 "k8s.io/api/core/v1"
 	storagev1 "k8s.io/api/storage/v1"
@@ -99,12 +100,12 @@ func (c *Constructor) Setup() util.Processors {
 	return append(processors, customProcessors...)
 }
 
-func (c *Constructor) Validate() error {
-	return nil
+func (c *Constructor) Validate() diag.Diagnostics {
+	return diag.Diagnostics{}
 }
 
-func (c *Constructor) Result() (interface{}, error) {
-	return c.StorageClass, nil
+func (c *Constructor) Result() (any, diag.Diagnostics) {
+	return c.StorageClass, diag.Diagnostics{}
 }
 
 func newStorageClassConstructor(StorageClass *storagev1.StorageClass) util.Constructor {

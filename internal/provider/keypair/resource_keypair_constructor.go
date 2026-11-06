@@ -2,6 +2,7 @@ package keypair
 
 import (
 	harvsterv1 "github.com/harvester/harvester/pkg/apis/harvesterhci.io/v1beta1"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 
 	"github.com/harvester/terraform-provider-harvester/internal/util"
 	"github.com/harvester/terraform-provider-harvester/pkg/constants"
@@ -23,12 +24,12 @@ func (c *Constructor) Setup() util.Processors {
 		String(constants.FieldKeyPairPublicKey, &c.KeyPair.Spec.PublicKey, true)
 }
 
-func (c *Constructor) Validate() error {
-	return nil
+func (c *Constructor) Validate() diag.Diagnostics {
+	return diag.Diagnostics{}
 }
 
-func (c *Constructor) Result() (interface{}, error) {
-	return c.KeyPair, nil
+func (c *Constructor) Result() (any, diag.Diagnostics) {
+	return c.KeyPair, diag.Diagnostics{}
 }
 
 func newKeyPairConstructor(keyPair *harvsterv1.KeyPair) util.Constructor {

@@ -180,9 +180,9 @@ func handleStorageNetworkSetting(newSetting *harvsterv1.Setting, oldValue string
 func updateSetting(ctx context.Context, harvesterClient *harvclient.Clientset, d *schema.ResourceData, oldSetting *harvsterv1.Setting) diag.Diagnostics {
 	oldValue := oldSetting.Value
 
-	toUpdate, err := util.ResourceConstruct(ctx, d, Updater(oldSetting))
-	if err != nil {
-		return diag.FromErr(err)
+	toUpdate, dia := util.ResourceConstruct(ctx, d, Updater(oldSetting))
+	if dia.HasError() {
+		return dia
 	}
 
 	newSetting := toUpdate.(*harvsterv1.Setting)
@@ -191,7 +191,7 @@ func updateSetting(ctx context.Context, harvesterClient *harvclient.Clientset, d
 
 	handleContainerdRegistrySetting(newSetting, oldValue)
 
-	newSetting, err = harvesterClient.HarvesterhciV1beta1().Settings().Update(ctx, newSetting, metav1.UpdateOptions{})
+	newSetting, err := harvesterClient.HarvesterhciV1beta1().Settings().Update(ctx, newSetting, metav1.UpdateOptions{})
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -200,7 +200,7 @@ func updateSetting(ctx context.Context, harvesterClient *harvclient.Clientset, d
 	// Without this, Terraform would detect a diff on every plan due to value normalization,
 	// causing an infinite update loop.
 	newSetting.Value = newValue
-	return diag.FromErr(resourceSettingImport(d, newSetting))
+	return append(dia, diag.FromErr(resourceSettingImport(d, newSetting))...)
 }
 
 func handleContainerdRegistrySetting(newSetting *harvsterv1.Setting, oldValue string) {

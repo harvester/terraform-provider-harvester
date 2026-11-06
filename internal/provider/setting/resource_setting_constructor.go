@@ -2,6 +2,7 @@ package setting
 
 import (
 	harvsterv1 "github.com/harvester/harvester/pkg/apis/harvesterhci.io/v1beta1"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/harvester/terraform-provider-harvester/internal/util"
@@ -24,12 +25,12 @@ func (c *Constructor) Setup() util.Processors {
 		String(constants.FieldSettingValue, &c.Setting.Value, true)
 }
 
-func (c *Constructor) Validate() error {
-	return nil
+func (c *Constructor) Validate() diag.Diagnostics {
+	return diag.Diagnostics{}
 }
 
-func (c *Constructor) Result() (interface{}, error) {
-	return c.Setting, nil
+func (c *Constructor) Result() (any, diag.Diagnostics) {
+	return c.Setting, diag.Diagnostics{}
 }
 
 func newSettingConstructor(setting *harvsterv1.Setting) util.Constructor {

@@ -2,6 +2,7 @@ package clusternetwork
 
 import (
 	harvsternetworkv1 "github.com/harvester/harvester-network-controller/pkg/apis/network.harvesterhci.io/v1beta1"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 
 	"github.com/harvester/terraform-provider-harvester/internal/util"
 )
@@ -23,12 +24,12 @@ func (c *Constructor) Setup() util.Processors {
 	return append(processors, customProcessors...)
 }
 
-func (c *Constructor) Validate() error {
-	return nil
+func (c *Constructor) Validate() diag.Diagnostics {
+	return diag.Diagnostics{}
 }
 
-func (c *Constructor) Result() (interface{}, error) {
-	return c.ClusterNetwork, nil
+func (c *Constructor) Result() (any, diag.Diagnostics) {
+	return c.ClusterNetwork, diag.Diagnostics{}
 }
 
 func newClusterNetworkConstructor(clusterNetwork *harvsternetworkv1.ClusterNetwork) util.Constructor {

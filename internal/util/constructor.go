@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-log/tflog"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -18,8 +19,8 @@ import (
 
 type Constructor interface {
 	Setup() Processors
-	Result() (interface{}, error)
-	Validate() error
+	Result() (interface{}, diag.Diagnostics)
+	Validate() diag.Diagnostics
 }
 
 type Processor struct {
@@ -108,7 +109,7 @@ func NewProcessors() Processors {
 	return []Processor{}
 }
 
-func ResourceConstruct(ctx context.Context, d *schema.ResourceData, c Constructor) (interface{}, error) {
+func ResourceConstruct(ctx context.Context, d *schema.ResourceData, c Constructor) (interface{}, diag.Diagnostics) {
 	for _, processor := range c.Setup() {
 		var (
 			value interface{}
@@ -127,19 +128,25 @@ func ResourceConstruct(ctx context.Context, d *schema.ResourceData, c Constructo
 		if reflectVal.Kind() == reflect.Slice {
 			for _, item := range value.([]interface{}) {
 				if err := processor.Parser(item); err != nil {
-					return nil, err
+					return nil, diag.FromErr(err)
 				}
 			}
 		} else {
 			if err := processor.Parser(value); err != nil {
-				return nil, err
+				return nil, diag.FromErr(err)
 			}
 		}
 	}
-	if err := c.Validate(); err != nil {
-		return nil, err
+
+	val := c.Validate()
+	if val.HasError() {
+		return nil, val
 	}
-	return c.Result()
+
+	// if Validate() doesn't produce an error, then there may still be a warning, so the validation
+	// results must be returned.
+	result, dia := c.Result()
+	return result, append(dia, val...)
 }
 
 func MapMerge(dst map[string]string, prefix string, values map[string]interface{}) map[string]string {

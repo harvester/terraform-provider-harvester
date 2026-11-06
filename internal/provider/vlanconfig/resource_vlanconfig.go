@@ -44,16 +44,16 @@ func resourceVLANConfigCreate(ctx context.Context, d *schema.ResourceData, meta 
 		return diag.FromErr(err)
 	}
 	name := d.Get(constants.FieldCommonName).(string)
-	toCreate, err := util.ResourceConstruct(ctx, d, Creator(name))
-	if err != nil {
-		return diag.FromErr(err)
+	toCreate, dia := util.ResourceConstruct(ctx, d, Creator(name))
+	if dia.HasError() {
+		return dia
 	}
 	obj, err := c.HarvesterNetworkClient.NetworkV1beta1().VlanConfigs().Create(ctx, toCreate.(*harvsternetworkv1.VlanConfig), metav1.CreateOptions{})
 	if err != nil {
 		return diag.FromErr(err)
 	}
 	d.SetId(helper.BuildID("", name))
-	return diag.FromErr(resourceVLANConfigImport(d, obj))
+	return append(dia, diag.FromErr(resourceVLANConfigImport(d, obj))...)
 }
 
 func resourceVLANConfigUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -73,15 +73,15 @@ func resourceVLANConfigUpdate(ctx context.Context, d *schema.ResourceData, meta 
 		}
 		return diag.FromErr(err)
 	}
-	toUpdate, err := util.ResourceConstruct(ctx, d, Updater(obj))
-	if err != nil {
-		return diag.FromErr(err)
+	toUpdate, dia := util.ResourceConstruct(ctx, d, Updater(obj))
+	if dia.HasError() {
+		return dia
 	}
 	_, err = c.HarvesterNetworkClient.NetworkV1beta1().VlanConfigs().Update(ctx, toUpdate.(*harvsternetworkv1.VlanConfig), metav1.UpdateOptions{})
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	return resourceVLANConfigRead(ctx, d, meta)
+	return append(dia, resourceVLANConfigRead(ctx, d, meta)...)
 }
 
 func resourceVLANConfigRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
