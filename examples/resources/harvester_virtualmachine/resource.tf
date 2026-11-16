@@ -167,3 +167,53 @@ resource "harvester_virtualmachine" "opensuse154" {
     network_data_secret_name = harvester_cloudinit_secret.cloud-config-opensuse154.name
   }
 }
+# Two web VMs on nodes with SSD disks, never on the same node.
+resource "harvester_virtualmachine" "web" {
+  count     = 2
+  name      = "web-${count.index}"
+  namespace = "default"
+
+  cpu    = 2
+  memory = "2Gi"
+
+  network_interface {
+    name         = "nic-1"
+    network_name = harvester_network.mgmt-vlan1.id
+  }
+
+  disk {
+    name       = "rootdisk"
+    type       = "disk"
+    size       = "10Gi"
+    bus        = "virtio"
+    boot_order = 1
+
+    image       = harvester_image.opensuse154.id
+    auto_delete = true
+  }
+
+  node_affinity {
+    required {
+      node_selector_term {
+        match_expressions {
+          key      = "disktype"
+          operator = "In"
+          values   = ["ssd"]
+        }
+      }
+    }
+  }
+
+  pod_anti_affinity {
+    required {
+      topology_key = "kubernetes.io/hostname"
+      label_selector {
+        match_expressions {
+          key      = "harvesterhci.io/vmName"
+          operator = "In"
+          values   = ["web-0", "web-1"]
+        }
+      }
+    }
+  }
+}
