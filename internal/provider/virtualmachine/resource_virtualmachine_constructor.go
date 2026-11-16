@@ -40,10 +40,18 @@ func (c *Constructor) Setup() util.Processors {
 	if vmBuilder == nil {
 		return nil
 	}
+	// Labels() drops every label that is not Harvester-owned, so that removed
+	// `labels` entries disappear on update. The delete protection label is
+	// managed by delete_protection instead: keep it, so an update that does
+	// not set delete_protection leaves the VM's protection unchanged.
+	deleteProtection, hasDeleteProtection := c.Builder.VirtualMachine.Labels[constants.LabelVMDeleteProtection]
 	processors := util.NewProcessors().
 		Tags(&c.Builder.VirtualMachine.Labels).
 		Labels(&c.Builder.VirtualMachine.Labels).
 		Description(&c.Builder.VirtualMachine.Annotations)
+	if hasDeleteProtection {
+		c.Builder.VirtualMachine.Labels[constants.LabelVMDeleteProtection] = deleteProtection
+	}
 
 	customProcessors := []util.Processor{
 		{

@@ -43,6 +43,7 @@ data "harvester_virtualmachine" "opensuse154" {
 - `cpu_model` (String) CPU model for the virtual machine
 - `cpu_pinning` (Boolean) To enable VM CPU pinning, ensure that at least one node has the CPU manager enabled
 - `create_initial_snapshot` (Boolean) Create an initial snapshot named {vm-name}-initial after the VM is created and ready
+- `delete_protection` (Boolean) Protect the VM from deletion. It sets the label `kubevirt.io/vm-delete-protection` to `"true"` or `"false"` on the VM. While it is enabled, Harvester rejects every delete request for the VM, so `terraform destroy` fails: set it to `false` and apply first. When unset, the provider keeps the value already on the VM, which Harvester sets from the `default-vm-delete-protection` setting when the VM is created. Manage this label through this field, not through `labels`.
 - `description` (String) Any text you want that better describes this resource
 - `disk` (List of Object) (see [below for nested schema](#nestedatt--disk))
 - `efi` (Boolean)

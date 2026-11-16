@@ -132,6 +132,10 @@ resource "harvester_virtualmachine" "opensuse154" {
   hostname     = "opensuse154"
   machine_type = "q35"
 
+  # Harvester rejects deleting this VM while it is true. Set it to false and
+  # apply before running terraform destroy.
+  delete_protection = true
+
   ssh_keys = [
     harvester_ssh_key.mysshkey.id
   ]
@@ -201,6 +205,7 @@ resource "harvester_virtualmachine" "opensuse154" {
 - `cpu_model` (String) CPU model for the virtual machine
 - `cpu_pinning` (Boolean) To enable VM CPU pinning, ensure that at least one node has the CPU manager enabled
 - `create_initial_snapshot` (Boolean) Create an initial snapshot named {vm-name}-initial after the VM is created and ready
+- `delete_protection` (Boolean) Protect the VM from deletion. It sets the label `kubevirt.io/vm-delete-protection` to `"true"` or `"false"` on the VM. While it is enabled, Harvester rejects every delete request for the VM, so `terraform destroy` fails: set it to `false` and apply first. When unset, the provider keeps the value already on the VM, which Harvester sets from the `default-vm-delete-protection` setting when the VM is created. Manage this label through this field, not through `labels`.
 - `description` (String) Any text you want that better describes this resource
 - `efi` (Boolean)
 - `host_device` (Block List) Attaches a host device to the VM (see [below for nested schema](#nestedblock--host_device))

@@ -56,6 +56,15 @@ please use %s instead of this deprecated field:
 				constants.FieldVirtualMachineStart, constants.FieldVirtualMachineRunStrategy, kubevirtv1.RunStrategyRerunOnFailure,
 				constants.FieldVirtualMachineStart, constants.FieldVirtualMachineRunStrategy, kubevirtv1.RunStrategyHalted),
 		},
+		constants.FieldVirtualMachineDeleteProtection: {
+			Type:     schema.TypeBool,
+			Optional: true,
+			Computed: true,
+			Description: "Protect the VM from deletion. It sets the label `" + constants.LabelVMDeleteProtection + "` to `\"true\"` or `\"false\"` on the VM. " +
+				"While it is enabled, Harvester rejects every delete request for the VM, so `terraform destroy` fails: set it to `false` and apply first. " +
+				"When unset, the provider keeps the value already on the VM, which Harvester sets from the `default-vm-delete-protection` setting when the VM is created. " +
+				"Manage this label through this field, not through `labels`.",
+		},
 		constants.FieldVirtualMachineCPU: {
 			Type:     schema.TypeInt,
 			Optional: true,
