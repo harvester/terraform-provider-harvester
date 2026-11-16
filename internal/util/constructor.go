@@ -14,6 +14,7 @@ import (
 	"github.com/harvester/harvester/pkg/builder"
 
 	"github.com/harvester/terraform-provider-harvester/pkg/constants"
+	"github.com/harvester/terraform-provider-harvester/pkg/helper"
 )
 
 type Constructor interface {
@@ -81,8 +82,7 @@ func (p Processors) Tags(labels *map[string]string) Processors {
 
 func (p Processors) Labels(labels *map[string]string) Processors {
 	for key := range *labels {
-		if !strings.HasPrefix(key, builder.LabelPrefixHarvesterTag) &&
-			!strings.HasPrefix(key, builder.LabelAnnotationPrefixHarvester) {
+		if !helper.IsReservedLabelKey(key) {
 			delete(*labels, key)
 		}
 	}
@@ -94,8 +94,7 @@ func (p Processors) Labels(labels *map[string]string) Processors {
 				*labels = map[string]string{}
 			}
 			for key, value := range i.(map[string]interface{}) {
-				if !strings.HasPrefix(key, builder.LabelPrefixHarvesterTag) &&
-					!strings.HasPrefix(key, builder.LabelAnnotationPrefixHarvester) {
+				if !helper.IsReservedLabelKey(key) {
 					(*labels)[key] = value.(string)
 				}
 			}
