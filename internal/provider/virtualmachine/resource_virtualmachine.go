@@ -8,9 +8,11 @@ import (
 
 	harvsterv1 "github.com/harvester/harvester/pkg/apis/harvesterhci.io/v1beta1"
 	harvesterutil "github.com/harvester/harvester/pkg/util"
+	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -23,6 +25,64 @@ import (
 	"github.com/harvester/terraform-provider-harvester/pkg/helper"
 	"github.com/harvester/terraform-provider-harvester/pkg/importer"
 )
+
+func WarnIfHotplugDiskAndRestartAfterUpdate() schema.ValidateRawResourceConfigFunc {
+	type attribute struct {
+		path  cty.Path
+		value cty.Value
+	}
+	return func(ctx context.Context, req schema.ValidateResourceConfigFuncRequest, resp *schema.ValidateResourceConfigFuncResponse) {
+		var (
+			attrs                    []attribute
+			has_restart_after_update bool
+			has_hot_plug             bool
+		)
+
+		// walk the config tree and look for the attributes
+		err := cty.Walk(req.RawConfig, func(p cty.Path, v cty.Value) (bool, error) {
+			if validation.PathMatches(p, cty.GetAttrPath("restart_after_update")) && v.True() {
+				has_restart_after_update = true
+				attrs = append(attrs, attribute{
+					path:  p,
+					value: v,
+				})
+			}
+
+			if p.HasPrefix(cty.GetAttrPath("disk")) {
+				if len(p) == 0 {
+					return false, nil
+				}
+
+				step, ok := p[len(p)-1].(cty.GetAttrStep)
+
+				if ok && (cty.Path{step}).Equals(cty.GetAttrPath("hot_plug")) && v.True() {
+					has_hot_plug = true
+					attrs = append(attrs, attribute{
+						path:  p,
+						value: v,
+					})
+				}
+			}
+
+			return true, nil
+		})
+		if err != nil {
+			return
+		}
+
+		// generate warnings for all locations
+		if has_restart_after_update && has_hot_plug {
+			for _, a := range attrs {
+				resp.Diagnostics = append(resp.Diagnostics, diag.Diagnostic{
+					Severity:      diag.Warning,
+					Summary:       "Conflicting settings restart_after_update and hotplug enabled.",
+					Detail:        fmt.Sprintf("The setting restart_after_update forces a restart on any resource update, even pluggin in a hotplug disk %s", a.path),
+					AttributePath: a.path,
+				})
+			}
+		}
+	}
+}
 
 func ResourceVirtualMachine() *schema.Resource {
 	return &schema.Resource{
@@ -40,6 +100,9 @@ func ResourceVirtualMachine() *schema.Resource {
 			Update:  schema.DefaultTimeout(2 * time.Minute),
 			Delete:  schema.DefaultTimeout(5 * time.Minute),
 			Default: schema.DefaultTimeout(2 * time.Minute),
+		},
+		ValidateRawResourceConfigFuncs: []schema.ValidateRawResourceConfigFunc{
+			WarnIfHotplugDiskAndRestartAfterUpdate(),
 		},
 	}
 }
