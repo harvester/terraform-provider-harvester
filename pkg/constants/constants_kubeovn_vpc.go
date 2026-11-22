@@ -1,0 +1,31 @@
+package constants
+
+const (
+	ResourceTypeKubeOVNVpc = "harvester_kubeovn_vpc"
+
+	FieldKubeOVNVpcNamespaces     = "namespaces"
+	FieldKubeOVNVpcStaticRoutes   = "static_routes"
+	FieldKubeOVNVpcPolicyRoutes   = "policy_routes"
+	FieldKubeOVNVpcEnableExternal = "enable_external"
+	FieldKubeOVNVpcEnableBfd      = "enable_bfd"
+	FieldKubeOVNVpcDefaultSubnet  = "default_subnet"
+	FieldKubeOVNVpcStandby        = "standby"
+	FieldKubeOVNVpcRouter         = "router"
+	FieldKubeOVNVpcSubnets        = "subnets"
+
+	FieldKubeOVNStaticRoutePolicy    = "policy"
+	FieldKubeOVNStaticRouteCIDR      = "cidr"
+	FieldKubeOVNStaticRouteNextHopIP = "next_hop_ip"
+	FieldKubeOVNStaticRouteECMPMode  = "ecmp_mode"
+	FieldKubeOVNStaticRouteTable     = "route_table"
+
+	FieldKubeOVNPolicyRoutePriority  = "priority"
+	FieldKubeOVNPolicyRouteMatch     = "match"
+	FieldKubeOVNPolicyRouteAction    = "action"
+	FieldKubeOVNPolicyRouteNextHopIP = "next_hop_ip"
+)
+
+// LabelPrefixKubeOVN is the prefix of the labels the kube-ovn controller sets
+// on the objects it manages. They are neither read into nor removed by the
+// provider.
+const LabelPrefixKubeOVN = "ovn.kubernetes.io/"
