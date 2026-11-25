@@ -11,6 +11,41 @@ import (
 	"github.com/harvester/terraform-provider-harvester/pkg/constants"
 )
 
+const (
+	labelKeyClusterNetwork = "network.harvesterhci.io/clusternetwork"
+	labelKeyReady          = "network.harvesterhci.io/ready"
+	labelKeyType           = "network.harvesterhci.io/type"
+	labelKeyVlanID         = "network.harvesterhci.io/vlan-id"
+	labelKeyTag            = "tag.harvesterhci.io/environment"
+	labelKeyForeign        = "example.com/owner"
+	labelKeyEnvironment    = "environment"
+
+	labelValuePublic      = "public"
+	labelValueTrue        = "true"
+	labelValueL2Vlan      = "L2VlanNetwork"
+	labelValueVlanID      = "2166"
+	labelValueSomeoneElse = "someone-else"
+	labelValueDev         = "dev"
+)
+
+// untouchedLabels returns the labels an update has to leave on the object: the
+// four the Harvester network controller derives from the
+// NetworkAttachmentDefinition, and one written by somebody else. Anything in
+// extra is added on top.
+func untouchedLabels(extra map[string]string) map[string]string {
+	labels := map[string]string{
+		labelKeyClusterNetwork: labelValuePublic,
+		labelKeyReady:          labelValueTrue,
+		labelKeyType:           labelValueL2Vlan,
+		labelKeyVlanID:         labelValueVlanID,
+		labelKeyForeign:        labelValueSomeoneElse,
+	}
+	for key, value := range extra {
+		labels[key] = value
+	}
+	return labels
+}
+
 // TestUpdaterKeepsControllerLabels checks that an update of a network leaves
 // the labels the Harvester network controller derives from the
 // NetworkAttachmentDefinition on the object, together with the labels written
@@ -22,34 +57,18 @@ func TestUpdaterKeepsControllerLabels(t *testing.T) {
 			Name:        "public-vlan-2166",
 			Namespace:   "harvester-public",
 			Annotations: map[string]string{},
-			Labels: map[string]string{
-				"network.harvesterhci.io/clusternetwork": "public",
-				"network.harvesterhci.io/ready":          "true",
-				"network.harvesterhci.io/type":           "L2VlanNetwork",
-				"network.harvesterhci.io/vlan-id":        "2166",
-				"tag.harvesterhci.io/environment":        "dev",
-				"example.com/owner":                      "someone-else",
-				"environment":                            "dev",
-			},
+			Labels: untouchedLabels(map[string]string{
+				labelKeyTag:         labelValueDev,
+				labelKeyEnvironment: labelValueDev,
+			}),
 		},
 	}
 	// The tag is rebuilt from the tags of the configuration, so it is dropped
 	// when the processors are registered.
-	afterSetup := map[string]string{
-		"network.harvesterhci.io/clusternetwork": "public",
-		"network.harvesterhci.io/ready":          "true",
-		"network.harvesterhci.io/type":           "L2VlanNetwork",
-		"network.harvesterhci.io/vlan-id":        "2166",
-		"example.com/owner":                      "someone-else",
-		"environment":                            "dev",
-	}
-	expected := map[string]string{
-		"network.harvesterhci.io/clusternetwork": "public",
-		"network.harvesterhci.io/ready":          "true",
-		"network.harvesterhci.io/type":           "L2VlanNetwork",
-		"network.harvesterhci.io/vlan-id":        "2166",
-		"example.com/owner":                      "someone-else",
-	}
+	afterSetup := untouchedLabels(map[string]string{
+		labelKeyEnvironment: labelValueDev,
+	})
+	expected := untouchedLabels(nil)
 
 	constructor := Updater(nil, context.Background(), network)
 	processors := constructor.Setup()
@@ -70,7 +89,7 @@ func TestUpdaterKeepsControllerLabels(t *testing.T) {
 
 	// The state carries the label the user manages, the configuration no
 	// longer declares it.
-	state := map[string]interface{}{"environment": "dev"}
+	state := map[string]interface{}{labelKeyEnvironment: labelValueDev}
 	configured := map[string]interface{}{}
 	if err := parser(state, configured); err != nil {
 		t.Fatalf("parsing the configured labels: %v", err)

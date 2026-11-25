@@ -27,13 +27,11 @@ func labelTestSchema() map[string]*schema.Schema {
 // state, for a resource that Terraform already knows, for the read that
 // follows a terraform import, and for a data source.
 func TestStatesSetLabels(t *testing.T) {
-	const (
-		name       = "public-vlan-2166"
-		foreignKey = "example.com/owner"
-	)
+	const name = "public-vlan-2166"
+
 	onTheObject := map[string]string{
-		labelKeyEnvironment: "prod",
-		foreignKey:          "someone-else",
+		labelKeyEnvironment: labelValueProd,
+		labelKeyForeign:     labelValueSomeoneElse,
 	}
 
 	testcases := []struct {
@@ -46,10 +44,10 @@ func TestStatesSetLabels(t *testing.T) {
 			name: "a known resource records only the labels it manages",
 			prior: map[string]interface{}{
 				constants.FieldCommonName:   name,
-				constants.FieldCommonLabels: map[string]interface{}{labelKeyEnvironment: "dev"},
+				constants.FieldCommonLabels: map[string]interface{}{labelKeyEnvironment: labelValueDev},
 			},
 			dataSetter: ResourceStatesSet,
-			expected:   map[string]interface{}{labelKeyEnvironment: "prod"},
+			expected:   map[string]interface{}{labelKeyEnvironment: labelValueProd},
 		},
 		{
 			name: "a known resource with no labels records none",
@@ -64,8 +62,8 @@ func TestStatesSetLabels(t *testing.T) {
 			prior:      map[string]interface{}{},
 			dataSetter: ResourceStatesSet,
 			expected: map[string]interface{}{
-				labelKeyEnvironment: "prod",
-				foreignKey:          "someone-else",
+				labelKeyEnvironment: labelValueProd,
+				labelKeyForeign:     labelValueSomeoneElse,
 			},
 		},
 		{
@@ -75,8 +73,8 @@ func TestStatesSetLabels(t *testing.T) {
 			},
 			dataSetter: DataSourceStatesSet,
 			expected: map[string]interface{}{
-				labelKeyEnvironment: "prod",
-				foreignKey:          "someone-else",
+				labelKeyEnvironment: labelValueProd,
+				labelKeyForeign:     labelValueSomeoneElse,
 			},
 		},
 	}
@@ -119,9 +117,9 @@ func TestManagedLabels(t *testing.T) {
 			name:  "labels nobody declared are not recorded",
 			known: map[string]interface{}{},
 			actual: map[string]string{
-				labelKeyClusterNetwork: "public",
+				labelKeyClusterNetwork: labelValuePublic,
 				labelKeyKubevirt:       "vm",
-				"owner":                "someone-else",
+				labelKeyOwner:          labelValueSomeoneElse,
 			},
 			expected: map[string]string{},
 		},
@@ -131,11 +129,11 @@ func TestManagedLabels(t *testing.T) {
 				labelKeyEnvironment: labelValueDev,
 			},
 			actual: map[string]string{
-				labelKeyEnvironment:    "prod",
-				labelKeyClusterNetwork: "public",
+				labelKeyEnvironment:    labelValueProd,
+				labelKeyClusterNetwork: labelValuePublic,
 			},
 			expected: map[string]string{
-				labelKeyEnvironment: "prod",
+				labelKeyEnvironment: labelValueProd,
 			},
 		},
 		{
@@ -144,7 +142,7 @@ func TestManagedLabels(t *testing.T) {
 				labelKeyEnvironment: labelValueDev,
 			},
 			actual: map[string]string{
-				labelKeyClusterNetwork: "public",
+				labelKeyClusterNetwork: labelValuePublic,
 			},
 			expected: map[string]string{},
 		},

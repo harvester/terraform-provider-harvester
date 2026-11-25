@@ -14,7 +14,15 @@ const (
 	labelKeyVlanID         = "network.harvesterhci.io/vlan-id"
 	labelKeyKubevirt       = "kubevirt.io/domain"
 	labelKeyEnvironment    = "environment"
-	labelValueDev          = "dev"
+	labelKeyOwner          = "owner"
+	labelKeyForeign        = "example.com/owner"
+
+	labelValueDev         = "dev"
+	labelValueProd        = "prod"
+	labelValueTrue        = "true"
+	labelValuePublic      = "public"
+	labelValueSomeoneElse = "someone-else"
+	labelValueL2Vlan      = "L2VlanNetwork"
 )
 
 // TestProcessorsLabels checks that constructing an update applies the labels
@@ -32,17 +40,17 @@ func TestProcessorsLabels(t *testing.T) {
 		{
 			name: "controller labels survive an empty configuration",
 			labels: map[string]string{
-				labelKeyClusterNetwork: "public",
-				labelKeyReady:          "true",
-				labelKeyType:           "L2VlanNetwork",
+				labelKeyClusterNetwork: labelValuePublic,
+				labelKeyReady:          labelValueTrue,
+				labelKeyType:           labelValueL2Vlan,
 				labelKeyVlanID:         "2166",
 			},
 			state:      map[string]interface{}{},
 			configured: map[string]interface{}{},
 			expected: map[string]string{
-				labelKeyClusterNetwork: "public",
-				labelKeyReady:          "true",
-				labelKeyType:           "L2VlanNetwork",
+				labelKeyClusterNetwork: labelValuePublic,
+				labelKeyReady:          labelValueTrue,
+				labelKeyType:           labelValueL2Vlan,
 				labelKeyVlanID:         "2166",
 			},
 		},
@@ -64,7 +72,7 @@ func TestProcessorsLabels(t *testing.T) {
 			labels: map[string]string{
 				labelKeyVlanID:      "2166",
 				labelKeyEnvironment: labelValueDev,
-				"owner":             "someone-else",
+				labelKeyOwner:       labelValueSomeoneElse,
 			},
 			state: map[string]interface{}{
 				labelKeyEnvironment: labelValueDev,
@@ -75,7 +83,7 @@ func TestProcessorsLabels(t *testing.T) {
 			expected: map[string]string{
 				labelKeyVlanID:      "2166",
 				labelKeyEnvironment: labelValueDev,
-				"owner":             "someone-else",
+				labelKeyOwner:       labelValueSomeoneElse,
 			},
 		},
 		{
@@ -102,18 +110,18 @@ func TestProcessorsLabels(t *testing.T) {
 				labelKeyEnvironment: labelValueDev,
 			},
 			configured: map[string]interface{}{
-				labelKeyEnvironment: "prod",
+				labelKeyEnvironment: labelValueProd,
 			},
 			expected: map[string]string{
 				labelKeyVlanID:      "2166",
-				labelKeyEnvironment: "prod",
+				labelKeyEnvironment: labelValueProd,
 			},
 		},
 		{
 			name:  "a configured reserved label is ignored",
 			state: map[string]interface{}{},
 			labels: map[string]string{
-				labelKeyReady: "true",
+				labelKeyReady: labelValueTrue,
 			},
 			configured: map[string]interface{}{
 				labelKeyReady:             "false",
@@ -121,21 +129,21 @@ func TestProcessorsLabels(t *testing.T) {
 				labelKeyEnvironment:       labelValueDev,
 			},
 			expected: map[string]string{
-				labelKeyReady:       "true",
+				labelKeyReady:       labelValueTrue,
 				labelKeyEnvironment: labelValueDev,
 			},
 		},
 		{
 			name: "a reserved label left in the state is not removed",
 			labels: map[string]string{
-				labelKeyReady: "true",
+				labelKeyReady: labelValueTrue,
 			},
 			state: map[string]interface{}{
-				labelKeyReady: "true",
+				labelKeyReady: labelValueTrue,
 			},
 			configured: map[string]interface{}{},
 			expected: map[string]string{
-				labelKeyReady: "true",
+				labelKeyReady: labelValueTrue,
 			},
 		},
 	}
