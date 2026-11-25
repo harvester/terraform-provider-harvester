@@ -39,5 +39,5 @@ func dataSourceClusterNetworkImport(d *schema.ResourceData, obj *harvsternetwork
 	if err != nil {
 		return err
 	}
-	return util.ResourceStatesSet(d, stateGetter)
+	return util.DataSourceStatesSet(d, stateGetter)
 }

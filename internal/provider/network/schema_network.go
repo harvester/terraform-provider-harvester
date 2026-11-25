@@ -62,7 +62,7 @@ func Schema() map[string]*schema.Schema {
 		},
 	}
 	util.NamespacedSchemaWrap(s, false)
-	s[constants.FieldCommonLabels].Computed = true // labels may be updated by API server
+	s[constants.FieldCommonLabels].Computed = true
 	return s
 }
 
