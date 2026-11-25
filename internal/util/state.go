@@ -20,9 +20,12 @@ func DataSourceStatesSet(d *schema.ResourceData, getter *importer.StateGetter) e
 }
 
 func statesSet(d *schema.ResourceData, getter *importer.StateGetter, managedLabelsOnly bool) error {
+	filterLabels := managedLabelsOnly && !isImporting(d)
+	knownLabels := d.Get(constants.FieldCommonLabels)
+
 	for key, value := range getter.States {
-		if managedLabelsOnly && key == constants.FieldCommonLabels {
-			value = managedLabels(d.Get(key), value)
+		if filterLabels && key == constants.FieldCommonLabels {
+			value = managedLabels(knownLabels, value)
 		}
 		if err := d.Set(key, value); err != nil {
 			return err
@@ -31,6 +34,12 @@ func statesSet(d *schema.ResourceData, getter *importer.StateGetter, managedLabe
 	d.SetId(getter.ID)
 	return nil
 }
+
+func isImporting(d *schema.ResourceData) bool {
+	name, ok := d.Get(constants.FieldCommonName).(string)
+	return ok && name == ""
+}
+
 func managedLabels(known, actual interface{}) interface{} {
 	knownLabels, ok := known.(map[string]interface{})
 	if !ok {
