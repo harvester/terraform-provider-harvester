@@ -27,6 +27,11 @@ type Processor struct {
 	Parser   func(interface{}) error
 	Field    string
 	Required bool
+	// ChangeParser is called with the previous and the current value of Field,
+	// and replaces Parser when it is set. It runs on every construction,
+	// including the ones where the configuration leaves Field empty, so that a
+	// field emptied in the configuration is still processed.
+	ChangeParser func(previous, current interface{}) error
 }
 
 type Processors []Processor
@@ -80,20 +85,33 @@ func (p Processors) Tags(labels *map[string]string) Processors {
 	})
 }
 
+/* Labels applies the labels of the configuration to the object and leaves
+ * every other label on it untouched.
+ *
+ * Which labels the configuration owns is taken from the Terraform state: a key
+ * is removed from the object only when the state carried it and the
+ * configuration no longer declares it. Labels written by Harvester, by another
+ * controller, by a mutating webhook or by hand are never in the state, so they
+ * survive an update instead of being reverted on the next apply.
+ */
 func (p Processors) Labels(labels *map[string]string) Processors {
-	for key := range *labels {
-		if !helper.IsReservedLabelKey(key) {
-			delete(*labels, key)
-		}
-	}
-
 	return append(p, Processor{
 		Field: constants.FieldCommonLabels,
-		Parser: func(i interface{}) error {
+		ChangeParser: func(previous, current interface{}) error {
 			if *labels == nil {
 				*labels = map[string]string{}
 			}
-			for key, value := range i.(map[string]interface{}) {
+			configured, _ := current.(map[string]interface{})
+			recorded, _ := previous.(map[string]interface{})
+			for key := range recorded {
+				if _, found := configured[key]; found {
+					continue
+				}
+				if !helper.IsReservedLabelKey(key) {
+					delete(*labels, key)
+				}
+			}
+			for key, value := range configured {
 				if !helper.IsReservedLabelKey(key) {
 					(*labels)[key] = value.(string)
 				}
@@ -113,6 +131,13 @@ func ResourceConstruct(ctx context.Context, d *schema.ResourceData, c Constructo
 			value interface{}
 			ok    bool
 		)
+		if processor.ChangeParser != nil {
+			previous, current := d.GetChange(processor.Field)
+			if err := processor.ChangeParser(previous, current); err != nil {
+				return nil, err
+			}
+			continue
+		}
 		if processor.Required {
 			value = d.Get(processor.Field)
 		} else {
